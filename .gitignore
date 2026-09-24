@@ -31,7 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+supabase/functions/.env
+
+# personal Claude Code settings
+.claude/settings.local.json
 
 # typescript
 *.tsbuildinfo
