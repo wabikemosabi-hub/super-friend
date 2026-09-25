@@ -36,7 +36,6 @@ Friends recommend movies, series, and books to each other. The recommendation it
 
 ## Not verified yet
 
-- **The migration has never run.** No Docker on the Windows box, so no `supabase start`. Run it first and fix anything that fails.
 - **The edge function has never run.** The Hardcover response shape (`data.search.results.hits[].document`) comes from their docs, not from a live call.
 - Lint and typecheck have not been run since the changes.
 
@@ -61,7 +60,10 @@ To make the TDD loop easy, pull pure logic out of the React components and the e
 
 ## Next steps, in order
 
-0. **Set up the test tooling** (jest-expo, `@testing-library/react-native`, a `test` script, pgTAP folder, and a `deno test` setup for functions). Then backfill tests for the migration's RPCs and RLS, and for the edge function's normalizers, before adding new features.
+0. **Backfill tests** for the existing code before adding new features. Test tooling is set up (`npm test`, `npm run test:functions`, `npm run test:db`, `npm run test:all`), and the migrations run on the Mac with OrbStack.
+   - Done: `supabase/tests/database/friendships.test.sql` covers every friendship RPC. It found two bugs, fixed in `20260925000000_lock_down_functions.sql`: `are_friends` let anyone check any two users' friendship, and `anon` could call every function.
+   - `supabase/tests/database/00000-test-helpers.sql` provides `tests.create_user`, `tests.authenticate_as`, `tests.authenticate_as_anon`, `tests.clear_authentication`, and `tests.user_id`.
+   - To do: pgTAP for the recommendation RPCs (`upsert_reason`, `send_recommendation`, `accept_recommendation`, `dismiss_recommendation`, including "anon cannot call" checks) and the table RLS policies (profiles, list entries, recommendations, reasons, stickers, watchlists); `deno test` for the edge function's normalizers.
 1. **Fix sticker RLS** (write the failing pgTAP test first). The recipient can't currently see a sender's *custom* sticker. The policy `"read built-in and own stickers"` should also allow stickers attached to a recommendation you're part of:
    ```sql
    using (
