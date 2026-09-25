@@ -63,7 +63,9 @@ To make the TDD loop easy, pull pure logic out of the React components and the e
 0. **Backfill tests** for the existing code before adding new features. Test tooling is set up (`npm test`, `npm run test:functions`, `npm run test:db`, `npm run test:all`), and the migrations run on the Mac with OrbStack.
    - Done: `supabase/tests/database/friendships.test.sql` covers every friendship RPC. It found two bugs, fixed in `20260925000000_lock_down_functions.sql`: `are_friends` let anyone check any two users' friendship, and `anon` could call every function.
    - `supabase/tests/database/00000-test-helpers.sql` provides `tests.create_user`, `tests.authenticate_as`, `tests.authenticate_as_anon`, `tests.clear_authentication`, and `tests.user_id`.
-   - To do: pgTAP for the recommendation RPCs (`upsert_reason`, `send_recommendation`, `accept_recommendation`, `dismiss_recommendation`, including "anon cannot call" checks) and the table RLS policies (profiles, list entries, recommendations, reasons, stickers, watchlists); `deno test` for the edge function's normalizers.
+   - Done: `supabase/tests/database/recommendations.test.sql` covers every recommendation RPC and the RLS on recommendations, reasons, and their sticker/reason links. It found one bug, fixed in `20260925000001_reason_text_only_updates.sql`: an author could move a reason to any recipient, including strangers.
+   - To do: pgTAP for the remaining table RLS policies (profiles, list entries, stickers, watchlists and watchlist items); `deno test` for the edge function's normalizers.
+   - Open question: `accept_recommendation` does not check status, so a dismissed recommendation can still be accepted later. Decide whether that is intended before testing it.
 1. **Fix sticker RLS** (write the failing pgTAP test first). The recipient can't currently see a sender's *custom* sticker. The policy `"read built-in and own stickers"` should also allow stickers attached to a recommendation you're part of:
    ```sql
    using (
