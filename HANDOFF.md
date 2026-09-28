@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-09-28 (Mac). No code changed. The product model was pinned down in Linear and an Adventure Page mockup was made._
+_Last session: 2026-09-28 (Mac). The Linear cleanup is done: one ticket per idea, in the glossary's words. Stickers were pushed to 2.0._
 
 ## Start here
 
@@ -11,23 +11,23 @@ _Last session: 2026-09-28 (Mac). No code changed. The product model was pinned d
 | **WAB-13 Glossary** | The vocabulary. Use these words in UI copy and tickets |
 | **WAB-14 Adventure Page** | The key page. Everything else hangs off it. Has a "Decisions from the mockup review" section |
 | WAB-15 Media Context Page | The page for a single piece of media: rate it or pass on it |
-| WAB-8 Sherpa Recommendation System | The original epic. Still bundles about 8 ideas |
-| WAB-9 to WAB-12 | Fellow Nomads (add, accept/decline, list) and the Sherpa Page |
+| WAB-8 Sherpa Recommendation System | Now an overview. Its sub-tickets are WAB-16 to WAB-24 |
+| WAB-16 to WAB-24 | Media Search, Recommend to a Nomad, Reasons, Ranking, Rating, Pass, Sherpa Score, Media Scoring, Tagging and Filtering (later) |
+| WAB-9, 10, 11, 30 | Fellow Nomads: add, accept or decline, open a nomad's Adventure Page, remove or block |
+| WAB-6, WAB-29 | Log In, Sign Up |
+| **WAB-25 Schema Reconciliation** | The table of where the schema disagrees with the tickets. Blocks WAB-17 to WAB-21 |
+| WAB-31 Theme Colors | Every color from a named role in one theme file |
+| **WAB-32 Typecheck and lint are failing** | High. Do first: nothing counts as done until these pass |
+| WAB-26, WAB-28 | Bugs: new functions callable by anon (parked for now), `touch_list_entry` search_path |
+| WAB-27 Stickers (2.0) | Backlog. Not in the first release |
+
+Closed: WAB-12 Sherpa Page (duplicate of WAB-14), WAB-7 landing page (archived on purpose), WAB-1 to WAB-4 (Linear's samples, canceled).
 
 The Adventure Page mockup: https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA (attached to WAB-14).
 
-### Next task: finish the ticket cleanup
+### Next task: WAB-32, then WAB-25
 
-The goal is one ticket per idea, in the glossary's words.
-
-- Split WAB-8 into its own tickets: media search, recommend to a nomad, reasons, reorder, rate, pass, Sherpa Score, Media Scoring (what to watch next), tagging and filtering (later).
-- WAB-10 and WAB-11 are both still titled "List of Friends". Rename them to Fellow Nomads language.
-- **WAB-12 Sherpa Page contradicts WAB-14.** It says top 10 and "Eben ONLY sees the recommendations Eben has made". Ask Eben before closing it as replaced by WAB-14.
-- Add a "Theme colors" ticket (see Design below).
-- Add tickets for the missing pieces: sign-up (WAB-6 is login only, and sign-up needs a username), unfriend and block (backend exists, no ticket), schema reconciliation, the three known bugs, and the typecheck and lint failures.
-- WAB-1 to WAB-4 are Linear's sample tickets and can be archived. **WAB-6 and WAB-7 were written by Jake.** Ask before rewriting them.
-
-After that: the schema reconciliation, test-first.
+Get `npx tsc --noEmit` and `npx expo lint` passing (see "Environment state" below). Then the schema reconciliation, test-first.
 
 ## What this is
 
@@ -79,6 +79,7 @@ None of this is done. It's the reconciliation backlog.
 | Pilgrim can't change the list | `list_entries` is the hub; recommendations point at it | Invert: the sherpa-owned list becomes the hub. A user's own list stays a separate thing |
 | Both nomads rate; history shows both | `list_entries.rating smallint CHECK 1..5`, one row per user+media | The column is right. RLS must let a nomad read the other's rating, but only for media recommended between the two of them. Test that a third user can't |
 | Reasons private per pilgrim | RLS on `reasons` enforces it, with passing tests | Already correct. Preserve it through the collapse |
+| Stickers are a 2.0 feature (WAB-27) | `stickers`, `recommendation_stickers`, 16 seeded built-ins | Drop both tables and their policies, and the sticker assertions in the tests |
 
 **Rewriting this touches `supabase/tests/database/recommendations.test.sql`** (48 assertions, many about accept/dismiss and reason reuse). Expect to delete and rewrite a good portion of it. `friendships.test.sql` is unaffected.
 
@@ -92,25 +93,15 @@ None of this is done. It's the reconciliation backlog.
 
 ## Known bugs, still open
 
-- **Stickers RLS.** `"read built-in and own stickers"` allows only `created_by is null or created_by = auth.uid()`, so a recipient can see *that* a custom sticker is attached but can never resolve its emoji or label. The existing test (`recommendations.test.sql:195`) passes only because it counts rows in the link table instead of joining through to `stickers`. The failing test is one line: as the recipient, join `recommendation_stickers` to `stickers` and expect both labels back. Proposed fix:
-  ```sql
-  using (
-    created_by is null or created_by = auth.uid()
-    or exists (
-      select 1 from public.recommendation_stickers rs
-      join public.recommendations r on r.id = rs.recommendation_id
-      where rs.sticker_id = stickers.id and auth.uid() in (r.from_user, r.to_user)
-    )
-  )
-  ```
-- **`alter default privileges` gap.** `20260925000000_lock_down_functions.sql` revokes execute from `public`/`anon` but never grants to `authenticated`. Any function added by a future migration is callable by nobody unless that migration grants explicitly. This will bite the reconciliation migration.
-- **`touch_list_entry`** is the one function missing `set search_path`.
+- **New functions are callable by `anon` (WAB-26, parked).** An earlier version of this doc had it backwards. `authenticated` is fine. The problem is that `alter default privileges in schema public revoke execute ... from public` in `20260925000000_lock_down_functions.sql` does nothing, because a per-schema default can't remove Postgres's global grant to PUBLIC. Verified locally: a new function comes out as `{=X/postgres, ...}` and `anon` can execute it. Existing functions are safe because they were revoked by name. Until it's fixed, any migration that adds a function should `revoke execute ... from public, anon` explicitly.
+- **`touch_list_entry`** is the one function missing `set search_path` (WAB-28).
+- The stickers RLS bug moved into WAB-27 with the rest of stickers.
 
 ## Open decisions
 
 - **Rating attribution.** If Eben and Scott both recommended Pulp Fiction to Jake and Jake rates it 5 stars, does each sherpa get credit? `list_entries.rating` is one row per user+media, so crediting everyone is what it supports today. Decide before building Sherpa Score.
 - **Media Connection** (in WAB-13). It says users must connect to media libraries before they can recommend. Search runs server-side with our own TMDB and Hardcover keys, so nobody needs to connect anything to search. Ask what it's for: importing history from Letterboxd or Goodreads? As written, it's a wall in front of new users.
-- **Stickers** exist in the schema but aren't in any ticket or the glossary. Keep or drop?
+- **After removing a nomad** (WAB-30): are the recommendations, reasons and ratings between them hidden, kept for if they reconnect, or deleted?
 - **Code names vs glossary names.** The schema says `from_user`/`to_user`. Whether code adopts sherpa/pilgrim is undecided. UI copy uses the glossary.
 - **Sherpa Scoring and Media Scoring formulas** are explicitly not decided in WAB-13.
 
@@ -120,7 +111,7 @@ The mockup at https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA shows the Advent
 
 **Direction:** bold, exciting, fun. An adventure between two friends. A muted, earthy first try was rejected.
 
-**Colors will change.** Jake is researching a new palette, and themes are wanted eventually. So:
+**Colors will change (WAB-31).** Jake is researching a new palette, and themes are wanted eventually. So:
 
 - **Never hard-code a color in a component.** Every color comes from a named role in one theme file. A palette swap or a new theme is then one file.
 - The template's `src/constants/theme.ts` is the natural home. It currently fails typecheck on its `@/global.css` import (see below).
@@ -164,12 +155,12 @@ Test suites, all green:
 | `npm run test:functions` | 1 passed (harness only) |
 | `npm run test:db` | **102 passed**, 4 files |
 
-Two pre-existing failures that block the "lint and typecheck before done" rule in `AGENTS.md`, both from untouched template files:
+Two pre-existing failures (WAB-32) that block the "lint and typecheck before done" rule in `AGENTS.md`, both from untouched template files:
 
 - `npx tsc --noEmit` — 2 errors, both CSS imports (`src/components/animated-icon.module.css`, `@/global.css` in `src/constants/theme.ts`). The files exist; the project has no `*.css` module declaration. Deleting the template's `animated-icon.*` removes one; the other needs a `src/types/css.d.ts`.
 - `npx expo lint` — 1 error, `setState` inside an effect at `src/hooks/use-color-scheme.web.ts:11`. That hydration guard exists to avoid a server/client render mismatch, which `web.output: "single"` would eliminate — so it may reduce to just `useRNColorScheme()`.
 
-`deno.lock` and `package-lock.json` have small uncommitted changes from the installs.
+`deno.lock` and `package-lock.json` have small uncommitted changes from the installs. Leave `package-lock.json` out of commits: the change strips `libc` fields from Linux optional dependencies, which is npm-version churn that could break Linux installs.
 
 ## What exists in the app
 
@@ -217,7 +208,7 @@ Pull pure logic out of components and the edge function into small importable mo
 | Books | **Hardcover** GraphQL, **Open Library** fallback | Goodreads API is closed; Amazon PA-API needs affiliate sales. Hardcover free tier: 5,000 req/day, 60/min, tokens server-side only |
 | Friendships | One row per pair, unique on `(least, greatest)` | Single source of truth; stops duplicate and crossed requests |
 | Friendship privacy | No direct table access; all through RPCs. Declined looks "pending" to the requester; blocks visible only to the blocker | |
-| Stickers | Curated built-in set (16), optionally user-made. They describe **the media's vibe** only | Messages ("trust me") and occasions ("date night") are reasons, not stickers. No overlap |
+| Stickers | **2.0, not the first release** (WAB-27). Coming out of the schema in WAB-25 | When they return: a curated set describing the media's vibe. Messages and occasions stay reasons |
 
 ## Later ideas
 
