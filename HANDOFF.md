@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-09-28 (Mac). The Linear cleanup is done: one ticket per idea, in the glossary's words. Stickers were pushed to 2.0._
+_Last session: 2026-09-28 (Mac). The Linear cleanup is done: one ticket per idea, in the glossary's words. Stickers were pushed to 2.0. WAB-32 is fixed: typecheck and lint pass._
 
 ## Start here
 
@@ -17,7 +17,7 @@ _Last session: 2026-09-28 (Mac). The Linear cleanup is done: one ticket per idea
 | WAB-6, WAB-29 | Log In, Sign Up |
 | **WAB-25 Schema Reconciliation** | The table of where the schema disagrees with the tickets. Blocks WAB-17 to WAB-21 |
 | WAB-31 Theme Colors | Every color from a named role in one theme file |
-| **WAB-32 Typecheck and lint are failing** | High. Do first: nothing counts as done until these pass |
+| WAB-32 Typecheck and lint are failing | Fixed on `ebenbsmith/wab-32-typecheck-and-lint-are-failing` |
 | WAB-26, WAB-28 | Bugs: new functions callable by anon (parked for now), `touch_list_entry` search_path |
 | WAB-27 Stickers (2.0) | Backlog. Not in the first release |
 
@@ -25,9 +25,9 @@ Closed: WAB-12 Sherpa Page (duplicate of WAB-14), WAB-7 landing page (archived o
 
 The Adventure Page mockup: https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA (attached to WAB-14).
 
-### Next task: WAB-32, then WAB-25
+### Next task: WAB-25
 
-Get `npx tsc --noEmit` and `npx expo lint` passing (see "Environment state" below). Then the schema reconciliation, test-first.
+The schema reconciliation, test-first. Typecheck and lint pass now, so "run lint and typecheck before done" is enforceable.
 
 ## What this is
 
@@ -151,20 +151,23 @@ Test suites, all green:
 
 | Command | Result |
 |---|---|
-| `npm test` | 1 passed (harness only) |
+| `npm test` | 3 passed, 2 files (harness, web color scheme hook) |
 | `npm run test:functions` | 1 passed (harness only) |
 | `npm run test:db` | **102 passed**, 4 files |
+| `npx tsc --noEmit` | passes |
+| `npx expo lint` | passes |
 
-Two pre-existing failures (WAB-32) that block the "lint and typecheck before done" rule in `AGENTS.md`, both from untouched template files:
+How WAB-32 was fixed:
 
-- `npx tsc --noEmit` — 2 errors, both CSS imports (`src/components/animated-icon.module.css`, `@/global.css` in `src/constants/theme.ts`). The files exist; the project has no `*.css` module declaration. Deleting the template's `animated-icon.*` removes one; the other needs a `src/types/css.d.ts`.
-- `npx expo lint` — 1 error, `setState` inside an effect at `src/hooks/use-color-scheme.web.ts:11`. That hydration guard exists to avoid a server/client render mismatch, which `web.output: "single"` would eliminate — so it may reduce to just `useRNColorScheme()`.
+- **Typecheck** only passed on machines that had run `npx expo start`. The CSS module types come from `expo-env.d.ts`, which Expo generates and gitignores, so a fresh clone or CI failed on the two CSS imports. `src/types/expo.d.ts` now references `expo/types` itself, so it passes either way.
+- **Lint** flagged `setState` inside an effect in `src/hooks/use-color-scheme.web.ts`, a hydration guard for `web.output: "static"`. It now uses `useSyncExternalStore` (server snapshot `false`, client snapshot `true`), which does the same thing without the effect. Tests pin it: `'light'` on the server, the device scheme once mounted. When WAB-6 switches to `"single"`, the guard can go and the `.web.ts` file can be deleted.
+- `@types/react-dom` was added as a dev dependency (for `renderToString` in that test).
 
-`deno.lock` and `package-lock.json` have small uncommitted changes from the installs. Leave `package-lock.json` out of commits: the change strips `libc` fields from Linux optional dependencies, which is npm-version churn that could break Linux installs.
+`package-lock.json` churn: this machine's npm 10 strips the `libc` fields from Linux optional dependencies, so any install rewrites dozens of unrelated lines. When adding a package, commit only its own lockfile entries, not the `libc` removals. `deno.lock` has a small uncommitted change from the installs.
 
 ## What exists in the app
 
-**Essentially nothing.** Every file under `src/` is untouched `create-expo` template except three: `src/lib/supabase.ts`, `src/lib/types.ts`, and a throwaway harness test. No session provider, no `(tabs)`, no sign-in screen, no `Stack` anywhere.
+**Essentially nothing.** Every file under `src/` is untouched `create-expo` template except `src/lib/supabase.ts`, `src/lib/types.ts`, a throwaway harness test, and the WAB-32 fixes (`src/types/expo.d.ts`, the web color scheme hook and its test). No session provider, no `(tabs)`, no sign-in screen, no `Stack` anywhere.
 
 Confirmed against the installed packages rather than from memory:
 
