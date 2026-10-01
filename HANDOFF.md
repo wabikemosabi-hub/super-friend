@@ -18,7 +18,7 @@ _Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end l
 | WAB-15 Media Context Page | One piece of media: rate it or pass on it |
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
 | WAB-9, 10, 11, 30 | Fellow Nomads: add, accept or decline, open an Adventure Page, remove or block. **Need rebuilding** on the new schema |
-| WAB-31 Theme Colors | Every color from a named role in one theme file. **Its palette and fonts are out of date:** the app now uses the ship-computer look (see Design). Eben to confirm, then update the ticket |
+| WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
 
@@ -175,7 +175,7 @@ The mockup (link above) shows the Adventure Page on a phone. Eben and Jake calle
 
 **Direction:** bold, exciting, fun. A muted, earthy first try was rejected. Letting each nomad pick their own colors is a 2.0 idea.
 
-**The ship-computer look** (chosen by Jake 2026-10-01; replaces WAB-31's purple palette and Bricolage/Figtree once Eben agrees): gritty cassette futurism, in the spirit of *2001*, the Nostromo in *Alien*, *Blade Runner*, *Silent Running* and *Outland*. Dark gunmetal panels with rivets and stencilled labels, black CRT screens with green phosphor text, yellow and black hazard stripes, a red status "eye", and one magenta neon glow. Fonts: **Michroma** (headings), **Space Mono** (labels and body), **VT323** (anything on a screen).
+**The ship-computer look** (chosen by Jake 2026-10-01, merged in PR 8; replaces the first mockup's purple palette and Bricolage/Figtree, and WAB-31 records it): gritty cassette futurism, in the spirit of *2001*, the Nostromo in *Alien*, *Blade Runner*, *Silent Running* and *Outland*. Dark gunmetal panels with rivets and stencilled labels, black CRT screens with green phosphor text, yellow and black hazard stripes, a red status "eye", and one magenta neon glow. Fonts: **Michroma** (headings), **Space Mono** (labels and body), **VT323** (anything on a screen).
 
 - Design canvas (Basecamp for web, phone and empty state, plus the Adventure Page): https://claude.ai/artifact/McuDsyS912uQUoDSAKoW7K. It is private to Jake until he shares it.
 - In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills).
