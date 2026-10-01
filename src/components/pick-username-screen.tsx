@@ -28,7 +28,7 @@ export function PickUsernameScreen({ onSignOut }: PickUsernameScreenProps) {
       <TextInput
         autoCapitalize="none"
         autoCorrect={false}
-        onChangeText={setUsername}
+        onChangeText={(text) => setUsername(text.replace(/[ _]/g, '-'))}
         placeholder="Username"
         placeholderTextColor={theme.textSecondary}
         style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}

@@ -15,6 +15,14 @@ test('explains the username rule before sending anything', async () => {
   expect(onSubmit).not.toHaveBeenCalled();
 });
 
+test('turns spaces and underscores into dashes as you type', async () => {
+  await render(<PickUsernameScreen onSubmit={jest.fn()} onSignOut={jest.fn()} />);
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy lee_fubbins');
+
+  expect(screen.getByTestId('pick-username-input')).toHaveDisplayValue('taffy-lee-fubbins');
+});
+
 test('lets you sign out', async () => {
   const onSignOut = jest.fn();
   await render(<PickUsernameScreen onSubmit={jest.fn()} onSignOut={onSignOut} />);
