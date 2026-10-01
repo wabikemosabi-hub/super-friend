@@ -5,7 +5,20 @@ export type Database = {
   
   "public": {
           Tables: {
-            "profiles": {
+            "media_items": {
+                  Row: {
+                    "external_id": string,"fetched_at": string,"id": string,"image_url": string | null,"metadata": NonNullable<Json>,"overview": string | null,"provider": string,"subtitle": string | null,"title": string,"type": string,"year": number | null
+                  }
+                  Insert: {
+                    "external_id": string,"fetched_at"?: string,"id"?: string,"image_url"?: string | null,"metadata"?: NonNullable<Json>,"overview"?: string | null,"provider": string,"subtitle"?: string | null,"title": string,"type": string,"year"?: number | null
+                  }
+                  Update: {
+                    "external_id"?: string,"fetched_at"?: string,"id"?: string,"image_url"?: string | null,"metadata"?: NonNullable<Json>,"overview"?: string | null,"provider"?: string,"subtitle"?: string | null,"title"?: string,"type"?: string,"year"?: number | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
                   Row: {
                     "avatar_url": string | null,"created_at": string,"id": string,"username": string
                   }

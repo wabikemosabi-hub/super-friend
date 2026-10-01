@@ -1,30 +1,39 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import '@/global.css';
 
 import { Platform } from 'react-native';
 
+const shipComputer = {
+  background: '#0C0E0F',
+  backgroundElement: '#2D3230',
+  backgroundSelected: '#3B413E',
+  edge: '#111413',
+  text: '#E4E6DE',
+  textSecondary: '#A9B0A6',
+  screen: '#030605',
+  bezel: '#1A1F1D',
+  phosphor: '#79F59A',
+  phosphorDim: '#4FC777',
+  hazard: '#F2B705',
+  alert: '#E8342B',
+  neon: '#FF3D9A',
+  you: '#FF3D9A',
+  friend: '#3DD6F5',
+  onAccent: '#0C0E0F',
+} as const;
+
 export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
+  light: shipComputer,
+  dark: shipComputer,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+
+export const Typefaces = {
+  display: 'Michroma_400Regular',
+  label: 'SpaceMono_400Regular',
+  labelBold: 'SpaceMono_700Bold',
+  screen: 'VT323_400Regular',
+} as const;
 
 export const Fonts = Platform.select({
   ios: {
