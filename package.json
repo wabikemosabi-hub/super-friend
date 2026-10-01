@@ -12,6 +12,7 @@
     "expo-font": "~57.0.4",
     "expo-glass-effect": "~57.0.4",
     "expo-image": "~57.0.5",
+    "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.23",
     "expo-splash-screen": "~57.0.9",
@@ -53,6 +54,7 @@
     "test:watch": "jest --watch",
     "test:functions": "deno test --allow-env --allow-read supabase/functions",
     "test:db": "supabase test db",
+    "db:types": "supabase gen types typescript --local --schema public > src/lib/database.types.ts",
     "test:all": "npm test && npm run test:functions && npm run test:db"
   },
   "jest": {
