@@ -17,6 +17,10 @@ jest.mock('@/lib/auth', () => ({
   signOut: jest.fn(),
 }));
 
+jest.mock('@/lib/avatar', () => ({
+  pickAvatar: jest.fn(),
+}));
+
 jest.mock('@/lib/profile', () => ({
   createProfile: jest.fn(),
   usernameAvailable: jest.fn(),
