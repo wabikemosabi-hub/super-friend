@@ -60,7 +60,10 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "<rootDir>/supabase/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "\\.css$": "<rootDir>/jest/style-stub.js"
+    }
   },
   "private": true
 }
