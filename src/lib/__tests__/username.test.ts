@@ -2,7 +2,7 @@ import { usernameProblem } from '@/lib/username';
 
 const rule = 'Usernames are 3 to 24 letters, numbers or underscores';
 
-test.each(['eben', 'Jake', 'nomad_42', 'abc', 'a'.repeat(24)])('accepts %p', (username) => {
+test.each(['taffy_lee_fubbins', 'Jake', 'nomad_42', 'abc', 'a'.repeat(24)])('accepts %p', (username) => {
   expect(usernameProblem(username)).toBeNull();
 });
 
