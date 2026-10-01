@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
+import { useAppFonts } from '@/hooks/use-app-fonts';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 
 SplashScreen.preventAutoHideAsync();
@@ -25,8 +26,9 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status } = useSession();
+  const fontsReady = useAppFonts();
 
-  if (status === 'loading') {
+  if (status === 'loading' || !fontsReady) {
     return null;
   }
 

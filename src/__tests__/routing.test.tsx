@@ -12,6 +12,10 @@ jest.mock('@/providers/session-provider', () => ({
   useSession: () => mockSession.state,
 }));
 
+jest.mock('@/hooks/use-app-fonts', () => ({
+  useAppFonts: () => true,
+}));
+
 jest.mock('@/lib/auth', () => ({
   signInWithGoogle: jest.fn(),
   signOut: jest.fn(),
