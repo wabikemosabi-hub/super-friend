@@ -1,28 +1,32 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, TextInput } from 'react-native';
+import { Image, StyleSheet, TextInput } from 'react-native';
 
 import { ActionButton } from '@/components/action-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { PickedAvatar } from '@/lib/avatar';
 import { usernameProblem } from '@/lib/username';
 
 type PickUsernameScreenProps = {
   checkUsername: (username: string) => Promise<boolean>;
   onSubmit: (username: string) => Promise<string | null>;
   onSignOut: () => void;
+  pickAvatar: () => Promise<PickedAvatar | null>;
 };
 
 export function PickUsernameScreen({
   checkUsername,
   onSubmit,
   onSignOut,
+  pickAvatar,
 }: PickUsernameScreenProps) {
   const theme = useTheme();
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [availability, setAvailability] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<PickedAvatar | null>(null);
 
   useEffect(() => {
     if (usernameProblem(username)) return;
@@ -43,6 +47,11 @@ export function PickUsernameScreen({
     setAvailability(null);
   }
 
+  async function handlePickAvatar() {
+    const picked = await pickAvatar();
+    if (picked) setAvatar(picked);
+  }
+
   async function handleContinue() {
     const problem = usernameProblem(username);
     setError(problem);
@@ -53,6 +62,18 @@ export function PickUsernameScreen({
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="subtitle">Pick a username</ThemedText>
+      {avatar && (
+        <Image
+          source={{ uri: avatar.uri }}
+          style={styles.avatar}
+          testID="pick-username-avatar-preview"
+        />
+      )}
+      <ActionButton
+        label="Pick an avatar"
+        onPress={handlePickAvatar}
+        testID="pick-username-avatar-button"
+      />
       <TextInput
         autoCapitalize="none"
         autoCorrect={false}
@@ -74,6 +95,11 @@ export function PickUsernameScreen({
 }
 
 const styles = StyleSheet.create({
+  avatar: {
+    borderRadius: 64,
+    height: 128,
+    width: 128,
+  },
   container: {
     alignItems: 'center',
     flex: 1,

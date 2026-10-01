@@ -1,9 +1,35 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 
 import { PickUsernameScreen } from '@/components/pick-username-screen';
+import type { PickedAvatar } from '@/lib/avatar';
 
 function nameIsFree() {
   return jest.fn<Promise<boolean>, [string]>().mockResolvedValue(true);
+}
+
+function sendsFine() {
+  return jest.fn<Promise<string | null>, [string]>().mockResolvedValue(null);
+}
+
+function picks(...avatars: (PickedAvatar | null)[]) {
+  const pickAvatar = jest.fn<Promise<PickedAvatar | null>, []>();
+  avatars.forEach((avatar) => pickAvatar.mockResolvedValueOnce(avatar));
+  return pickAvatar;
+}
+
+const taffyPhoto: PickedAvatar = { uri: 'file:///taffy.jpg', mimeType: 'image/jpeg' };
+
+function renderScreen(props: Partial<ComponentProps<typeof PickUsernameScreen>> = {}) {
+  return render(
+    <PickUsernameScreen
+      checkUsername={nameIsFree()}
+      onSubmit={sendsFine()}
+      onSignOut={jest.fn()}
+      pickAvatar={picks(null)}
+      {...props}
+    />,
+  );
 }
 
 afterEach(() => {
@@ -11,8 +37,8 @@ afterEach(() => {
 });
 
 test('explains the username rule before sending anything', async () => {
-  const onSubmit = jest.fn();
-  await render(<PickUsernameScreen checkUsername={nameIsFree()} onSubmit={onSubmit} onSignOut={jest.fn()} />);
+  const onSubmit = sendsFine();
+  await renderScreen({ onSubmit });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'e!');
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
@@ -24,7 +50,7 @@ test('explains the username rule before sending anything', async () => {
 });
 
 test('turns spaces and underscores into dashes as you type', async () => {
-  await render(<PickUsernameScreen checkUsername={nameIsFree()} onSubmit={jest.fn()} onSignOut={jest.fn()} />);
+  await renderScreen();
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy lee_fubbins');
 
@@ -33,7 +59,7 @@ test('turns spaces and underscores into dashes as you type', async () => {
 
 test('lets you sign out', async () => {
   const onSignOut = jest.fn();
-  await render(<PickUsernameScreen checkUsername={nameIsFree()} onSubmit={jest.fn()} onSignOut={onSignOut} />);
+  await renderScreen({ onSignOut });
 
   await fireEvent.press(screen.getByTestId('pick-username-sign-out'));
 
@@ -43,9 +69,7 @@ test('lets you sign out', async () => {
 test('says a name is taken shortly after you stop typing', async () => {
   jest.useFakeTimers();
   const checkUsername = jest.fn<Promise<boolean>, [string]>().mockResolvedValue(false);
-  await render(
-    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
-  );
+  await renderScreen({ checkUsername });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'Roy-Donk');
   expect(checkUsername).not.toHaveBeenCalled();
@@ -61,9 +85,7 @@ test('says a name is taken shortly after you stop typing', async () => {
 test('clears the taken message as soon as you change the name', async () => {
   jest.useFakeTimers();
   const checkUsername = jest.fn<Promise<boolean>, [string]>().mockResolvedValue(false);
-  await render(
-    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
-  );
+  await renderScreen({ checkUsername });
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'Roy-Donk');
   await act(async () => {
     await jest.advanceTimersByTimeAsync(500);
@@ -77,9 +99,7 @@ test('clears the taken message as soon as you change the name', async () => {
 
 test('says a name is available shortly after you stop typing', async () => {
   jest.useFakeTimers();
-  await render(
-    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
-  );
+  await renderScreen();
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy-lee-fubbins');
   await act(async () => {
@@ -101,9 +121,7 @@ test('ignores a slow answer about a name you already changed', async () => {
         })
       : Promise.resolve(false),
   );
-  await render(
-    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
-  );
+  await renderScreen({ checkUsername });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy');
   await act(async () => {
@@ -123,9 +141,7 @@ test('ignores a slow answer about a name you already changed', async () => {
 test('checks only the name you stop on, not every keystroke', async () => {
   jest.useFakeTimers();
   const checkUsername = nameIsFree();
-  await render(
-    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
-  );
+  await renderScreen({ checkUsername });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy');
   await act(async () => {
@@ -141,10 +157,8 @@ test('checks only the name you stop on, not every keystroke', async () => {
 });
 
 test('sends the dashed name when you continue', async () => {
-  const onSubmit = jest.fn<Promise<string | null>, [string]>().mockResolvedValue(null);
-  await render(
-    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={onSubmit} onSignOut={jest.fn()} />,
-  );
+  const onSubmit = sendsFine();
+  await renderScreen({ onSubmit });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy lee fubbins');
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
@@ -158,9 +172,7 @@ test('shows what went wrong when sending fails', async () => {
   const onSubmit = jest
     .fn<Promise<string | null>, [string]>()
     .mockResolvedValue('That username is taken');
-  await render(
-    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={onSubmit} onSignOut={jest.fn()} />,
-  );
+  await renderScreen({ onSubmit });
 
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy-donk');
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
@@ -168,4 +180,28 @@ test('shows what went wrong when sending fails', async () => {
   expect(await screen.findByTestId('pick-username-error')).toHaveTextContent(
     'That username is taken',
   );
+});
+
+test('shows the photo you pick', async () => {
+  const pickAvatar = picks(taffyPhoto);
+  await renderScreen({ pickAvatar });
+
+  await fireEvent.press(screen.getByTestId('pick-username-avatar-button'));
+
+  expect(pickAvatar).toHaveBeenCalledTimes(1);
+  expect(await screen.findByTestId('pick-username-avatar-preview')).toHaveProp('source', {
+    uri: 'file:///taffy.jpg',
+  });
+});
+
+test('keeps your photo if you cancel picking another', async () => {
+  await renderScreen({ pickAvatar: picks(taffyPhoto, null) });
+
+  await fireEvent.press(screen.getByTestId('pick-username-avatar-button'));
+  await screen.findByTestId('pick-username-avatar-preview');
+  await fireEvent.press(screen.getByTestId('pick-username-avatar-button'));
+
+  expect(screen.getByTestId('pick-username-avatar-preview')).toHaveProp('source', {
+    uri: 'file:///taffy.jpg',
+  });
 });

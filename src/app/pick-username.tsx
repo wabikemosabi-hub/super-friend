@@ -8,6 +8,7 @@ export default function PickUsernameRoute() {
       checkUsername={usernameAvailable}
       onSubmit={async () => null}
       onSignOut={signOut}
+      pickAvatar={async () => null}
     />
   );
 }
