@@ -8,3 +8,8 @@ export async function createProfile(profile: Profile) {
   if (error?.code === uniqueViolation) throw new Error('That username is taken');
   if (error) throw error;
 }
+
+export async function usernameAvailable(name: string): Promise<boolean> {
+  const { data } = await supabase.rpc('username_available', { name });
+  return data;
+}

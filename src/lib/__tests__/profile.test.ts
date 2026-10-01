@@ -1,9 +1,10 @@
 import { PostgrestError } from '@supabase/supabase-js';
 
-import { createProfile } from '@/lib/profile';
+import { createProfile, usernameAvailable } from '@/lib/profile';
 
 const mockFrom = jest.fn();
 const mockInsert = jest.fn();
+const mockRpc = jest.fn();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -11,6 +12,7 @@ jest.mock('@/lib/supabase', () => ({
       mockFrom(table);
       return { insert: (row: unknown) => mockInsert(row) };
     },
+    rpc: (fn: string, args: unknown) => mockRpc(fn, args),
   },
 }));
 
@@ -21,6 +23,7 @@ function databaseError(code: string, message: string) {
 beforeEach(() => {
   mockFrom.mockReset();
   mockInsert.mockReset().mockResolvedValue({ error: null });
+  mockRpc.mockReset();
 });
 
 test('saves the profile', async () => {
@@ -52,4 +55,11 @@ test('passes along any other failure', async () => {
   await expect(
     createProfile({ id: 'user-2', username: 'roy-donk', avatar_url: null }),
   ).rejects.toThrow('connection failure');
+});
+
+test('asks the database whether a username is free', async () => {
+  mockRpc.mockResolvedValue({ data: false, error: null });
+
+  await expect(usernameAvailable('Roy-Donk')).resolves.toBe(false);
+  expect(mockRpc).toHaveBeenCalledWith('username_available', { name: 'Roy-Donk' });
 });
