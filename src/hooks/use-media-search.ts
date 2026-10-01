@@ -6,8 +6,10 @@ import { searchMedia, shouldSearch, type MediaType } from '@/lib/media-search';
 const typingPause = 300;
 
 export function useMediaSearch(type: MediaType, query: string) {
-  const settled = useSettledValue(query.trim(), typingPause);
+  const typed = query.trim();
+  const settled = useSettledValue(typed, typingPause);
   const active = shouldSearch(settled);
+  const waiting = shouldSearch(typed) && typed !== settled;
 
   const search = useQuery({
     queryKey: ['media-search', type, settled],
@@ -17,10 +19,14 @@ export function useMediaSearch(type: MediaType, query: string) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const isSearching = waiting || (active && search.isFetching);
+  const finished = active && !isSearching && search.isSuccess && !search.isPlaceholderData;
+
   return {
     results: active ? (search.data ?? []) : [],
-    isSearching: active && search.isFetching,
+    isSearching,
     error: active && search.error ? search.error.message : null,
+    noMatches: finished && search.data.length === 0,
   };
 }
 

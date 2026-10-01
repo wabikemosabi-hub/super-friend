@@ -44,6 +44,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={status === 'ready'}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="dev/media-search" />
       </Stack.Protected>
     </Stack>
   );

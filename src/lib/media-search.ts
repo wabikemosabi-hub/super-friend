@@ -22,6 +22,12 @@ export async function searchMedia(type: MediaType, query: string): Promise<Media
   return data.results;
 }
 
+export function posterPath(item: MediaItem): string | null {
+  const { metadata } = item;
+  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) return null;
+  return typeof metadata.poster_path === 'string' ? metadata.poster_path : null;
+}
+
 export type TmdbImageSize = 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original';
 
 export function tmdbImage(path: string | null | undefined, size: TmdbImageSize) {

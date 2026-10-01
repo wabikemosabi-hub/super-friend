@@ -54,7 +54,47 @@ test('does not search for fewer than 2 characters', async () => {
   await act(() => jest.advanceTimersByTime(1000));
 
   expect(mockSearchMedia).not.toHaveBeenCalled();
-  expect(result.current).toEqual({ results: [], isSearching: false, error: null });
+  expect(result.current).toEqual({ results: [], isSearching: false, error: null, noMatches: false });
+});
+
+test('is searching while waiting for typing to pause', async () => {
+  const hook = await setup();
+  await hook.rerender({ query: 'Alien' });
+  await act(() => jest.advanceTimersByTime(100));
+
+  expect(mockSearchMedia).not.toHaveBeenCalled();
+  expect(hook.result.current.isSearching).toBe(true);
+  expect(hook.result.current.noMatches).toBe(false);
+});
+
+test('reports no matches once a search finds nothing', async () => {
+  mockSearchMedia.mockResolvedValue([]);
+  const { result } = await setup('zzqxqzzqxq');
+  await act(() => jest.advanceTimersByTime(300));
+
+  await waitFor(() => expect(result.current.noMatches).toBe(true));
+  expect(result.current.isSearching).toBe(false);
+});
+
+test('does not report no matches while the next search is waiting', async () => {
+  mockSearchMedia.mockResolvedValue([]);
+  const hook = await setup('zzqxqzzqxq');
+  await act(() => jest.advanceTimersByTime(300));
+  await waitFor(() => expect(hook.result.current.noMatches).toBe(true));
+
+  await hook.rerender({ query: 'Alien' });
+
+  expect(hook.result.current.noMatches).toBe(false);
+  expect(hook.result.current.isSearching).toBe(true);
+});
+
+test('does not report no matches when the search failed', async () => {
+  mockSearchMedia.mockRejectedValue(new Error('Search is having trouble. Try again in a moment.'));
+  const { result } = await setup('Alien');
+  await act(() => jest.advanceTimersByTime(300));
+
+  await waitFor(() => expect(result.current.error).not.toBeNull());
+  expect(result.current.noMatches).toBe(false);
 });
 
 test('searches once typing pauses for 300 ms', async () => {

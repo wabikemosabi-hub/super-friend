@@ -1,6 +1,13 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
-import { searchMedia, searchTrouble, shouldSearch, tmdbImage, type MediaItem } from '@/lib/media-search';
+import {
+  posterPath,
+  searchMedia,
+  searchTrouble,
+  shouldSearch,
+  tmdbImage,
+  type MediaItem,
+} from '@/lib/media-search';
 
 type InvokeResult = { data: { results: MediaItem[] } | null; error: Error | null };
 
@@ -72,4 +79,17 @@ test('builds a TMDB image URL at the size asked for', () => {
 test('no image path means no image', () => {
   expect(tmdbImage(null, 'w185')).toBeNull();
   expect(tmdbImage(undefined, 'w500')).toBeNull();
+});
+
+test('reads the TMDB poster path from a media row', () => {
+  expect(posterPath(fullMetalJacket)).toBe('/kMKyx1k8hWWscYFnPbnxxN4Eqo4.jpg');
+});
+
+test.each([
+  ['no poster', { poster_path: null }],
+  ['no metadata keys', {}],
+  ['a poster path that is not text', { poster_path: 42 }],
+  ['metadata that is a list', ['/kMKyx1k8hWWscYFnPbnxxN4Eqo4.jpg']],
+])('a row with %s has no poster path', (_case, metadata) => {
+  expect(posterPath({ ...fullMetalJacket, metadata })).toBeNull();
 });
