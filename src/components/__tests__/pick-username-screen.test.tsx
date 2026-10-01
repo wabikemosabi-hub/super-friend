@@ -90,3 +90,32 @@ test('says a name is available shortly after you stop typing', async () => {
     'taffy-lee-fubbins is available',
   );
 });
+
+test('ignores a slow answer about a name you already changed', async () => {
+  jest.useFakeTimers();
+  let answerForRoy: (available: boolean) => void = () => {};
+  const checkUsername = jest.fn<Promise<boolean>, [string]>((username) =>
+    username === 'roy'
+      ? new Promise((resolve) => {
+          answerForRoy = resolve;
+        })
+      : Promise.resolve(false),
+  );
+  await render(
+    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
+  );
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy');
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(500);
+  });
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy-donk');
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(500);
+  });
+  await act(async () => {
+    answerForRoy(true);
+  });
+
+  expect(screen.getByTestId('pick-username-availability')).toHaveTextContent('roy-donk is taken');
+});

@@ -22,12 +22,16 @@ export function PickUsernameScreen({ checkUsername, onSignOut }: PickUsernameScr
 
   useEffect(() => {
     if (usernameProblem(username)) return;
+    let current = true;
     const timer = setTimeout(() => {
       checkUsername(username).then((available) => {
-        setAvailability(`${username} is ${available ? 'available' : 'taken'}`);
+        if (current) setAvailability(`${username} is ${available ? 'available' : 'taken'}`);
       });
     }, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
   }, [username, checkUsername]);
 
   function handleChangeText(text: string) {
