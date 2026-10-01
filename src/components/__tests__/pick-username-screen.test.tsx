@@ -10,7 +10,7 @@ test('explains the username rule before sending anything', async () => {
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
 
   expect(screen.getByTestId('pick-username-error')).toHaveTextContent(
-    'Usernames are 3 to 24 letters, numbers or underscores',
+    'Usernames are 3 to 24 letters or numbers, with single dashes between words',
   );
   expect(onSubmit).not.toHaveBeenCalled();
 });
