@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput } from 'react-native';
 
 import { ActionButton } from '@/components/action-button';
@@ -9,14 +9,31 @@ import { useTheme } from '@/hooks/use-theme';
 import { usernameProblem } from '@/lib/username';
 
 type PickUsernameScreenProps = {
+  checkUsername: (username: string) => Promise<boolean>;
   onSubmit: (username: string) => Promise<string | null>;
   onSignOut: () => void;
 };
 
-export function PickUsernameScreen({ onSignOut }: PickUsernameScreenProps) {
+export function PickUsernameScreen({ checkUsername, onSignOut }: PickUsernameScreenProps) {
   const theme = useTheme();
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (usernameProblem(username)) return;
+    const timer = setTimeout(() => {
+      checkUsername(username).then((available) => {
+        if (!available) setAvailability(`${username} is taken`);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username, checkUsername]);
+
+  function handleChangeText(text: string) {
+    setUsername(text.replace(/[ _]/g, '-'));
+    setAvailability(null);
+  }
 
   function handleContinue() {
     setError(usernameProblem(username));
@@ -28,7 +45,7 @@ export function PickUsernameScreen({ onSignOut }: PickUsernameScreenProps) {
       <TextInput
         autoCapitalize="none"
         autoCorrect={false}
-        onChangeText={(text) => setUsername(text.replace(/[ _]/g, '-'))}
+        onChangeText={handleChangeText}
         placeholder="Username"
         placeholderTextColor={theme.textSecondary}
         style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
@@ -36,6 +53,9 @@ export function PickUsernameScreen({ onSignOut }: PickUsernameScreenProps) {
         value={username}
       />
       {error && <ThemedText testID="pick-username-error">{error}</ThemedText>}
+      {availability && (
+        <ThemedText testID="pick-username-availability">{availability}</ThemedText>
+      )}
       <ActionButton label="Continue" onPress={handleContinue} testID="pick-username-continue" />
       <ActionButton label="Sign out" onPress={onSignOut} testID="pick-username-sign-out" />
     </ThemedView>

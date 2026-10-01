@@ -17,6 +17,11 @@ jest.mock('@/lib/auth', () => ({
   signOut: jest.fn(),
 }));
 
+jest.mock('@/lib/profile', () => ({
+  createProfile: jest.fn(),
+  usernameAvailable: jest.fn(),
+}));
+
 const taffy = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
 
 test('shows nothing while the session is loading', async () => {
