@@ -119,3 +119,23 @@ test('ignores a slow answer about a name you already changed', async () => {
 
   expect(screen.getByTestId('pick-username-availability')).toHaveTextContent('roy-donk is taken');
 });
+
+test('checks only the name you stop on, not every keystroke', async () => {
+  jest.useFakeTimers();
+  const checkUsername = nameIsFree();
+  await render(
+    <PickUsernameScreen checkUsername={checkUsername} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
+  );
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy');
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(300);
+  });
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy-donk');
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(500);
+  });
+
+  expect(checkUsername).toHaveBeenCalledTimes(1);
+  expect(checkUsername).toHaveBeenCalledWith('roy-donk');
+});
