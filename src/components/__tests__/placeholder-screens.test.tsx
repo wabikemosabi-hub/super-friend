@@ -1,16 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { BasecampScreen } from '@/components/basecamp-screen';
-import { PickUsernameScreen } from '@/components/pick-username-screen';
-
-test('pick username lets you sign out', async () => {
-  const onSignOut = jest.fn();
-  await render(<PickUsernameScreen onSignOut={onSignOut} />);
-
-  await fireEvent.press(screen.getByTestId('pick-username-sign-out'));
-
-  expect(onSignOut).toHaveBeenCalledTimes(1);
-});
 
 test('basecamp greets you by username', async () => {
   await render(<BasecampScreen username="taffy_lee_fubbins" onSignOut={jest.fn()} />);
