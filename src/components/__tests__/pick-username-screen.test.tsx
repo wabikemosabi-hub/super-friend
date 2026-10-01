@@ -9,7 +9,7 @@ function nameIsFree() {
 }
 
 function sendsFine() {
-  return jest.fn<Promise<string | null>, [string]>().mockResolvedValue(null);
+  return jest.fn<Promise<string | null>, [string, PickedAvatar]>().mockResolvedValue(null);
 }
 
 function picks(...avatars: (PickedAvatar | null)[]) {
@@ -19,6 +19,11 @@ function picks(...avatars: (PickedAvatar | null)[]) {
 }
 
 const taffyPhoto: PickedAvatar = { uri: 'file:///taffy.jpg', mimeType: 'image/jpeg' };
+
+async function pickTaffyPhoto() {
+  await fireEvent.press(screen.getByTestId('pick-username-avatar-button'));
+  await screen.findByTestId('pick-username-avatar-preview');
+}
 
 function renderScreen(props: Partial<ComponentProps<typeof PickUsernameScreen>> = {}) {
   return render(
@@ -156,24 +161,26 @@ test('checks only the name you stop on, not every keystroke', async () => {
   expect(checkUsername).toHaveBeenCalledWith('roy-donk');
 });
 
-test('sends the dashed name when you continue', async () => {
+test('sends the dashed name and your photo when you continue', async () => {
   const onSubmit = sendsFine();
-  await renderScreen({ onSubmit });
+  await renderScreen({ onSubmit, pickAvatar: picks(taffyPhoto) });
 
+  await pickTaffyPhoto();
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy lee fubbins');
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
 
   expect(onSubmit).toHaveBeenCalledTimes(1);
-  expect(onSubmit).toHaveBeenCalledWith('taffy-lee-fubbins');
+  expect(onSubmit).toHaveBeenCalledWith('taffy-lee-fubbins', taffyPhoto);
   expect(screen.queryByTestId('pick-username-error')).toBeNull();
 });
 
 test('shows what went wrong when sending fails', async () => {
   const onSubmit = jest
-    .fn<Promise<string | null>, [string]>()
+    .fn<Promise<string | null>, [string, PickedAvatar]>()
     .mockResolvedValue('That username is taken');
-  await renderScreen({ onSubmit });
+  await renderScreen({ onSubmit, pickAvatar: picks(taffyPhoto) });
 
+  await pickTaffyPhoto();
   await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy-donk');
   await fireEvent.press(screen.getByTestId('pick-username-continue'));
 
@@ -204,4 +211,15 @@ test('keeps your photo if you cancel picking another', async () => {
   expect(screen.getByTestId('pick-username-avatar-preview')).toHaveProp('source', {
     uri: 'file:///taffy.jpg',
   });
+});
+
+test('asks for an avatar before sending', async () => {
+  const onSubmit = sendsFine();
+  await renderScreen({ onSubmit });
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy-lee-fubbins');
+  await fireEvent.press(screen.getByTestId('pick-username-continue'));
+
+  expect(await screen.findByTestId('pick-username-error')).toHaveTextContent('Pick an avatar first');
+  expect(onSubmit).not.toHaveBeenCalled();
 });

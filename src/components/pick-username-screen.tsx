@@ -11,7 +11,7 @@ import { usernameProblem } from '@/lib/username';
 
 type PickUsernameScreenProps = {
   checkUsername: (username: string) => Promise<boolean>;
-  onSubmit: (username: string) => Promise<string | null>;
+  onSubmit: (username: string, avatar: PickedAvatar) => Promise<string | null>;
   onSignOut: () => void;
   pickAvatar: () => Promise<PickedAvatar | null>;
 };
@@ -53,10 +53,10 @@ export function PickUsernameScreen({
   }
 
   async function handleContinue() {
-    const problem = usernameProblem(username);
+    const problem = usernameProblem(username) ?? (avatar ? null : 'Pick an avatar first');
     setError(problem);
-    if (problem) return;
-    setError(await onSubmit(username));
+    if (problem || !avatar) return;
+    setError(await onSubmit(username, avatar));
   }
 
   return (
