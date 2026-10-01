@@ -17,7 +17,7 @@ jest.mock('@/lib/auth', () => ({
   signOut: jest.fn(),
 }));
 
-const taffy = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: null };
+const taffy = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
 
 test('shows nothing while the session is loading', async () => {
   mockSession.state = { status: 'loading', session: null, profile: null };
@@ -58,5 +58,5 @@ test('sends nomads with a profile to Basecamp', async () => {
 
   await renderRouter('src/app');
 
-  expect(screen.getByTestId('basecamp-greeting')).toHaveTextContent('Welcome to Basecamp, taffy_lee_fubbins');
+  expect(screen.getByTestId('basecamp-greeting')).toHaveTextContent('Welcome to Basecamp, taffy-lee-fubbins');
 });

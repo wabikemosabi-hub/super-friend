@@ -90,12 +90,12 @@ test('needs a profile when signed in without one', async () => {
 
 test('is ready with the profile when signed in with one', async () => {
   mockAuth.session = fakeSession('taffy-id');
-  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: 'taffy-id/avatar.png' };
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: 'taffy-id/avatar.png' };
 
   const { result } = await renderHook(() => useSession(), { wrapper });
 
   await waitFor(() => expect(result.current.status).toBe('ready'));
-  expect(result.current.profile?.username).toBe('taffy_lee_fubbins');
+  expect(result.current.profile?.username).toBe('taffy-lee-fubbins');
 });
 
 test('is ready after refreshing once the profile exists', async () => {
@@ -103,16 +103,16 @@ test('is ready after refreshing once the profile exists', async () => {
   const { result } = await renderHook(() => useSession(), { wrapper });
   await waitFor(() => expect(result.current.status).toBe('needsProfile'));
 
-  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: null };
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
   await act(async () => result.current.refreshProfile());
 
   expect(result.current.status).toBe('ready');
-  expect(result.current.profile?.username).toBe('taffy_lee_fubbins');
+  expect(result.current.profile?.username).toBe('taffy-lee-fubbins');
 });
 
 test('goes back to signed out when the user signs out', async () => {
   mockAuth.session = fakeSession('taffy-id');
-  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: null };
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
   const { result } = await renderHook(() => useSession(), { wrapper });
   await waitFor(() => expect(result.current.status).toBe('ready'));
 
