@@ -19,16 +19,23 @@ type MediaSearchProps = {
 export function MediaSearch({ type, onPick }: MediaSearchProps) {
   const theme = useTheme();
   const [query, setQuery] = useState('');
+  const [focused, setFocused] = useState(false);
   const { results, isSearching, error, noMatches } = useMediaSearch(type, query);
 
   return (
     <View style={styles.container}>
-      <View style={[styles.screen, { backgroundColor: theme.screen, borderColor: theme.edge }]}>
+      <View
+        style={[
+          styles.screen,
+          { backgroundColor: theme.screen, borderColor: focused ? theme.phosphorDim : theme.edge },
+        ]}>
         <TextInput
           accessibilityLabel={`Search ${plural[type]}`}
           autoCapitalize="none"
           autoCorrect={false}
+          onBlur={() => setFocused(false)}
           onChangeText={setQuery}
+          onFocus={() => setFocused(true)}
           placeholder={`SEARCH ${plural[type].toUpperCase()}`}
           placeholderTextColor={theme.phosphorDim}
           style={[styles.input, { color: theme.phosphor }]}
@@ -113,6 +120,8 @@ const styles = StyleSheet.create({
     fontFamily: Typefaces.screen,
     fontSize: 26,
     minHeight: 52,
+    outlineStyle: 'solid',
+    outlineWidth: 0,
   },
   status: {
     fontFamily: Typefaces.screen,

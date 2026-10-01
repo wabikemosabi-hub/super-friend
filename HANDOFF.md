@@ -22,9 +22,9 @@ _Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end l
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
 
-Closed: WAB-35 (database tests and real local users, done), WAB-29 (sign-up, done), WAB-32 (typecheck and lint), WAB-25 (superseded by the restart), WAB-28 (moot), WAB-12 (duplicate of WAB-14), WAB-7 (archived on purpose), WAB-1 to WAB-4 (Linear samples).
+Closed: WAB-31 (theme colors, done; records the ship-computer look), WAB-35 (database tests and real local users, done), WAB-29 (sign-up, done), WAB-32 (typecheck and lint), WAB-25 (superseded by the restart), WAB-28 (moot), WAB-12 (duplicate of WAB-14), WAB-7 (archived on purpose), WAB-1 to WAB-4 (Linear samples).
 
-The Adventure Page mockup: https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA (attached to WAB-14).
+Mockups are Claude Design canvases on claude.ai, not files in the repo. The list is under **Design → Mockups** below.
 
 ## Where things stand
 
@@ -66,8 +66,9 @@ Branch `jakelthejakyll/wab-16-media-search` (PR open). Everything below is test-
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
   - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
-- `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. Meant for the Adventure Page's Movies tab (WAB-14). No unit tests on purpose; Playwright will cover it.
-- **`src/app/dev/media-search.tsx` is temporary**: a page for trying `MediaSearch`, signed-in nomads with a profile only (listed under the `ready` guard in `_layout.tsx`). Delete the file and its `Stack.Screen` once the Adventure Page uses the component.
+- `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. While the field has focus its border lights up `phosphorDim` (instead of the browser's blue focus ring). No unit tests on purpose; Playwright will cover it.
+- `src/components/media-search-modal.tsx`: `MediaSearchModal` (props `visible`, `type`, `onPick(item)`, `onClose()`) wraps `MediaSearch` in React Native's `Modal`: a header with a `CH-01` plate, "SEARCH MOVIES" and a close button (`media-search-modal-close`). On web it's a centered panel (up to 640 px) over a `scrim` backdrop that closes it when clicked (`media-search-modal-backdrop`); on phones it slides up full screen. Picking a result calls `onPick`, then closes. This is how the Adventure Page's Movies tab (WAB-14) should open search. A `Modal` rather than a modal route because it's a self-contained task that hands a value back (Expo's docs recommend `Modal` for that).
+- **`src/app/dev/media-search.tsx` is temporary**: a page with a "Search movies" button that opens `MediaSearchModal`, signed-in nomads with a profile only (listed under the `ready` guard in `_layout.tsx`). Delete the file and its `Stack.Screen` once the Adventure Page uses the modal.
 - `src/components/tmdb-attribution.tsx`: the notice TMDB requires wherever its data shows. Text only; TMDB also asks for its logo, which needs downloading from TMDB and hasn't been approved yet.
 - React Query's `QueryClientProvider` wraps everything in `src/app/_layout.tsx`.
 - Fonts: `useAppFonts()` (`src/hooks/use-app-fonts.ts`) loads the four faces in `Typefaces`, and counts as ready even if loading fails, so nobody is stuck on the splash screen. `RootNavigator` waits for both the session and the fonts. `ThemedText` titles and subtitles use Michroma; other text uses Space Mono.
@@ -168,17 +169,24 @@ Friends recommend movies, series and books to each other. Your friends know what
 - `supabase.functions.invoke` returns `any`. Assert the response type (`as SearchResponse`); a type annotation alone doesn't satisfy `no-unsafe-assignment`.
 - `deno check` on an edge function from the repo root gets confused by the app's `node_modules` (it looks there for `npm:` packages). The real check is `npx supabase functions serve`, which runs Supabase's own runtime. `deno test` is unaffected.
 - Edge function tests import JSON fixtures with `import x from './fixtures/x.json' with { type: 'json' };`.
+- **Removing the browser's focus ring on a `TextInput` (web)** takes `outlineStyle: 'solid'` plus `outlineWidth: 0`. `outlineWidth: 0` alone does nothing, because the browser's own focus style is `outline-style: auto`, which ignores the width. Always give focus another visible signal (the search field lights its border).
 
 ## Design
 
-The mockup (link above) shows the Adventure Page on a phone. Eben and Jake called it a visually acceptable first pass; their notes are in WAB-14.
+### Mockups
+
+The canvases are the source of truth for how screens should look; there are no copies in git, so they can't go stale. Link a new canvas here and on its Linear ticket, and share it with the other person from the canvas's **Share** menu.
+
+| Canvas | What's on it | Status | Owner | Linked from |
+|---|---|---|---|---|
+| [Basecamp](https://claude.ai/artifact/McuDsyS912uQUoDSAKoW7K) | The ship-computer look: Basecamp on web and phone, the "no nomads yet" empty state, and the Adventure Page on a phone | **Current** | Jake | WAB-33, WAB-14, WAB-31 |
+| [Adventure Page](https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA) | The first Adventure Page mockup, in the old purple palette with Bricolage Grotesque and Figtree. Eben's and Jake's notes are in WAB-14 | **Outdated** (the layout ideas still hold; the look doesn't) | Eben | WAB-14 |
 
 **Direction:** bold, exciting, fun. A muted, earthy first try was rejected. Letting each nomad pick their own colors is a 2.0 idea.
 
 **The ship-computer look** (chosen by Jake 2026-10-01, merged in PR 8; replaces the first mockup's purple palette and Bricolage/Figtree, and WAB-31 records it): gritty cassette futurism, in the spirit of *2001*, the Nostromo in *Alien*, *Blade Runner*, *Silent Running* and *Outland*. Dark gunmetal panels with rivets and stencilled labels, black CRT screens with green phosphor text, yellow and black hazard stripes, a red status "eye", and one magenta neon glow. Fonts: **Michroma** (headings), **Space Mono** (labels and body), **VT323** (anything on a screen).
 
-- Design canvas (Basecamp for web, phone and empty state, plus the Adventure Page): https://claude.ai/artifact/McuDsyS912uQUoDSAKoW7K. It is private to Jake until he shares it.
-- In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills).
+- In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills), `scrim` (70% black, behind modals).
 - The canvas's scanlines, glows and hazard stripes use web-only CSS; the app doesn't have them yet.
 
 ## Environment (Mac, verified 2026-10-01)

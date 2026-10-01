@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { MediaSearch } from '@/components/media-search';
+import { ActionButton } from '@/components/action-button';
+import { MediaSearchModal } from '@/components/media-search-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { MediaItem } from '@/lib/media-search';
 
 export default function DevMediaSearchRoute() {
+  const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState<MediaItem | null>(null);
 
   return (
@@ -16,9 +18,13 @@ export default function DevMediaSearchRoute() {
         <View style={styles.column}>
           <ThemedText type="subtitle">DEV: MEDIA SEARCH</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Temporary page for trying the search component. Delete once the Adventure Page uses it.
+            Temporary page for trying the search modal. Delete once the Adventure Page uses it.
           </ThemedText>
-          <MediaSearch type="movie" onPick={setPicked} />
+          <ActionButton
+            label="Search movies"
+            onPress={() => setSearching(true)}
+            testID="dev-media-search-open"
+          />
           {picked && (
             <ThemedText testID="dev-media-search-picked">
               Picked: {picked.title}
@@ -27,6 +33,12 @@ export default function DevMediaSearchRoute() {
           )}
         </View>
       </ScrollView>
+      <MediaSearchModal
+        visible={searching}
+        type="movie"
+        onPick={setPicked}
+        onClose={() => setSearching(false)}
+      />
     </ThemedView>
   );
 }
@@ -40,6 +52,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   column: {
+    alignItems: 'flex-start',
     gap: Spacing.four,
     maxWidth: MaxContentWidth,
     width: '100%',
