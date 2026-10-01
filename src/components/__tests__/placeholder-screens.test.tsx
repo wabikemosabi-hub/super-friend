@@ -13,14 +13,14 @@ test('pick username lets you sign out', async () => {
 });
 
 test('basecamp greets you by username', async () => {
-  await render(<BasecampScreen username="eben" onSignOut={jest.fn()} />);
+  await render(<BasecampScreen username="taffy_lee_fubbins" onSignOut={jest.fn()} />);
 
-  expect(screen.getByTestId('basecamp-greeting')).toHaveTextContent('Welcome to Basecamp, eben');
+  expect(screen.getByTestId('basecamp-greeting')).toHaveTextContent('Welcome to Basecamp, taffy_lee_fubbins');
 });
 
 test('basecamp lets you sign out', async () => {
   const onSignOut = jest.fn();
-  await render(<BasecampScreen username="eben" onSignOut={onSignOut} />);
+  await render(<BasecampScreen username="taffy_lee_fubbins" onSignOut={onSignOut} />);
 
   await fireEvent.press(screen.getByTestId('basecamp-sign-out'));
 
