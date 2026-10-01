@@ -1,8 +1,8 @@
 begin;
 select plan(10);
 
-select tests.create_user('eben');
-select tests.create_user('jake');
+select tests.create_user('taffy');
+select tests.create_user('roy');
 
 select results_eq(
   $$select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'avatars'$$,
@@ -10,18 +10,18 @@ select results_eq(
   'the avatars bucket is public, images only, up to 5 MB'
 );
 
-select tests.authenticate_as('eben');
+select tests.authenticate_as('taffy');
 select lives_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'avatars', tests.user_id('eben') || '/avatar.png', tests.user_id('eben')
+    'avatars', tests.user_id('taffy') || '/avatar.png', tests.user_id('taffy')
   ),
   'a user can upload into their own folder'
 );
 select throws_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'avatars', tests.user_id('jake') || '/avatar.png', tests.user_id('eben')
+    'avatars', tests.user_id('roy') || '/avatar.png', tests.user_id('taffy')
   ),
   '42501', null,
   'a user cannot upload into someone else''s folder'
@@ -32,16 +32,16 @@ select throws_ok(
   'a user cannot upload outside a folder'
 );
 
-select tests.authenticate_as('jake');
+select tests.authenticate_as('roy');
 select lives_ok(
   format(
     'insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)',
-    'avatars', tests.user_id('jake') || '/avatar.png', tests.user_id('jake')
+    'avatars', tests.user_id('roy') || '/avatar.png', tests.user_id('roy')
   ),
   'another user can upload into their own folder'
 );
 
-select tests.authenticate_as('eben');
+select tests.authenticate_as('taffy');
 update storage.objects set metadata = '{"v": 2}'
   where bucket_id = 'avatars' and name like '%/avatar.png';
 select tests.clear_authentication();
@@ -49,16 +49,16 @@ select results_eq(
   format(
     $$select split_part(name, '/', 1), coalesce(metadata ->> 'v', 'original') from storage.objects
       where bucket_id = 'avatars' order by split_part(name, '/', 1) = %L desc$$,
-    tests.user_id('eben')
+    tests.user_id('taffy')
   ),
   format(
     $$values (%L, '2'), (%L, 'original')$$,
-    tests.user_id('eben'), tests.user_id('jake')
+    tests.user_id('taffy'), tests.user_id('roy')
   ),
   'a user can replace their own avatar but nobody else''s'
 );
 
-select tests.authenticate_as('eben');
+select tests.authenticate_as('taffy');
 select results_eq(
   $$select count(*)::int from storage.objects where bucket_id = 'avatars'$$,
   $$values (2)$$,
@@ -70,7 +70,7 @@ delete from storage.objects where bucket_id = 'avatars' and name like '%/avatar.
 select tests.clear_authentication();
 select results_eq(
   $$select split_part(name, '/', 1)::uuid from storage.objects where bucket_id = 'avatars'$$,
-  format('values (%L::uuid)', tests.user_id('jake')),
+  format('values (%L::uuid)', tests.user_id('roy')),
   'a user can delete their own avatar but nobody else''s'
 );
 
