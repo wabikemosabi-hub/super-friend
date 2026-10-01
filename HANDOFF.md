@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end locally** (WAB-16): the new `media-search` edge function asks TMDB and caches results in `media_items`; the app has a `useMediaSearch` hook and a `MediaSearch` component, which you can try on the temporary page `/dev/media-search`. **The app now has the ship-computer look** (a gritty cassette-futurism palette, plus Michroma, Space Mono and VT323) from Jake's Basecamp design. Also fixed WAB-35 (database tests broke when real local users existed). Earlier the same day: sign-up works end to end on web (WAB-29, done). Next up: test users for Playwright (WAB-34), then friendships._
+_Last session: 2026-10-01, evening (Eben's Mac). Pulled Jake's media search and ship-computer look, got movie search working locally, and wrote down what tripped us up (see "After you pull" and Gotchas). Earlier the same day: Jake made movie search work end to end (WAB-16) and gave the app the ship-computer look (WAB-31); Eben's sign-up flow landed (WAB-29). Try search on the temporary page `/dev/media-search`. Next up: test users for Playwright (WAB-34), then friendships._
 
 ## Start here
 
@@ -26,9 +26,23 @@ Closed: WAB-31 (theme colors, done; records the ship-computer look), WAB-35 (dat
 
 Mockups are Claude Design canvases on claude.ai, not files in the repo. The list is under **Design → Mockups** below.
 
+## After you pull
+
+Someone else's merged work can need a few local steps. Run these after every `git pull` on `main`:
+
+```sh
+npm install                          # new packages, if any
+git restore package-lock.json        # this Mac's npm rewrites it (strips libc lines); main's copy is correct
+npx supabase migration list --local  # anything with an empty "remote" hasn't been applied yet
+npx supabase migration up            # applies new migrations and keeps your data
+npm run test:all                     # Jest, functions, database
+```
+
+Then restart `npx expo start --web` if packages changed, and restart `npx supabase functions serve --env-file supabase/functions/.env` if functions changed. If a pull **rewrote or deleted old migrations** (like the 2026-09-28 restart), `migration up` isn't enough: run `npx supabase db reset`, which wipes local data and rebuilds from the migrations.
+
 ## Where things stand
 
-Branch `jakelthejakyll/wab-16-media-search` (PR open). Everything below is test-first.
+Everything below is on `main` and was built test-first.
 
 **Database** (five migrations; the old schema is deleted):
 
@@ -81,7 +95,7 @@ Branch `jakelthejakyll/wab-16-media-search` (PR open). Everything below is test-
 
 Eben clicked through on web: Roy-Donk shows taken, a free name shows available, picked a photo, Continue → Basecamp, refresh stays on Basecamp.
 
-**Local data:** a `roy-donk` profile made by a quick SQL insert (`roy@test.local`, no password, can't sign in) and Eben's real `OubliettePadawan`. Replace Roy with the WAB-34 script once it exists. (Jake's Mac: reset on 2026-10-01, so no users; five cached Full Metal Jacket results in `media_items`.)
+**Local data:** Eben's Mac has two real Google accounts, one with the profile `OubliettePadawan`. The hand-made `roy-donk` (`roy@test.local`) was deleted on 2026-10-01 because it collided with the database tests' own `roy@test.local` (see Gotchas). Make test users with the WAB-34 script once it exists. (Jake's Mac: reset on 2026-10-01, so no users; five cached Full Metal Jacket results in `media_items`.)
 
 ## Next steps
 
@@ -165,6 +179,9 @@ Friends recommend movies, series and books to each other. Your friends know what
 - Tests that use `jest.useFakeTimers()` rely on an `afterEach(() => jest.useRealTimers())`, so a failing test can't leak the fake clock.
 - Sorting: `order by username` uses `en_US` collation, so `roy-donk` sorts before `Taffy`.
 - `git stash@{0}` holds obsolete email/password validation from before the switch to Google. Safe to drop.
+- **Never hand-make local users with an `@test.local` email.** The database tests' `tests.create_user('roy')` makes `roy@test.local`, and a leftover user with the same email breaks every test file that creates Roy (`duplicate key value violates unique constraint "users_email_partial_key"`). The WAB-34 script should use a different ending, like `roy-donk@dev.local`.
+- **Two `.env` files, on purpose.** The root `.env` is for the app and `config.toml` (Supabase URL and publishable key, Google sign-in). `supabase/functions/.env` is only for edge functions (`TMDB_API_TOKEN`). Keep server keys out of the root one. After editing `supabase/functions/.env`, restart `functions serve`; it only reads the file at start.
+- **TMDB needs the long "API Read Access Token"** (starts with `eyJ`), not the short 32-character "API Key": `media-search` sends it as `Authorization: Bearer …`. A missing or wrong token shows in the app only as "Search is having trouble"; the `functions serve` window has the real error.
 - **Database tests must not assume empty tables** (WAB-35). Local databases hold real sign-ups, avatars and cached search results. Scope checks to the test's own users, and when a test inserts a row with a real id (like `movie:600`), delete any existing one first inside the test's transaction; the `rollback` puts it back.
 - `supabase.functions.invoke` returns `any`. Assert the response type (`as SearchResponse`); a type annotation alone doesn't satisfy `no-unsafe-assignment`.
 - `deno check` on an edge function from the repo root gets confused by the app's `node_modules` (it looks there for `npm:` packages). The real check is `npx supabase functions serve`, which runs Supabase's own runtime. `deno test` is unaffected.
