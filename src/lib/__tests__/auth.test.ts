@@ -1,7 +1,9 @@
 import { signInWithGoogle, signOut } from '@/lib/auth';
 
-const mockSignInWithOAuth = jest.fn();
-const mockSignOut = jest.fn();
+type AuthResult = { error: Error | null };
+
+const mockSignInWithOAuth = jest.fn<Promise<AuthResult & { data: object }>, [unknown]>();
+const mockSignOut = jest.fn<Promise<AuthResult>, []>();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {

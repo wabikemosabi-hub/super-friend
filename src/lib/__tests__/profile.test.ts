@@ -2,9 +2,11 @@ import { PostgrestError } from '@supabase/supabase-js';
 
 import { createProfile, usernameAvailable } from '@/lib/profile';
 
-const mockFrom = jest.fn();
-const mockInsert = jest.fn();
-const mockRpc = jest.fn();
+type DatabaseResult = { error: PostgrestError | null };
+
+const mockFrom = jest.fn<void, [string]>();
+const mockInsert = jest.fn<Promise<DatabaseResult>, [unknown]>();
+const mockRpc = jest.fn<Promise<DatabaseResult & { data: boolean | null }>, [string, unknown]>();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
