@@ -1,6 +1,3 @@
--- A cache of search results from TMDB (and later book providers). The
--- search-media edge function writes it with the service role; signed-in users
--- only read it.
 create table public.media_items (
   id uuid primary key default gen_random_uuid(),
   type text not null check (type in ('movie', 'series', 'book')),

@@ -1,5 +1,3 @@
--- media_items: a cache of search results. Signed-in users read it; only the
--- search-media edge function (service role) writes it.
 begin;
 select plan(9);
 
@@ -11,7 +9,8 @@ select ok(
   'media_items has row level security on'
 );
 
--- The edge function writes with the service role.
+delete from public.media_items where provider = 'tmdb' and external_id = 'movie:600';
+
 select tests.clear_authentication();
 set local role service_role;
 select lives_ok(

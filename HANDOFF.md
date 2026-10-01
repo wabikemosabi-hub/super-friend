@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-01 (Mac). **Sign-up works end to end on web**: Google sign-in → pick a username and an avatar → Basecamp. Eben signed up for real as `OubliettePadawan`. WAB-29 is done; its PR is open from `ebenbsmith/wab-29-pick-username`. Next up: test users for Playwright (WAB-34), then friendships._
+_Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end locally** (WAB-16): the new `media-search` edge function asks TMDB, caches results in `media_items`, and the app has a `useMediaSearch` hook. There is no search UI yet; it arrives with the Adventure Page (WAB-14). Also fixed WAB-35 (database tests broke when real local users existed). Earlier the same day: sign-up works end to end on web (WAB-29, done). Next up: test users for Playwright (WAB-34), then friendships._
 
 ## Start here
 
@@ -13,6 +13,7 @@ _Last session: 2026-10-01 (Mac). **Sign-up works end to end on web**: Google sig
 | WAB-29 Pick a Username and Avatar | **Done** 2026-10-01. Has a Status section listing what's built and what's left for later |
 | WAB-6 Sign In with Google | In progress. Works on web; error states and phones remain |
 | WAB-33 Basecamp | In progress. Where you land after sign-in; built from cards. Placeholder for now |
+| WAB-16 Media Search | In progress. Movies work through `media-search`; series next. The agreed design is a comment on the ticket |
 | WAB-14 Adventure Page | The page between two nomads. Has a "Decisions" section |
 | WAB-15 Media Context Page | One piece of media: rate it or pass on it |
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
@@ -21,22 +22,31 @@ _Last session: 2026-10-01 (Mac). **Sign-up works end to end on web**: Google sig
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
 
-Closed: WAB-29 (sign-up, done), WAB-32 (typecheck and lint), WAB-25 (superseded by the restart), WAB-28 (moot), WAB-12 (duplicate of WAB-14), WAB-7 (archived on purpose), WAB-1 to WAB-4 (Linear samples).
+Closed: WAB-35 (database tests and real local users, done), WAB-29 (sign-up, done), WAB-32 (typecheck and lint), WAB-25 (superseded by the restart), WAB-28 (moot), WAB-12 (duplicate of WAB-14), WAB-7 (archived on purpose), WAB-1 to WAB-4 (Linear samples).
 
 The Adventure Page mockup: https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA (attached to WAB-14).
 
 ## Where things stand
 
-Branch `ebenbsmith/wab-29-pick-username` (pushed, PR open). Everything below is test-first.
+Branch `jakelthejakyll/wab-16-media-search` (PR open). Everything below is test-first.
 
-**Database** (four migrations; the old schema is deleted):
+**Database** (five migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
 - `username_available(name)`: true or false, case-insensitive, signed-in only (`anon` revoked). Migration `username_available`.
 - `avatars` storage bucket: public to read, `image/*` only, 5 MB. You can only upload, replace or delete inside `avatars/<your user id>/`.
-- **Nothing else.** No friendships, media, recommendations yet.
+- `media_items`: the cache of search results that recommendations will point at. One row per `(provider, external_id)`; `external_id` is `movie:<tmdb id>` (TMDB movie and TV ids overlap). Signed-in users read it; only the service role (the edge function) writes; `anon` has no access. Migration `media_items`.
+- **Nothing else.** No friendships or recommendations yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
+
+**Edge function `media-search`** (WAB-16; the old `search-media` was never run and is deleted):
+
+- `POST { type, query }`, signed-in callers only (401 otherwise). Only `type: 'movie'` works; `series` and `book` answer 400 "not available yet"; a blank query returns no results without calling TMDB; a TMDB failure is a 502.
+- Calls TMDB `/search/movie` (first page, `en-US`, no adult), upserts into `media_items` with the service role, and returns our rows in TMDB's order.
+- `metadata` keeps TMDB's `poster_path` and `backdrop_path`, so the app can choose an image size (`tmdbImage(path, 'w185')`).
+- Code: `index.ts` (wiring only), `handler.ts` (all logic, dependencies passed in), `providers/tmdb-movies.ts`; shared types in `supabase/functions/_shared/media.ts`. Tests in `supabase/functions/tests/` against recorded TMDB responses in `tests/fixtures/`.
+- Run it locally: `npx supabase functions serve --env-file supabase/functions/.env`. Hosted: `npx supabase secrets set TMDB_API_TOKEN=...`.
 
 **Auth:**
 
@@ -54,6 +64,10 @@ Branch `ebenbsmith/wab-29-pick-username` (pushed, PR open). Everything below is 
   - `profile.ts`: `createProfile()` (turns `23505` into "That username is taken") and `usernameAvailable()` (calls the database function).
   - `avatar.ts`: `pickAvatar()` (one square image, 0.8 quality, falls back to `image/jpeg`) and `uploadAvatar(userId, avatar)` (to `<id>/avatar.<type>` with `upsert`, returns the public URL).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
+  - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`.
+- `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error }`. Waits for a 300 ms pause in typing, skips queries under 2 characters, keeps the last results showing while the next load. Not used by any screen yet.
+- `src/components/tmdb-attribution.tsx`: the notice TMDB requires wherever its data shows. Text only; TMDB also asks for its logo, which needs downloading from TMDB and hasn't been approved yet.
+- React Query's `QueryClientProvider` wraps everything in `src/app/_layout.tsx`.
 - `src/providers/session-provider.tsx`: `useSession()` returns `{ status, session, profile, refreshProfile }`, status one of `loading`, `signedOut`, `needsProfile`, `ready`.
 - `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp).
 - **Pick a username screen** (`PickUsernameScreen`, props `checkUsername`, `onSubmit`, `onSignOut`, `pickAvatar`): spaces and underscores become dashes as you type; half a second after you stop typing a valid name it shows "… is taken" / "… is available" (clears when you type, checks only the name you stop on, ignores stale answers); "Pick an avatar" with a round preview; Continue checks the name rule, then asks for a photo, then sends both. The route (`src/app/pick-username.tsx`) calls `finishSignUp`, then `refreshProfile()`.
@@ -63,15 +77,16 @@ Branch `ebenbsmith/wab-29-pick-username` (pushed, PR open). Everything below is 
 
 Eben clicked through on web: Roy-Donk shows taken, a free name shows available, picked a photo, Continue → Basecamp, refresh stays on Basecamp.
 
-**Local data:** a `roy-donk` profile made by a quick SQL insert (`roy@test.local`, no password, can't sign in) and Eben's real `OubliettePadawan`. Replace Roy with the WAB-34 script once it exists.
+**Local data:** a `roy-donk` profile made by a quick SQL insert (`roy@test.local`, no password, can't sign in) and Eben's real `OubliettePadawan`. Replace Roy with the WAB-34 script once it exists. (Jake's Mac: reset on 2026-10-01, so no users; five cached Full Metal Jacket results in `media_items`.)
 
 ## Next steps
 
 1. **WAB-34, the test user script**, then **Playwright** end-to-end tests against the web build. Every interactive element has a `testID` (`data-testid` on web). A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; small; not a real person).
 2. **Friendships (WAB-9, 10, 30), then the Fellow Nomads List card on Basecamp (WAB-33).**
-3. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
-4. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
-5. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
+3. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. Then decide on the TMDB logo for `TmdbAttribution`.
+4. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
+5. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
+6. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
 
 ## What this is
 
@@ -145,6 +160,10 @@ Friends recommend movies, series and books to each other. Your friends know what
 - Tests that use `jest.useFakeTimers()` rely on an `afterEach(() => jest.useRealTimers())`, so a failing test can't leak the fake clock.
 - Sorting: `order by username` uses `en_US` collation, so `roy-donk` sorts before `Taffy`.
 - `git stash@{0}` holds obsolete email/password validation from before the switch to Google. Safe to drop.
+- **Database tests must not assume empty tables** (WAB-35). Local databases hold real sign-ups, avatars and cached search results. Scope checks to the test's own users, and when a test inserts a row with a real id (like `movie:600`), delete any existing one first inside the test's transaction; the `rollback` puts it back.
+- `supabase.functions.invoke` returns `any`. Assert the response type (`as SearchResponse`); a type annotation alone doesn't satisfy `no-unsafe-assignment`.
+- `deno check` on an edge function from the repo root gets confused by the app's `node_modules` (it looks there for `npm:` packages). The real check is `npx supabase functions serve`, which runs Supabase's own runtime. `deno test` is unaffected.
+- Edge function tests import JSON fixtures with `import x from './fixtures/x.json' with { type: 'json' };`.
 
 ## Design
 
@@ -156,14 +175,15 @@ The mockup (link above) shows the Adventure Page on a phone. Eben and Jake calle
 
 - Node v22.20.0, npm 10.9.3, Deno (Homebrew), Docker Desktop (must be running before `supabase start`), `gh` CLI (installed and logged in 2026-09-28).
 - Root `.env`: Supabase URL and publishable key, plus the two Google variables.
-- `supabase/functions/.env`: `TMDB_API_TOKEN` and `HARDCOVER_API_TOKEN` are blank. The `search-media` edge function has never run, and it caches into a `media_items` table that no longer exists (WAB-16).
+- `supabase/functions/.env`: `TMDB_API_TOKEN` must be set for `media-search` (each developer makes their own: themoviedb.org → Settings → API → "API Read Access Token"). `HARDCOVER_API_TOKEN` is unused until book search.
+- Jake's Mac (2026-10-01): Node v26 and Deno 2.9 from Homebrew, OrbStack instead of Docker Desktop.
 - Studio http://127.0.0.1:54323. Web dev server: `npx expo start --web` on http://localhost:8081.
 
 | Command | Result |
 |---|---|
-| `npm test` | 66 passed, 12 files |
-| `npm run test:functions` | 1 passed (harness only) |
-| `npm run test:db` | 31 passed, 4 files |
+| `npm test` | 83 passed, 15 files |
+| `npm run test:functions` | 18 passed, 2 files |
+| `npm run test:db` | 40 passed, 5 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
 | `npx tsc --noEmit` | passes |
 | `npx expo lint` | passes |
@@ -175,7 +195,7 @@ The mockup (link above) shows the Adventure Page on a phone. Eben and Jake calle
 | App | **Expo SDK 57 + Expo Router**, one codebase; **web first** for now | Fastest route to web and phones |
 | Backend | **Supabase** (Postgres, auth, storage, RLS, edge functions) | RLS handles who-sees-what; edge functions keep API keys server-side |
 | Auth | **Google only**, via Supabase | No passwords to manage; lightweight sign-up |
-| Data fetching | **@tanstack/react-query** (installed, not wired up) | Caching and invalidation after mutations |
+| Data fetching | **@tanstack/react-query** (wired up in the root layout; first used by `useMediaSearch`) | Caching and invalidation after mutations |
 | Movies/series | **TMDB** | IMDb has no public API. Requires TMDB attribution |
 | Books | **Hardcover**, **Open Library** fallback | Goodreads API is closed |
 
@@ -198,4 +218,4 @@ npx supabase db reset           # once, if you had the old schema applied
 npx expo start --web
 ```
 
-Get the Google client id and secret from Eben through a password manager, never chat or git. Jake must be a test user on the Google consent screen. Deno is needed for `npm run test:functions` (`brew install deno`).
+Get the Google client id and secret from Eben through a password manager, never chat or git. Put your own TMDB read access token in `supabase/functions/.env`. Jake must be a test user on the Google consent screen. Deno is needed for `npm run test:functions` (`brew install deno`).
