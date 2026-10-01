@@ -1,5 +1,13 @@
 import type { Session } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -17,7 +25,26 @@ export type SessionState = {
   profile: Profile | null;
 };
 
-const SessionContext = createContext<SessionState | null>(null);
+export type SessionContextValue = SessionState & {
+  refreshProfile: () => Promise<void>;
+};
+
+const SessionContext = createContext<SessionContextValue | null>(null);
+
+async function fetchProfile(userId: string): Promise<Profile | null> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url')
+    .eq('id', userId)
+    .maybeSingle();
+  return data;
+}
+
+function signedInState(session: Session, profile: Profile | null): SessionState {
+  return profile
+    ? { status: 'ready', session, profile }
+    : { status: 'needsProfile', session, profile: null };
+}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>({
@@ -25,6 +52,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     session: null,
     profile: null,
   });
+
+  const { session } = state;
+  const refreshProfile = useCallback(async () => {
+    if (!session) return;
+    const profile = await fetchProfile(session.user.id);
+    setState(signedInState(session, profile));
+  }, [session]);
 
   useEffect(() => {
     let active = true;
@@ -35,19 +69,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      const profile: Profile | null = data;
-
-      if (!active) return;
-      setState(
-        profile
-          ? { status: 'ready', session, profile }
-          : { status: 'needsProfile', session, profile: null },
-      );
+      const profile = await fetchProfile(session.user.id);
+      if (active) setState(signedInState(session, profile));
     }
 
     supabase.auth.getSession().then(({ data }) => load(data.session));
@@ -62,10 +85,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <SessionContext.Provider value={state}>{children}</SessionContext.Provider>;
+  const value = useMemo(() => ({ ...state, refreshProfile }), [state, refreshProfile]);
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
-export function useSession(): SessionState {
+export function useSession(): SessionContextValue {
   const state = useContext(SessionContext);
   if (!state) {
     throw new Error('useSession must be used inside SessionProvider');

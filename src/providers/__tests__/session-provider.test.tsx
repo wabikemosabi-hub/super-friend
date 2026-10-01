@@ -81,7 +81,7 @@ test('is signed out when there is no session', async () => {
 });
 
 test('needs a profile when signed in without one', async () => {
-  mockAuth.session = fakeSession('eben-id');
+  mockAuth.session = fakeSession('taffy-id');
 
   const { result } = await renderHook(() => useSession(), { wrapper });
 
@@ -89,18 +89,30 @@ test('needs a profile when signed in without one', async () => {
 });
 
 test('is ready with the profile when signed in with one', async () => {
-  mockAuth.session = fakeSession('eben-id');
-  mockAuth.profile = { id: 'eben-id', username: 'eben', avatar_url: 'eben-id/avatar.png' };
+  mockAuth.session = fakeSession('taffy-id');
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: 'taffy-id/avatar.png' };
 
   const { result } = await renderHook(() => useSession(), { wrapper });
 
   await waitFor(() => expect(result.current.status).toBe('ready'));
-  expect(result.current.profile?.username).toBe('eben');
+  expect(result.current.profile?.username).toBe('taffy_lee_fubbins');
+});
+
+test('is ready after refreshing once the profile exists', async () => {
+  mockAuth.session = fakeSession('taffy-id');
+  const { result } = await renderHook(() => useSession(), { wrapper });
+  await waitFor(() => expect(result.current.status).toBe('needsProfile'));
+
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: null };
+  await act(async () => result.current.refreshProfile());
+
+  expect(result.current.status).toBe('ready');
+  expect(result.current.profile?.username).toBe('taffy_lee_fubbins');
 });
 
 test('goes back to signed out when the user signs out', async () => {
-  mockAuth.session = fakeSession('eben-id');
-  mockAuth.profile = { id: 'eben-id', username: 'eben', avatar_url: null };
+  mockAuth.session = fakeSession('taffy-id');
+  mockAuth.profile = { id: 'taffy-id', username: 'taffy_lee_fubbins', avatar_url: null };
   const { result } = await renderHook(() => useSession(), { wrapper });
   await waitFor(() => expect(result.current.status).toBe('ready'));
 
