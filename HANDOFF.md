@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end locally** (WAB-16): the new `media-search` edge function asks TMDB, caches results in `media_items`, and the app has a `useMediaSearch` hook. There is no search UI yet; it arrives with the Adventure Page (WAB-14). Also fixed WAB-35 (database tests broke when real local users existed). Earlier the same day: sign-up works end to end on web (WAB-29, done). Next up: test users for Playwright (WAB-34), then friendships._
+_Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end locally** (WAB-16): the new `media-search` edge function asks TMDB and caches results in `media_items`; the app has a `useMediaSearch` hook and a `MediaSearch` component, which you can try on the temporary page `/dev/media-search`. **The app now has the ship-computer look** (a gritty cassette-futurism palette, plus Michroma, Space Mono and VT323) from Jake's Basecamp design. Also fixed WAB-35 (database tests broke when real local users existed). Earlier the same day: sign-up works end to end on web (WAB-29, done). Next up: test users for Playwright (WAB-34), then friendships._
 
 ## Start here
 
@@ -18,7 +18,7 @@ _Last session: 2026-10-01, later (Jake's Mac). **Movie search works end to end l
 | WAB-15 Media Context Page | One piece of media: rate it or pass on it |
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
 | WAB-9, 10, 11, 30 | Fellow Nomads: add, accept or decline, open an Adventure Page, remove or block. **Need rebuilding** on the new schema |
-| WAB-31 Theme Colors | Every color from a named role in one theme file |
+| WAB-31 Theme Colors | Every color from a named role in one theme file. **Its palette and fonts are out of date:** the app now uses the ship-computer look (see Design). Eben to confirm, then update the ticket |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
 
@@ -64,12 +64,15 @@ Branch `jakelthejakyll/wab-16-media-search` (PR open). Everything below is test-
   - `profile.ts`: `createProfile()` (turns `23505` into "That username is taken") and `usernameAvailable()` (calls the database function).
   - `avatar.ts`: `pickAvatar()` (one square image, 0.8 quality, falls back to `image/jpeg`) and `uploadAvatar(userId, avatar)` (to `<id>/avatar.<type>` with `upsert`, returns the public URL).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
-  - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`.
-- `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error }`. Waits for a 300 ms pause in typing, skips queries under 2 characters, keeps the last results showing while the next load. Not used by any screen yet.
+  - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
+- `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
+- `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. Meant for the Adventure Page's Movies tab (WAB-14). No unit tests on purpose; Playwright will cover it.
+- **`src/app/dev/media-search.tsx` is temporary**: a page for trying `MediaSearch`, signed-in nomads with a profile only (listed under the `ready` guard in `_layout.tsx`). Delete the file and its `Stack.Screen` once the Adventure Page uses the component.
 - `src/components/tmdb-attribution.tsx`: the notice TMDB requires wherever its data shows. Text only; TMDB also asks for its logo, which needs downloading from TMDB and hasn't been approved yet.
 - React Query's `QueryClientProvider` wraps everything in `src/app/_layout.tsx`.
+- Fonts: `useAppFonts()` (`src/hooks/use-app-fonts.ts`) loads the four faces in `Typefaces`, and counts as ready even if loading fails, so nobody is stuck on the splash screen. `RootNavigator` waits for both the session and the fonts. `ThemedText` titles and subtitles use Michroma; other text uses Space Mono.
 - `src/providers/session-provider.tsx`: `useSession()` returns `{ status, session, profile, refreshProfile }`, status one of `loading`, `signedOut`, `needsProfile`, `ready`.
-- `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp).
+- `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp) and the temporary `dev/media-search`.
 - **Pick a username screen** (`PickUsernameScreen`, props `checkUsername`, `onSubmit`, `onSignOut`, `pickAvatar`): spaces and underscores become dashes as you type; half a second after you stop typing a valid name it shows "… is taken" / "… is available" (clears when you type, checks only the name you stop on, ignores stale answers); "Pick an avatar" with a round preview; Continue checks the name rule, then asks for a photo, then sends both. The route (`src/app/pick-username.tsx`) calls `finishSignUp`, then `refreshProfile()`.
 - Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. `ActionButton` is the shared button and **requires** a `testID`.
 - Basecamp is still a placeholder ("Welcome to Basecamp, <username>" plus sign out).
@@ -83,7 +86,7 @@ Eben clicked through on web: Roy-Donk shows taken, a free name shows available, 
 
 1. **WAB-34, the test user script**, then **Playwright** end-to-end tests against the web build. Every interactive element has a `testID` (`data-testid` on web). A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; small; not a real person).
 2. **Friendships (WAB-9, 10, 30), then the Fellow Nomads List card on Basecamp (WAB-33).**
-3. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. Then decide on the TMDB logo for `TmdbAttribution`.
+3. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
 4. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
 5. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
 6. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
@@ -170,7 +173,13 @@ Friends recommend movies, series and books to each other. Your friends know what
 
 The mockup (link above) shows the Adventure Page on a phone. Eben and Jake called it a visually acceptable first pass; their notes are in WAB-14.
 
-**Direction:** bold, exciting, fun. A muted, earthy first try was rejected. Jake is researching a new palette; letting each nomad pick their own colors is a 2.0 idea. The theme roles and current values are in WAB-31. Mockup fonts: Bricolage Grotesque (headings) and Figtree (body). The current screens still use the template's plain theme.
+**Direction:** bold, exciting, fun. A muted, earthy first try was rejected. Letting each nomad pick their own colors is a 2.0 idea.
+
+**The ship-computer look** (chosen by Jake 2026-10-01; replaces WAB-31's purple palette and Bricolage/Figtree once Eben agrees): gritty cassette futurism, in the spirit of *2001*, the Nostromo in *Alien*, *Blade Runner*, *Silent Running* and *Outland*. Dark gunmetal panels with rivets and stencilled labels, black CRT screens with green phosphor text, yellow and black hazard stripes, a red status "eye", and one magenta neon glow. Fonts: **Michroma** (headings), **Space Mono** (labels and body), **VT323** (anything on a screen).
+
+- Design canvas (Basecamp for web, phone and empty state, plus the Adventure Page): https://claude.ai/artifact/McuDsyS912uQUoDSAKoW7K. It is private to Jake until he shares it.
+- In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills).
+- The canvas's scanlines, glows and hazard stripes use web-only CSS; the app doesn't have them yet.
 
 ## Environment (Mac, verified 2026-10-01)
 
@@ -182,7 +191,7 @@ The mockup (link above) shows the Adventure Page on a phone. Eben and Jake calle
 
 | Command | Result |
 |---|---|
-| `npm test` | 83 passed, 15 files |
+| `npm test` | 96 passed, 16 files |
 | `npm run test:functions` | 18 passed, 2 files |
 | `npm run test:db` | 40 passed, 5 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
