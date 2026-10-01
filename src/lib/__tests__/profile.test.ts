@@ -65,3 +65,9 @@ test('asks the database whether a username is free', async () => {
   await expect(usernameAvailable('Roy-Donk')).resolves.toBe(false);
   expect(mockRpc).toHaveBeenCalledWith('username_available', { name: 'Roy-Donk' });
 });
+
+test('passes along a failed username check', async () => {
+  mockRpc.mockResolvedValue({ data: null, error: databaseError('08006', 'connection failure') });
+
+  await expect(usernameAvailable('roy-donk')).rejects.toThrow('connection failure');
+});

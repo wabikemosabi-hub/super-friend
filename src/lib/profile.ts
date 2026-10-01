@@ -10,6 +10,7 @@ export async function createProfile(profile: Profile) {
 }
 
 export async function usernameAvailable(name: string): Promise<boolean> {
-  const { data } = await supabase.rpc('username_available', { name });
+  const { data, error } = await supabase.rpc('username_available', { name });
+  if (error) throw error;
   return data;
 }
