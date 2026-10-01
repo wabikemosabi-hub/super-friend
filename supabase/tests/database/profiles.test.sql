@@ -68,8 +68,13 @@ select lives_ok(
   'a username with dashes is fine'
 );
 
+-- Checks below only look at Taffy's and Roy's profiles, so real local users
+-- don't change the results.
 select results_eq(
-  $$select username from public.profiles order by username$$,
+  format(
+    'select username from public.profiles where id in (%L, %L) order by username',
+    tests.user_id('taffy'), tests.user_id('roy')
+  ),
   $$values ('roy-donk'), ('Taffy')$$,
   'signed-in users can look up everyone''s profile'
 );
@@ -78,7 +83,10 @@ update public.profiles set avatar_url = 'hijacked.png' where username = 'Taffy';
 update public.profiles set avatar_url = 'avatars/roy.png' where username = 'roy-donk';
 select tests.clear_authentication();
 select results_eq(
-  $$select username, avatar_url from public.profiles order by username$$,
+  format(
+    'select username, avatar_url from public.profiles where id in (%L, %L) order by username',
+    tests.user_id('taffy'), tests.user_id('roy')
+  ),
   $$values ('roy-donk', 'avatars/roy.png'), ('Taffy', 'avatars/taffy.png')$$,
   'a user can change their own avatar but nobody else''s'
 );

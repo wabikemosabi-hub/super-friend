@@ -45,11 +45,14 @@ select tests.authenticate_as('taffy');
 update storage.objects set metadata = '{"v": 2}'
   where bucket_id = 'avatars' and name like '%/avatar.png';
 select tests.clear_authentication();
+-- Checks below only look at Taffy's and Roy's folders, so real local users'
+-- avatars don't change the results.
 select results_eq(
   format(
     $$select split_part(name, '/', 1), coalesce(metadata ->> 'v', 'original') from storage.objects
-      where bucket_id = 'avatars' order by split_part(name, '/', 1) = %L desc$$,
-    tests.user_id('taffy')
+      where bucket_id = 'avatars' and split_part(name, '/', 1) in (%L, %L)
+      order by split_part(name, '/', 1) = %L desc$$,
+    tests.user_id('taffy'), tests.user_id('roy'), tests.user_id('taffy')
   ),
   format(
     $$values (%L, '2'), (%L, 'original')$$,
@@ -60,7 +63,11 @@ select results_eq(
 
 select tests.authenticate_as('taffy');
 select results_eq(
-  $$select count(*)::int from storage.objects where bucket_id = 'avatars'$$,
+  format(
+    $$select count(*)::int from storage.objects
+      where bucket_id = 'avatars' and split_part(name, '/', 1) in (%L, %L)$$,
+    tests.user_id('taffy'), tests.user_id('roy')
+  ),
   $$values (2)$$,
   'signed-in users can see every avatar'
 );
@@ -69,7 +76,11 @@ select set_config('storage.allow_delete_query', 'true', true);
 delete from storage.objects where bucket_id = 'avatars' and name like '%/avatar.png';
 select tests.clear_authentication();
 select results_eq(
-  $$select split_part(name, '/', 1)::uuid from storage.objects where bucket_id = 'avatars'$$,
+  format(
+    $$select split_part(name, '/', 1)::uuid from storage.objects
+      where bucket_id = 'avatars' and split_part(name, '/', 1) in (%L, %L)$$,
+    tests.user_id('taffy'), tests.user_id('roy')
+  ),
   format('values (%L::uuid)', tests.user_id('roy')),
   'a user can delete their own avatar but nobody else''s'
 );
