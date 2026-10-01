@@ -74,3 +74,19 @@ test('clears the taken message as soon as you change the name', async () => {
 
   expect(screen.queryByTestId('pick-username-availability')).toBeNull();
 });
+
+test('says a name is available shortly after you stop typing', async () => {
+  jest.useFakeTimers();
+  await render(
+    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={jest.fn()} onSignOut={jest.fn()} />,
+  );
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy-lee-fubbins');
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(500);
+  });
+
+  expect(screen.getByTestId('pick-username-availability')).toHaveTextContent(
+    'taffy-lee-fubbins is available',
+  );
+});

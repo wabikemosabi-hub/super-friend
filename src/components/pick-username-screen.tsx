@@ -24,7 +24,7 @@ export function PickUsernameScreen({ checkUsername, onSignOut }: PickUsernameScr
     if (usernameProblem(username)) return;
     const timer = setTimeout(() => {
       checkUsername(username).then((available) => {
-        if (!available) setAvailability(`${username} is taken`);
+        setAvailability(`${username} is ${available ? 'available' : 'taken'}`);
       });
     }, 500);
     return () => clearTimeout(timer);
