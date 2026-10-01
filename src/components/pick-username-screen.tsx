@@ -14,7 +14,11 @@ type PickUsernameScreenProps = {
   onSignOut: () => void;
 };
 
-export function PickUsernameScreen({ checkUsername, onSignOut }: PickUsernameScreenProps) {
+export function PickUsernameScreen({
+  checkUsername,
+  onSubmit,
+  onSignOut,
+}: PickUsernameScreenProps) {
   const theme = useTheme();
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +43,11 @@ export function PickUsernameScreen({ checkUsername, onSignOut }: PickUsernameScr
     setAvailability(null);
   }
 
-  function handleContinue() {
-    setError(usernameProblem(username));
+  async function handleContinue() {
+    const problem = usernameProblem(username);
+    setError(problem);
+    if (problem) return;
+    setError(await onSubmit(username));
   }
 
   return (

@@ -139,3 +139,33 @@ test('checks only the name you stop on, not every keystroke', async () => {
   expect(checkUsername).toHaveBeenCalledTimes(1);
   expect(checkUsername).toHaveBeenCalledWith('roy-donk');
 });
+
+test('sends the dashed name when you continue', async () => {
+  const onSubmit = jest.fn<Promise<string | null>, [string]>().mockResolvedValue(null);
+  await render(
+    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={onSubmit} onSignOut={jest.fn()} />,
+  );
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'taffy lee fubbins');
+  await fireEvent.press(screen.getByTestId('pick-username-continue'));
+
+  expect(onSubmit).toHaveBeenCalledTimes(1);
+  expect(onSubmit).toHaveBeenCalledWith('taffy-lee-fubbins');
+  expect(screen.queryByTestId('pick-username-error')).toBeNull();
+});
+
+test('shows what went wrong when sending fails', async () => {
+  const onSubmit = jest
+    .fn<Promise<string | null>, [string]>()
+    .mockResolvedValue('That username is taken');
+  await render(
+    <PickUsernameScreen checkUsername={nameIsFree()} onSubmit={onSubmit} onSignOut={jest.fn()} />,
+  );
+
+  await fireEvent.changeText(screen.getByTestId('pick-username-input'), 'roy-donk');
+  await fireEvent.press(screen.getByTestId('pick-username-continue'));
+
+  expect(await screen.findByTestId('pick-username-error')).toHaveTextContent(
+    'That username is taken',
+  );
+});
