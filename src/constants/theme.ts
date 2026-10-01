@@ -19,6 +19,7 @@ const shipComputer = {
   you: '#FF3D9A',
   friend: '#3DD6F5',
   onAccent: '#0C0E0F',
+  scrim: '#000000B3',
 } as const;
 
 export const Colors = {
