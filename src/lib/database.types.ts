@@ -18,6 +18,31 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"nomad_connections": {
+                  Row: {
+                    "addressee_id": string,"created_at": string,"id": string,"requester_id": string,"responded_at": string | null,"status": Database["public"]['Enums']["connection_status"]
+                  }
+                  Insert: {
+                    "addressee_id": string,"created_at"?: string,"id"?: string,"requester_id": string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
+                  }
+                  Update: {
+                    "addressee_id"?: string,"created_at"?: string,"id"?: string,"requester_id"?: string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "nomad_connections_addressee_id_fkey"
+      columns: ["addressee_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "nomad_connections_requester_id_fkey"
+      columns: ["requester_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"created_at": string,"id": string,"username": string
@@ -37,12 +62,15 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            "username_available":
+            "send_connection_request":
+{ Args: { "username": string }; Returns: undefined
+                           },
+"username_available":
 { Args: { "name": string }; Returns: boolean
                            }
           }
           Enums: {
-            [_ in never]: never
+            "connection_status": "pending"|"accepted"|"declined"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -158,7 +186,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            
+            "connection_status": ["pending", "accepted", "declined"]
           }
         }
 } as const
