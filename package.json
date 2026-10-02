@@ -55,7 +55,7 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:functions": "deno test --allow-env --allow-read supabase/functions",
+    "test:functions": "deno test --no-lock --allow-env --allow-read supabase/functions",
     "test:db": "supabase test db",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/database.types.ts",
     "test:all": "npm test && npm run test:functions && npm run test:db"
