@@ -62,7 +62,15 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "send_connection_request":
+            "my_connections":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
+            }[]
+                           },
+"respond_to_connection_request":
+{ Args: { "accept": boolean,"connection_id": string }; Returns: undefined
+                           },
+"send_connection_request":
 { Args: { "username": string }; Returns: undefined
                            },
 "username_available":

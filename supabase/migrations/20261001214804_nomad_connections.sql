@@ -52,3 +52,49 @@ end;
 $$;
 
 revoke execute on function public.send_connection_request(text) from public, anon;
+
+create function public.respond_to_connection_request(connection_id uuid, accept boolean)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.nomad_connections
+  set status = case when accept then 'accepted' else 'declined' end::public.connection_status,
+      responded_at = now()
+  where id = connection_id and addressee_id = auth.uid() and status = 'pending';
+end;
+$$;
+
+revoke execute on function public.respond_to_connection_request(uuid, boolean) from public, anon;
+
+create function public.my_connections()
+returns table (
+  connection_id uuid,
+  nomad_id uuid,
+  username text,
+  avatar_url text,
+  status text,
+  outgoing boolean
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    c.id,
+    p.id,
+    p.username,
+    p.avatar_url,
+    case when c.status = 'declined' then 'pending' else c.status::text end,
+    c.requester_id = auth.uid()
+  from public.nomad_connections c
+  join public.profiles p
+    on p.id = case when c.requester_id = auth.uid() then c.addressee_id else c.requester_id end
+  where auth.uid() in (c.requester_id, c.addressee_id)
+    and not (c.status = 'declined' and c.addressee_id = auth.uid());
+$$;
+
+revoke execute on function public.my_connections() from public, anon;
