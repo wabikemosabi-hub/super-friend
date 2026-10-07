@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(13);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -70,6 +70,23 @@ select tests.authenticate_as('taffy');
 select is_empty(
   $$select * from public.my_connections()$$,
   'asking again after a decline sends nothing new'
+);
+
+select tests.clear_authentication();
+update public.nomad_connections set last_asked_at = now() - interval '31 days';
+
+select tests.authenticate_as('roy');
+select public.send_connection_request('taffy-lee-fubbins');
+select results_eq(
+  $$select username, status, outgoing from public.my_connections()$$,
+  $$values ('taffy-lee-fubbins', 'pending', true)$$,
+  'asking again restarts your 30 days'
+);
+
+select tests.authenticate_as('taffy');
+select is_empty(
+  $$select * from public.my_connections()$$,
+  'asking again after your request faded sends nothing new'
 );
 
 select tests.clear_authentication();
