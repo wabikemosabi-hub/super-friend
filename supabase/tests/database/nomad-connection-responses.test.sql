@@ -1,5 +1,5 @@
 begin;
-select plan(5);
+select plan(6);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -56,6 +56,16 @@ select results_eq(
   $$select status::text from public.nomad_connections$$,
   $$values ('declined')$$,
   'a request that was already answered cannot be answered again'
+);
+
+select tests.authenticate_as('taffy');
+select public.send_connection_request('roy-donk');
+
+select tests.clear_authentication();
+select results_eq(
+  $$select requester_id, addressee_id, status::text from public.nomad_connections$$,
+  $$values (tests.user_id('roy'), tests.user_id('taffy'), 'accepted')$$,
+  'a nomad who declined can change their mind by asking, which connects you'
 );
 
 select tests.authenticate_as_anon();
