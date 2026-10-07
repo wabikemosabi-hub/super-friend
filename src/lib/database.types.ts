@@ -20,13 +20,13 @@ export type Database = {
                   ]
                 },"nomad_connections": {
                   Row: {
-                    "addressee_id": string,"created_at": string,"id": string,"requester_id": string,"responded_at": string | null,"status": Database["public"]['Enums']["connection_status"]
+                    "addressee_id": string,"created_at": string,"id": string,"last_asked_at": string,"requester_id": string,"responded_at": string | null,"status": Database["public"]['Enums']["connection_status"]
                   }
                   Insert: {
-                    "addressee_id": string,"created_at"?: string,"id"?: string,"requester_id": string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
+                    "addressee_id": string,"created_at"?: string,"id"?: string,"last_asked_at"?: string,"requester_id": string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
                   }
                   Update: {
-                    "addressee_id"?: string,"created_at"?: string,"id"?: string,"requester_id"?: string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
+                    "addressee_id"?: string,"created_at"?: string,"id"?: string,"last_asked_at"?: string,"requester_id"?: string,"responded_at"?: string | null,"status"?: Database["public"]['Enums']["connection_status"]
                   }
                   Relationships: [
                     {

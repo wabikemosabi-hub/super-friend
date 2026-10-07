@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -23,6 +23,27 @@ select results_eq(
   $$values (tests.user_id('roy'), 'roy-donk', 'pending', false)$$,
   'a request sent to you shows as pending and incoming'
 );
+
+select tests.clear_authentication();
+update public.nomad_connections set last_asked_at = now() - interval '31 days';
+
+select tests.authenticate_as('roy');
+select is_empty(
+  $$select * from public.my_connections()$$,
+  'a request you sent fades from your list after 30 days'
+);
+
+select tests.authenticate_as('taffy');
+select results_eq(
+  $$select username, status, outgoing from public.my_connections()$$,
+  $$values ('roy-donk', 'pending', false)$$,
+  'a request sent to you stays until you answer it'
+);
+
+select tests.clear_authentication();
+update public.nomad_connections set last_asked_at = now();
+
+select tests.authenticate_as('taffy');
 
 select public.respond_to_connection_request(
   (select connection_id from public.my_connections()),
