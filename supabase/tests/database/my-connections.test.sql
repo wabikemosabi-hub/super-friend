@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(9);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -40,6 +40,15 @@ select tests.authenticate_as('taffy');
 select is_empty(
   $$select * from public.my_connections()$$,
   'a request you declined leaves your list'
+);
+
+select tests.authenticate_as('roy');
+select public.send_connection_request('taffy-lee-fubbins');
+
+select tests.authenticate_as('taffy');
+select is_empty(
+  $$select * from public.my_connections()$$,
+  'asking again after a decline sends nothing new'
 );
 
 select tests.clear_authentication();
