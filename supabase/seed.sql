@@ -33,8 +33,10 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into public.profiles (id, username)
+insert into public.profiles (id, username, avatar_url)
 values
-  ('b0000000-0000-4000-8000-000000000001', 'bart-harley-jarvis'),
-  ('b0000000-0000-4000-8000-000000000002', 'paul-bufano')
+  ('b0000000-0000-4000-8000-000000000001', 'bart-harley-jarvis',
+   'http://127.0.0.1:54321/storage/v1/object/public/avatars/b0000000-0000-4000-8000-000000000001/avatar.png'),
+  ('b0000000-0000-4000-8000-000000000002', 'paul-bufano',
+   'http://127.0.0.1:54321/storage/v1/object/public/avatars/b0000000-0000-4000-8000-000000000002/avatar.png')
 on conflict (id) do nothing;

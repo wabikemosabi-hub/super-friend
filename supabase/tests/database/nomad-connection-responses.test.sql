@@ -11,38 +11,38 @@ select tests.authenticate_as('roy');
 select public.send_connection_request('taffy-lee-fubbins');
 
 select tests.clear_authentication();
-select id as connection_id from public.nomad_connections \gset
+select id as connection_id from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id) \gset
 
 select tests.authenticate_as('taffy');
 select public.respond_to_connection_request(:'connection_id', true);
 
 select tests.clear_authentication();
 select results_eq(
-  $$select status::text, responded_at is not null from public.nomad_connections$$,
+  $$select status::text, responded_at is not null from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values ('accepted', true)$$,
   'the nomad who was asked can accept'
 );
 
-update public.nomad_connections set status = 'pending', responded_at = null;
+update public.nomad_connections set status = 'pending', responded_at = null where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('taffy');
 select public.respond_to_connection_request(:'connection_id', false);
 
 select tests.clear_authentication();
 select results_eq(
-  $$select status::text, responded_at is not null from public.nomad_connections$$,
+  $$select status::text, responded_at is not null from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values ('declined', true)$$,
   'the nomad who was asked can decline'
 );
 
-update public.nomad_connections set status = 'pending', responded_at = null;
+update public.nomad_connections set status = 'pending', responded_at = null where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('roy');
 select public.respond_to_connection_request(:'connection_id', true);
 
 select tests.clear_authentication();
 select results_eq(
-  $$select status::text from public.nomad_connections$$,
+  $$select status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values ('pending')$$,
   'the nomad who asked cannot answer their own request'
 );
@@ -53,7 +53,7 @@ select public.respond_to_connection_request(:'connection_id', true);
 
 select tests.clear_authentication();
 select results_eq(
-  $$select status::text from public.nomad_connections$$,
+  $$select status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values ('declined')$$,
   'a request that was already answered cannot be answered again'
 );
@@ -63,7 +63,7 @@ select public.send_connection_request('roy-donk');
 
 select tests.clear_authentication();
 select results_eq(
-  $$select requester_id, addressee_id, status::text from public.nomad_connections$$,
+  $$select requester_id, addressee_id, status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values (tests.user_id('roy'), tests.user_id('taffy'), 'accepted')$$,
   'a nomad who declined can change their mind by asking, which connects you'
 );

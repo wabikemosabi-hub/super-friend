@@ -25,7 +25,7 @@ select results_eq(
 );
 
 select tests.clear_authentication();
-update public.nomad_connections set last_asked_at = now() - interval '31 days';
+update public.nomad_connections set last_asked_at = now() - interval '31 days' where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('roy');
 select is_empty(
@@ -41,7 +41,7 @@ select results_eq(
 );
 
 select tests.clear_authentication();
-update public.nomad_connections set last_asked_at = now();
+update public.nomad_connections set last_asked_at = now() where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('taffy');
 
@@ -73,7 +73,7 @@ select is_empty(
 );
 
 select tests.clear_authentication();
-update public.nomad_connections set last_asked_at = now() - interval '31 days';
+update public.nomad_connections set last_asked_at = now() - interval '31 days' where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('roy');
 select public.send_connection_request('taffy-lee-fubbins');
@@ -90,7 +90,7 @@ select is_empty(
 );
 
 select tests.clear_authentication();
-update public.nomad_connections set status = 'pending', responded_at = null;
+update public.nomad_connections set status = 'pending', responded_at = null where tests.user_id('roy') in (requester_id, addressee_id);
 
 select tests.authenticate_as('taffy');
 select public.respond_to_connection_request(

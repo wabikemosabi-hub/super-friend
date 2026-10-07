@@ -12,7 +12,7 @@ select public.send_connection_request('taffy-lee-fubbins');
 
 select tests.clear_authentication();
 select results_eq(
-  $$select requester_id, addressee_id, status::text from public.nomad_connections$$,
+  $$select requester_id, addressee_id, status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values (tests.user_id('roy'), tests.user_id('taffy'), 'pending')$$,
   'asking a nomad by username makes a pending connection'
 );
@@ -22,7 +22,7 @@ select public.send_connection_request('Taffy-Lee-Fubbins');
 
 select tests.clear_authentication();
 select results_eq(
-  $$select requester_id, addressee_id, status::text from public.nomad_connections$$,
+  $$select requester_id, addressee_id, status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values (tests.user_id('roy'), tests.user_id('taffy'), 'pending')$$,
   'asking the same nomad again changes nothing'
 );
@@ -32,7 +32,7 @@ select public.send_connection_request('roy-donk');
 
 select tests.clear_authentication();
 select results_eq(
-  $$select requester_id, addressee_id, status::text from public.nomad_connections$$,
+  $$select requester_id, addressee_id, status::text from public.nomad_connections where tests.user_id('roy') in (requester_id, addressee_id)$$,
   $$values (tests.user_id('roy'), tests.user_id('taffy'), 'accepted')$$,
   'asking someone who already asked you connects you'
 );
