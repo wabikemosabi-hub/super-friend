@@ -1,14 +1,16 @@
-import { signInWithGoogle, signOut } from '@/lib/auth';
+import { signInWithGoogle, signInWithPassword, signOut } from '@/lib/auth';
 
 type AuthResult = { error: Error | null };
 
 const mockSignInWithOAuth = jest.fn<Promise<AuthResult & { data: object }>, [unknown]>();
+const mockSignInWithPassword = jest.fn<Promise<AuthResult & { data: object }>, [unknown]>();
 const mockSignOut = jest.fn<Promise<AuthResult>, []>();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithOAuth: (options: unknown) => mockSignInWithOAuth(options),
+      signInWithPassword: (credentials: unknown) => mockSignInWithPassword(credentials),
       signOut: () => mockSignOut(),
     },
   },
@@ -16,6 +18,7 @@ jest.mock('@/lib/supabase', () => ({
 
 beforeEach(() => {
   mockSignInWithOAuth.mockReset().mockResolvedValue({ data: {}, error: null });
+  mockSignInWithPassword.mockReset().mockResolvedValue({ data: {}, error: null });
   mockSignOut.mockReset().mockResolvedValue({ error: null });
 });
 
@@ -32,6 +35,23 @@ test('reports a failed Google sign-in', async () => {
   mockSignInWithOAuth.mockResolvedValue({ data: {}, error: new Error('Google said no') });
 
   await expect(signInWithGoogle('http://localhost:8081')).rejects.toThrow('Google said no');
+});
+
+test('signs in with an email and password', async () => {
+  await signInWithPassword('paul-bufano@dev.local', 'nomad-password');
+
+  expect(mockSignInWithPassword).toHaveBeenCalledWith({
+    email: 'paul-bufano@dev.local',
+    password: 'nomad-password',
+  });
+});
+
+test('reports a failed email sign-in', async () => {
+  mockSignInWithPassword.mockResolvedValue({ data: {}, error: new Error('Invalid login credentials') });
+
+  await expect(signInWithPassword('paul-bufano@dev.local', 'wrong')).rejects.toThrow(
+    'Invalid login credentials',
+  );
 });
 
 test('signs out', async () => {

@@ -34,6 +34,13 @@ jest.mock('@/lib/profile', () => ({
   usernameAvailable: jest.fn(),
 }));
 
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+
+jest.mock('@/lib/connections', () => ({
+  ...jest.requireActual<typeof import('@/lib/connections')>('@/lib/connections'),
+  myConnections: () => Promise.resolve([]),
+}));
+
 const taffy = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
 
 test('shows nothing while the session is loading', async () => {
@@ -42,7 +49,7 @@ test('shows nothing while the session is loading', async () => {
   await renderRouter('src/app');
 
   expect(screen.queryByTestId('sign-in-google')).toBeNull();
-  expect(screen.queryByTestId('basecamp-greeting')).toBeNull();
+  expect(screen.queryByTestId('basecamp-operator')).toBeNull();
 });
 
 test('sends signed-out visitors to sign in', async () => {
@@ -58,7 +65,7 @@ test('keeps signed-out visitors out of Basecamp even if they ask for it', async 
 
   await renderRouter('src/app', { initialUrl: '/' });
 
-  expect(screen.queryByTestId('basecamp-greeting')).toBeNull();
+  expect(screen.queryByTestId('basecamp-operator')).toBeNull();
   expect(screen.getByTestId('sign-in-google')).toBeOnTheScreen();
 });
 
@@ -75,5 +82,5 @@ test('sends nomads with a profile to Basecamp', async () => {
 
   await renderRouter('src/app');
 
-  expect(screen.getByTestId('basecamp-greeting')).toHaveTextContent('Welcome to Basecamp, taffy-lee-fubbins');
+  expect(screen.getByTestId('basecamp-operator')).toHaveTextContent('OPERATOR: TAFFY-LEE-FUBBINS');
 });

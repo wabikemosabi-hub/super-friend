@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-01, evening (Eben's Mac). Pulled Jake's media search and ship-computer look, got movie search working locally, and wrote down what tripped us up (see "After you pull" and Gotchas). Earlier the same day: Jake made movie search work end to end (WAB-16) and gave the app the ship-computer look (WAB-31); Eben's sign-up flow landed (WAB-29). Try search on the temporary page `/dev/media-search`. Next up: test users for Playwright (WAB-34), then friendships._
+_Last session: 2026-10-07 (Eben's Mac, Jake on a call for part of it). **Fellow nomads work end to end on web** (WAB-9 add, WAB-10 accept or decline): the `nomad_connections` table and its three database functions, the request rules Eben decided (quiet declines, a change of heart connects you, outgoing requests fade after 30 days; see "Requests and declines" in WAB-9), and a real **Basecamp** built from Jake's canvas (header, CH-01 Fellow Nomads, CH-02 Nomad requests). Two **seed users with avatars** (`bart-harley-jarvis`, `paul-bufano`) sign in through a dev-only email form, so testing no longer needs Google. Branch `ebenbsmith/wab-9-fellow-nomads-add-a-nomad`. Next up: Playwright against the seed users, then the Adventure Page (WAB-14)._
 
 ## Start here
 
@@ -9,15 +9,17 @@ _Last session: 2026-10-01, evening (Eben's Mac). Pulled Jake's media search and 
 | Ticket | What it is |
 |---|---|
 | **WAB-13 Glossary** | The vocabulary. Use these words in UI copy and tickets |
-| **WAB-34 Test User Script** | Backlog. **Likely next.** `npm run test-user -- roy-donk` makes local users that can sign in without Google; unblocks Playwright |
+| **WAB-9 Add a Nomad** | In progress, built. **Read its "Requests and declines" section** (decided by Eben 2026-10-07) before touching connections |
+| **WAB-10 Accept or Decline** | In progress, built. The ticket says the asker "is informed" on accept; today they just see the new nomad in their list (no badge or notice yet) |
+| WAB-34 Test User Script | In progress in Linear, but the seed users plus the dev email sign-in cover it (see Auth). Decide whether to close it or keep a script for making more users |
 | WAB-29 Pick a Username and Avatar | **Done** 2026-10-01. Has a Status section listing what's built and what's left for later |
 | WAB-6 Sign In with Google | In progress. Works on web; error states and phones remain |
-| WAB-33 Basecamp | In progress. Where you land after sign-in; built from cards. Placeholder for now |
+| WAB-33 Basecamp | In progress. Header, CH-01 Fellow Nomads and CH-02 Nomad requests are built; CH-03 "Probably watch next" waits for recommendations |
 | WAB-16 Media Search | In progress. Movies work through `media-search`; series next. The agreed design is a comment on the ticket |
 | WAB-14 Adventure Page | The page between two nomads. Has a "Decisions" section |
 | WAB-15 Media Context Page | One piece of media: rate it or pass on it |
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
-| WAB-9, 10, 11, 30 | Fellow Nomads: add, accept or decline, open an Adventure Page, remove or block. **Need rebuilding** on the new schema |
+| WAB-11, 30 | Fellow Nomads: open an Adventure Page, remove or block. Not started. Block is "never" where a decline is "not now" |
 | WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
@@ -40,18 +42,24 @@ npm run test:all                     # Jest, functions, database
 
 Then restart `npx expo start --web` if packages changed, and restart `npx supabase functions serve --env-file supabase/functions/.env` if functions changed. If a pull **rewrote or deleted old migrations** (like the 2026-09-28 restart), `migration up` isn't enough: run `npx supabase db reset`, which wipes local data and rebuilds from the migrations.
 
+**If a pull changed `supabase/seed.sql`, `supabase/seed/` or the buckets in `config.toml`, run `npx supabase db reset` too.** `migration up` never seeds. A reset runs the migrations, then `seed.sql`, then uploads the seed files to storage. The 2026-10-07 work needs one reset to create the seed users and their avatars.
+
 ## Where things stand
 
-Everything below is on `main` and was built test-first.
+Everything below was built test-first. The fellow nomads work (connections, Basecamp, seed users) is on `ebenbsmith/wab-9-fellow-nomads-add-a-nomad` until its PR merges; the rest is on `main`.
 
-**Database** (five migrations; the old schema is deleted):
+**Database** (nine migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
 - `username_available(name)`: true or false, case-insensitive, signed-in only (`anon` revoked). Migration `username_available`.
 - `avatars` storage bucket: public to read, `image/*` only, 5 MB. You can only upload, replace or delete inside `avatars/<your user id>/`.
 - `media_items`: the cache of search results that recommendations will point at. One row per `(provider, external_id)`; `external_id` is `movie:<tmdb id>` (TMDB movie and TV ids overlap). Signed-in users read it; only the service role (the edge function) writes; `anon` has no access. Migration `media_items`.
-- **Nothing else.** No friendships or recommendations yet.
+- `nomad_connections` (WAB-9, 10): one row per pair (`requester_id`, `addressee_id`, `status` = `pending` | `accepted` | `declined`, `created_at`, `responded_at`, `last_asked_at`). A unique index on the pair (in either order) stops duplicates. RLS is on with **no policies**: nobody reads or writes the table directly, only through three `security definer` functions, all with `anon` revoked:
+  - `send_connection_request(username)`: case-insensitive lookup. Raises "No nomad named …" or "You can't connect with yourself". If they already asked you (pending **or** declined), you're connected on the spot. If you already asked them, only `last_asked_at` resets. Otherwise inserts a pending row.
+  - `respond_to_connection_request(connection_id, accept)`: only the addressee, only while pending; does nothing otherwise.
+  - `my_connections()`: `connection_id`, `nomad_id`, `username`, `avatar_url`, `status`, `outgoing`. A declined request shows as `pending` to the asker and disappears for the decliner. Outgoing requests that aren't accepted drop out after 30 days since `last_asked_at`; incoming ones stay until answered.
+  - Migrations `nomad_connections`, `declined_nomads_can_change_their_mind`, `outgoing_requests_fade`, `asking_again_restarts_the_fade`. No recommendations yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
 
 **Edge function `media-search`** (WAB-16; the old `search-media` was never run and is deleted):
@@ -65,7 +73,8 @@ Everything below is on `main` and was built test-first.
 **Auth:**
 
 - Google OAuth client exists (Google Cloud project made by Eben, testing mode, Eben and Jake as test users). Creating it costs nothing; ignore the "$300 free trial" banner.
-- Local Supabase reads the client from the root `.env` (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID`, `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, gitignored). `supabase/config.toml` has `[auth.external.google]`, `site_url = "http://localhost:8081"`, redirects allowed to `http://localhost:8081/**`. Local email sign-up is also on (no confirmation), which WAB-34 will use.
+- Local Supabase reads the client from the root `.env` (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID`, `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, gitignored). `supabase/config.toml` has `[auth.external.google]`, `site_url = "http://localhost:8081"`, redirects allowed to `http://localhost:8081/**`. Local email sign-up is also on (no confirmation).
+- **Seed users and dev sign-in** (2026-10-01, avatars 2026-10-07): `supabase/seed.sql` makes `bart-harley-jarvis@dev.local` and `paul-bufano@dev.local` (the password is in that file) with profiles and avatars. Their pictures live in `supabase/seed/avatars/<user id>/avatar.png`, and `config.toml`'s `[storage.buckets.avatars]` (`objects_path = "./seed/avatars"`, same rules as the migration) uploads them on every `db reset`. They aren't connected to each other, so you can try a request. In development builds only (`__DEV__`), the sign-in screen shows a "DEV ONLY: test nomads" email form (`signInWithPassword` in `src/lib/auth.ts`; testIDs `email-sign-in-email`, `-password`, `-submit`, `-error`). Playwright can sign in through it. Seed emails end in `@dev.local` on purpose (see Gotchas).
 - Google console redirect URI: `http://127.0.0.1:54321/auth/v1/callback`; JS origin `http://localhost:8081`. A hosted Supabase project will need its own callback URI added there.
 
 **App:**
@@ -73,12 +82,14 @@ Everything below is on `main` and was built test-first.
 - `app.json` `web.output` is `"single"` (a single-page app; static rendering broke auth). Plugins include `expo-image-picker` (photo permission message for phones).
 - `src/lib/`:
   - `supabase.ts`: the only Supabase client (typed). Reads the sign-in result from the URL on web.
-  - `auth.ts`: `signInWithGoogle(returnTo)`, `signOut()`.
+  - `auth.ts`: `signInWithGoogle(returnTo)`, `signInWithPassword(email, password)` (dev form only), `signOut()`.
+  - `connections.ts`: `sendConnectionRequest(username)`, `myConnections()`, `respondToConnectionRequest(id, accept)` (database errors pass through as-is; their messages are already friendly), `groupConnections(rows)` → `{ nomads, incoming, outgoing }`, each sorted by username ignoring case. `Connection` is the generated `my_connections` row type.
   - `username.ts`: `usernameProblem(name)`, the same rule as the database, with the message "Usernames are 3 to 24 letters or numbers, with single dashes between words".
   - `profile.ts`: `createProfile()` (turns `23505` into "That username is taken") and `usernameAvailable()` (calls the database function).
   - `avatar.ts`: `pickAvatar()` (one square image, 0.8 quality, falls back to `image/jpeg`) and `uploadAvatar(userId, avatar)` (to `<id>/avatar.<type>` with `upsert`, returns the public URL).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
   - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
+- `src/hooks/use-connections.ts`: `useConnections()` returns `{ nomads, incoming, outgoing, isLoading, error, send(username), respond(id, accept) }`. React Query key `['connections']`; `send` and `respond` refresh the list afterwards; `send` rejects with the database's message so the screen can show it.
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
 - `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. While the field has focus its border lights up `phosphorDim` (instead of the browser's blue focus ring). No unit tests on purpose; Playwright will cover it.
 - `src/components/media-search-modal.tsx`: `MediaSearchModal` (props `visible`, `type`, `onPick(item)`, `onClose()`) wraps `MediaSearch` in React Native's `Modal`: a header with a `CH-01` plate, "SEARCH MOVIES" and a close button (`media-search-modal-close`). On web it's a centered panel (up to 640 px) over a `scrim` backdrop that closes it when clicked (`media-search-modal-backdrop`); on phones it slides up full screen. Picking a result calls `onPick`, then closes. This is how the Adventure Page's Movies tab (WAB-14) should open search. A `Modal` rather than a modal route because it's a self-contained task that hands a value back (Expo's docs recommend `Modal` for that).
@@ -89,18 +100,22 @@ Everything below is on `main` and was built test-first.
 - `src/providers/session-provider.tsx`: `useSession()` returns `{ status, session, profile, refreshProfile }`, status one of `loading`, `signedOut`, `needsProfile`, `ready`.
 - `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp) and the temporary `dev/media-search`.
 - **Pick a username screen** (`PickUsernameScreen`, props `checkUsername`, `onSubmit`, `onSignOut`, `pickAvatar`): spaces and underscores become dashes as you type; half a second after you stop typing a valid name it shows "… is taken" / "… is available" (clears when you type, checks only the name you stop on, ignores stale answers); "Pick an avatar" with a round preview; Continue checks the name rule, then asks for a photo, then sends both. The route (`src/app/pick-username.tsx`) calls `finishSignUp`, then `refreshProfile()`.
-- Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. `ActionButton` is the shared button and **requires** a `testID`.
-- Basecamp is still a placeholder ("Welcome to Basecamp, <username>" plus sign out).
+- Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. Both button components **require** a `testID`: `ActionButton` (the older rounded one, still on sign-in and pick-username) and `ShipButton` (ship-computer style, `hazard` | `phosphor` | `panel`, used on Basecamp).
+- **Basecamp** (`BasecampScreen`, built from Jake's canvas; the route `src/app/index.tsx` passes in `useConnections()` and the profile). No unit tests on purpose; Playwright will cover it:
+  - **Header:** "MEDIA ADVISORY BOARD · DEEP FIELD UNIT MAB-1", the red status eye beside a neon BASECAMP title. Your avatar and `OPERATOR: <USERNAME>` plate are one button (`basecamp-account`, plate text `basecamp-operator`) that opens Sign out (`basecamp-sign-out`). A red line and a hazard stripe run underneath.
+  - **CH-01 Fellow Nomads** (`fellow-nomads-card.tsx`): a two-digit count (`fellow-nomads-count`), rows `fellow-nomad-<username>` with an avatar, the "NO SIGNAL" empty state (`fellow-nomads-empty`), then "ADD A NOMAD BY USERNAME" (`add-nomad-input`, placeholder `#username` that hides on focus; `add-nomad-send`, disabled while empty). Shows `REQUEST SENT TO …` (`add-nomad-sent`) or the error in `alert` red (`add-nomad-error`).
+  - **CH-02 Nomad requests** (`nomad-requests-card.tsx`): incoming as "INCOMING TRANSMISSION" with Accept / Decline (`incoming-<username>-accept`, `-decline`); outgoing as dim "OUTGOING TRANSMISSION · waiting for a yes" (`outgoing-<username>`); "NO TRANSMISSIONS" when empty.
+  - Shared pieces in `ship-panel.tsx`: `ShipPanel` (riveted card with a `CH-xx` plate), `Plate`, `CrtScreen`, `ShipButton`, `HazardStripe`. `nomad-avatar.tsx`: `NomadAvatar` shows the picture, or the initial when there's no `avatar_url`.
 - Unused Expo template components and images were deleted. Still in place: `src/hooks/use-color-scheme.web.ts` (used, but its hydration guard is pointless now that output is `"single"`).
 
-Eben clicked through on web: Roy-Donk shows taken, a free name shows available, picked a photo, Continue → Basecamp, refresh stays on Basecamp.
+Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees it in CH-02 and accepts, and both show up in each other's Fellow Nomads list with their pictures.
 
-**Local data:** Eben's Mac has two real Google accounts, one with the profile `OubliettePadawan`. The hand-made `roy-donk` (`roy@test.local`) was deleted on 2026-10-01 because it collided with the database tests' own `roy@test.local` (see Gotchas). Make test users with the WAB-34 script once it exists. (Jake's Mac: reset on 2026-10-01, so no users; five cached Full Metal Jacket results in `media_items`.)
+**Local data:** Eben's Mac was reset on 2026-10-07: just the two seed users, plus whatever was clicked since. The real Google accounts (`OubliettePadawan`) are gone; sign in with Google again to remake them. Jake's Mac needs one `npx supabase db reset` after pulling this work (see "After you pull").
 
 ## Next steps
 
-1. **WAB-34, the test user script**, then **Playwright** end-to-end tests against the web build. Every interactive element has a `testID` (`data-testid` on web). A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; small; not a real person).
-2. **Friendships (WAB-9, 10, 30), then the Fellow Nomads List card on Basecamp (WAB-33).**
+1. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
+2. **The Adventure Page (WAB-11, WAB-14):** make a Fellow Nomads row open the page between two nomads. Jake's canvas has a phone version. Then remove or block (WAB-30), and maybe a "NEW" tag when someone accepts (WAB-10's "is informed").
 3. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
 4. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
 5. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
@@ -143,22 +158,23 @@ Friends recommend movies, series and books to each other. Your friends know what
 - **Rating attribution for Sherpa Score:** if two sherpas recommended the same thing, does the pilgrim's rating credit both? Decide before building Sherpa Score.
 - **After removing a nomad** (WAB-30): are their picks and History hidden, kept for if they reconnect, or deleted?
 - **Media Connection** (in WAB-13) says users must connect media libraries before recommending. Search uses our own keys, so it's not needed for search. Ask what it's for; as written it's a wall in front of new users.
-- **Code names vs glossary names** (`from_user`/`to_user` vs sherpa/pilgrim) for the new tables.
+- **Code names vs glossary names:** decided for connections: plain names in the schema (`nomad_connections`, `requester_id`, `addressee_id`), never "friendships" and no sherpa/pilgrim in table names. Recommendations should follow the same idea.
+- **Seeded avatar URLs** hard-code `http://127.0.0.1:54321`. Fine locally; a hosted project would need its own seed.
 - **Sherpa Scoring and Media Scoring formulas.**
 
 ## Conventions (Eben's rules; also in his global CLAUDE.md)
 
 - **Strict red → green → refactor.** Write the test, watch it fail for the right reason, then the least code to pass. pgTAP for every table, policy and function; Jest for app code; `deno test` for edge functions. When a "can't do X" test passes before the code exists, break the code on purpose once to prove the test catches it.
 - **Build slowly**, one small piece at a time, run it right away. Eben stops things when they move too fast; check in before big moves (that's how the schema restart happened, and it was the right call).
-- **Every interactive element gets a `testID`** (for Playwright later). Use `ActionButton` for buttons.
+- **Every interactive element gets a `testID`** (for Playwright later). Use `ShipButton` (or `ActionButton` on the older screens) for buttons.
 - **Tests check real values**, not shapes: exact arguments, exact messages, call counts. If a test passes before the code exists, break the code on purpose once to prove the test can fail.
 - **Playwright is planned (after WAB-34), and we are prototyping fast** (decided by Jake 2026-10-01). Unit tests that only check how things look or are wired together (which font a text style uses, which colors the theme holds, which screen shows while fonts load) are overkill for now. Keep unit tests for logic, data and security: database rules, edge functions, hooks and `src/lib/`. When a test would really be checking what someone sees on screen, write it as a Playwright test once Playwright is set up, and move existing ones like that over then.
-- **Test data uses Taffy Lee Fubbins (`taffy-lee-fubbins`) and Roy Donk (`roy-donk`)**, never real people's names.
+- **Test data uses Taffy Lee Fubbins (`taffy-lee-fubbins`) and Roy Donk (`roy-donk`)**, never the team's own names (Eben, Jake, other developers). Characters and cast from *I Think You Should Leave* are fine, photos included; the seed users' avatars are ITYSL pictures.
 - No `any`, enforced by lint (`no-explicit-any` plus the `no-unsafe-*` rules, which catch `any` leaking in from libraries). No comments unless asked. No `console.log`.
 - Only `src/lib/supabase.ts` may call `createClient` (lint enforces it).
 - **Eben names every commit.** Summarize what's in it and ask for the title. Never mention AI or Claude in commits, PRs or code (attribution is turned off in Eben's Claude settings). Never `git add .`. Run tests before committing.
 - **Work in small steps and check in.** Red and green together per test, then stop for Eben to look and name the commit. Show test results in code blocks.
-- Never hard-code a color in a component: colors come from the theme (WAB-31).
+- Never hard-code a color in a component: colors come from the theme (WAB-31), so a whole new theme is one file. A new color becomes a named role in `theme.ts`. Shadows and glows build their color from a role too (``boxShadow: `0px 4px 0px ${theme.edge}` ``). Quick check: `grep -rnE "#[0-9A-Fa-f]{3,8}\b|rgba?\(" src/components src/app` should find nothing.
 - `npx expo install` for packages. Check the versioned Expo docs (`https://docs.expo.dev/versions/v57.0.0/`) before using an Expo API.
 - **Explain Expo (and Supabase) concepts as we go**; Eben and Jake are learning. Short "Expo note" asides tied to what was just done work well.
 
@@ -178,14 +194,20 @@ Friends recommend movies, series and books to each other. Your friends know what
 - `routing.test.tsx` renders real route files. When a route starts importing a `src/lib/` module that touches Supabase or a native module, fake that module there, or Jest crashes on `expo-sqlite`.
 - Tests that use `jest.useFakeTimers()` rely on an `afterEach(() => jest.useRealTimers())`, so a failing test can't leak the fake clock.
 - Sorting: `order by username` uses `en_US` collation, so `roy-donk` sorts before `Taffy`.
-- `git stash@{0}` holds obsolete email/password validation from before the switch to Google. Safe to drop.
-- **Never hand-make local users with an `@test.local` email.** The database tests' `tests.create_user('roy')` makes `roy@test.local`, and a leftover user with the same email breaks every test file that creates Roy (`duplicate key value violates unique constraint "users_email_partial_key"`). The WAB-34 script should use a different ending, like `roy-donk@dev.local`.
+- **Never hand-make local users with an `@test.local` email.** The database tests' `tests.create_user('roy')` makes `roy@test.local`, and a leftover user with the same email breaks every test file that creates Roy (`duplicate key value violates unique constraint "users_email_partial_key"`). The seed users use `@dev.local` for this reason; keep it that way for any new ones.
 - **Two `.env` files, on purpose.** The root `.env` is for the app and `config.toml` (Supabase URL and publishable key, Google sign-in). `supabase/functions/.env` is only for edge functions (`TMDB_API_TOKEN`). Keep server keys out of the root one. After editing `supabase/functions/.env`, restart `functions serve`; it only reads the file at start.
 - **TMDB needs the long "API Read Access Token"** (starts with `eyJ`), not the short 32-character "API Key": `media-search` sends it as `Authorization: Bearer …`. A missing or wrong token shows in the app only as "Search is having trouble"; the `functions serve` window has the real error.
 - **Database tests must not assume empty tables** (WAB-35). Local databases hold real sign-ups, avatars and cached search results. Scope checks to the test's own users, and when a test inserts a row with a real id (like `movie:600`), delete any existing one first inside the test's transaction; the `rollback` puts it back.
 - `supabase.functions.invoke` returns `any`. Assert the response type (`as SearchResponse`); a type annotation alone doesn't satisfy `no-unsafe-assignment`.
 - `deno check` on an edge function from the repo root gets confused by the app's `node_modules` (it looks there for `npm:` packages). The real check is `npx supabase functions serve`, which runs Supabase's own runtime. `deno test` is unaffected.
 - Edge function tests import JSON fixtures with `import x from './fixtures/x.json' with { type: 'json' };`.
+- **Changing a database function that's already applied: add a new migration** with `create or replace function …` (it keeps the function's grants, so the `anon` revoke still holds). Editing an applied migration means everyone needs a `db reset`. A migration you're still iterating on can be re-applied by hand: `psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f <file>`. A fresh `db reset` before committing proves the migrations apply in order.
+- **Breaking code on purpose for a pgTAP test** without touching files: pipe an altered copy of the function through `psql` (e.g. `sed … migration.sql | psql …`), run `npm run test:db`, then re-apply the real migration file the same way.
+- **React Query in Jest:** a test `QueryClient` needs `gcTime: Infinity` (plus `retry: false`), or React Query's 5-minute cleanup timer keeps Jest running after the tests finish. Tests with fake timers (`use-media-search`) don't hit it.
+- **macOS has no `timeout` command.** `timeout 60 npx jest` fails instantly and looks like a hang. Use `perl -e 'alarm 60; exec @ARGV' npx jest …`.
+- **`test:functions` runs `deno test --no-lock`** and `deno.lock` is gitignored: Deno kept rewriting the lock file differently on each Mac.
+- **Shadows:** use `boxShadow` (works on web and phones in React Native 0.86 with the New Architecture). The old `shadow*` props warn on web. Text glows still use `textShadowColor` / `textShadowRadius`: React Native has no `textShadow` shorthand on phones, so the web-only "textShadow* style props are deprecated" warning is expected.
+- **Storage seeding:** `[storage.buckets.<name>]` with `objects_path` in `config.toml` uploads that folder on `npx supabase db reset` (after `seed.sql`). Keep the bucket's rules there identical to its migration.
 - **Removing the browser's focus ring on a `TextInput` (web)** takes `outlineStyle: 'solid'` plus `outlineWidth: 0`. `outlineWidth: 0` alone does nothing, because the browser's own focus style is `outline-style: auto`, which ignores the width. Always give focus another visible signal (the search field lights its border).
 
 ## Design
@@ -203,8 +225,8 @@ The canvases are the source of truth for how screens should look; there are no c
 
 **The ship-computer look** (chosen by Jake 2026-10-01, merged in PR 8; replaces the first mockup's purple palette and Bricolage/Figtree, and WAB-31 records it): gritty cassette futurism, in the spirit of *2001*, the Nostromo in *Alien*, *Blade Runner*, *Silent Running* and *Outland*. Dark gunmetal panels with rivets and stencilled labels, black CRT screens with green phosphor text, yellow and black hazard stripes, a red status "eye", and one magenta neon glow. Fonts: **Michroma** (headings), **Space Mono** (labels and body), **VT323** (anything on a screen).
 
-- In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills), `scrim` (70% black, behind modals).
-- The canvas's scanlines, glows and hazard stripes use web-only CSS; the app doesn't have them yet.
+- In code: `Colors` and `Typefaces` in `src/constants/theme.ts`. Light and dark mode both use the same palette. Themes are a goal (Eben, 2026-10-07): every color already comes from a role, but `Typefaces` is one global list, so a theme that changes fonts would need them moved into the theme object. Roles: `background`, `backgroundElement` (panel), `backgroundSelected` (raised panel), `edge`, `text`, `textSecondary`, `screen`, `bezel`, `phosphor`, `phosphorDim`, `hazard`, `alert`, `neon`, `you`, `friend`, `onAccent` (dark text on bright fills), `scrim` (70% black, behind modals).
+- The canvas's hazard stripes are a CSS gradient; the app draws them from slanted `View`s (`HazardStripe`), which works on phones too. Scanlines aren't in the app yet.
 
 ## Environment (Mac, verified 2026-10-01)
 
@@ -216,9 +238,9 @@ The canvases are the source of truth for how screens should look; there are no c
 
 | Command | Result |
 |---|---|
-| `npm test` | 96 passed, 16 files |
+| `npm test` | 111 passed, 17 files |
 | `npm run test:functions` | 18 passed, 2 files |
-| `npm run test:db` | 40 passed, 5 files |
+| `npm run test:db` | 67 passed, 8 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
 | `npx tsc --noEmit` | passes |
 | `npx expo lint` | passes |
@@ -243,14 +265,4 @@ The canvases are the source of truth for how screens should look; there are no c
 
 ## Setup on a new machine (or for Jake)
 
-```sh
-git clone https://github.com/wabikemosabi-hub/super-friend.git && cd super-friend
-npm install
-cp .env.example .env            # Supabase URL + publishable key (from `npx supabase status`), plus the Google client id and secret
-cp supabase/functions/.env.example supabase/functions/.env
-npx supabase start              # needs Docker running
-npx supabase db reset           # once, if you had the old schema applied
-npx expo start --web
-```
-
-Get the Google client id and secret from Eben through a password manager, never chat or git. Put your own TMDB read access token in `supabase/functions/.env`. Jake must be a test user on the Google consent screen. Deno is needed for `npm run test:functions` (`brew install deno`).
+The steps are in [README.md](README.md). Get the Google client id and secret from Eben through a password manager, never chat or git. Jake must be a test user on the Google consent screen.

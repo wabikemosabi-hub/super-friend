@@ -1,56 +1,51 @@
-# Welcome to your Expo app 👋
+# Media Advisory Board
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Friends recommend movies, series and books to each other. Your friends know what you'll actually connect with, so the app is built around the recommendation itself, and eventually around knowing *whose* recommendations are reliably right for you. No ads, no algorithm feed: just you and your fellow nomads.
 
-## Get started
+Built with Expo (SDK 57, Expo Router, web first) and Supabase (Postgres, auth, storage, edge functions). Movie data comes from TMDB.
 
-1. Install dependencies
+**Working on it?** Read [HANDOFF.md](HANDOFF.md) for where things stand, the decisions made and the gotchas. Tickets live in Linear (team Wabikemosabi, project Media Advisory Board).
 
-   ```bash
-   npm install
-   ```
+## You need
 
-2. Start the app
+- Node 22 or newer, and npm
+- Docker Desktop or OrbStack, running (local Supabase runs in containers)
+- Deno, for the edge function tests: `brew install deno`
+- A TMDB "API Read Access Token" for movie search: themoviedb.org → Settings → API (the long token that starts with `eyJ`, not the short API key)
 
-   ```bash
-   npx expo start
-   ```
+## Set up
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+git clone https://github.com/wabikemosabi-hub/super-friend.git && cd super-friend
+npm install
+cp .env.example .env
+cp supabase/functions/.env.example supabase/functions/.env
+npx supabase start
+npx supabase db reset
+npx expo start --web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Root `.env`:** the Supabase URL and publishable key (`npx supabase status` prints them), plus the Google sign-in client id and secret (ask Eben; shared through a password manager, never chat or git).
+- **`supabase/functions/.env`:** your own `TMDB_API_TOKEN`.
+- **`npx supabase db reset`** builds the local database from the migrations, then seeds it: two test nomads, `bart-harley-jarvis@dev.local` and `paul-bufano@dev.local`, with avatars. Their password is in `supabase/seed.sql`. In development, the sign-in screen has a "DEV ONLY: test nomads" form for them, so you don't need Google to try things.
+- **Movie search** also needs the edge function running: `npx supabase functions serve --env-file supabase/functions/.env`.
 
-### Other setup steps
+The app runs at http://localhost:8081 and Supabase Studio at http://127.0.0.1:54323.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Commands
 
-## Learn more
+| Command | What it does |
+|---|---|
+| `npx expo start --web` | Run the app on the web |
+| `npm test` | Jest unit tests (app code) |
+| `npm run test:functions` | Deno tests for the edge functions |
+| `npm run test:db` | pgTAP tests for the database (needs Supabase running) |
+| `npm run test:all` | All three |
+| `npx tsc --noEmit` | Typecheck |
+| `npx expo lint` | Lint |
+| `npm run db:types` | Regenerate `src/lib/database.types.ts` after a migration |
+| `npx expo install <package>` | Add a package (picks versions that match the Expo SDK) |
 
-To learn more about developing your project with Expo, look at the following resources:
+## After you pull
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+See "After you pull" in [HANDOFF.md](HANDOFF.md). In short: `npm install`, `npx supabase migration up`, and `npx supabase db reset` whenever the seed changed.
