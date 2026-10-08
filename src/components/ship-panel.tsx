@@ -97,6 +97,16 @@ export function ShipButton({ label, onPress, testID, variant = 'hazard', disable
   );
 }
 
+export function ScreenLine({ text, color, testID }: { text: string; color?: string; testID: string }) {
+  const theme = useTheme();
+
+  return (
+    <ThemedText style={[styles.screenLine, { color: color ?? theme.phosphor }]} testID={testID}>
+      {text}
+    </ThemedText>
+  );
+}
+
 const stripeCount = 80;
 
 export function HazardStripe() {
@@ -182,6 +192,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.8,
     lineHeight: 20,
+  },
+  screenLine: {
+    fontFamily: Typefaces.screen,
+    fontSize: 22,
+    lineHeight: 26,
   },
   stripe: {
     flexDirection: 'row',

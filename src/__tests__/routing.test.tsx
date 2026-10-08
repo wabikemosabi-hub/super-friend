@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
 import { signOut } from '@/lib/auth';
+import type { Recommendation } from '@/lib/recommendations';
 import type { SessionState } from '@/providers/session-provider';
 
 
@@ -53,10 +54,31 @@ jest.mock('@/lib/connections', () => ({
     ]),
 }));
 
+const mockPicks: { rows: Recommendation[] } = { rows: [] };
+
 jest.mock('@/lib/recommendations', () => ({
   ...jest.requireActual<typeof import('@/lib/recommendations')>('@/lib/recommendations'),
-  adventureRecommendations: () => Promise.resolve([]),
+  adventureRecommendations: () => Promise.resolve(mockPicks.rows),
 }));
+
+function pick(title: string, outgoing: boolean): Recommendation {
+  return {
+    id: `${title}-id`,
+    outgoing,
+    rank: 1,
+    reasons: [`Watch ${title}`],
+    media_item_id: `${title}-media`,
+    type: 'movie',
+    external_id: `movie:${title}`,
+    title,
+    year: 2019,
+    metadata: {},
+  };
+}
+
+afterEach(() => {
+  mockPicks.rows = [];
+});
 
 const taffy = { id: 'taffy-id', username: 'taffy-lee-fubbins', avatar_url: null };
 
@@ -108,6 +130,22 @@ test('opens the adventure page with a fellow nomad', async () => {
   await renderRouter('src/app', { initialUrl: '/adventure/roy-donk' });
 
   expect(await screen.findByTestId('adventure-nomad')).toHaveTextContent('@roy-donk · Fellow Nomad');
+});
+
+test("shows the road a fellow nomad plotted and your route for them", async () => {
+  mockSession.state = { status: 'ready', session: null, profile: taffy };
+  mockPicks.rows = [pick('Coffin Flop', false), pick('Hot Dog Car', true)];
+
+  await renderRouter('src/app', { initialUrl: '/adventure/roy-donk' });
+
+  expect(await screen.findByTestId('road-stop-movie:Coffin Flop')).toHaveTextContent(/Coffin Flop \(2019\)/);
+  expect(screen.queryByTestId('console-stop-movie:Hot Dog Car')).toBeNull();
+
+  await fireEvent.press(screen.getByTestId('adventure-view-console'));
+
+  expect(await screen.findByTestId('console-stop-movie:Hot Dog Car')).toHaveTextContent(/Hot Dog Car \(2019\)/);
+  expect(screen.getByTestId('console-slots')).toHaveTextContent('2 SLOTS OPEN. MAKE THEM COUNT.');
+  expect(screen.queryByTestId('road-stop-movie:Coffin Flop')).toBeNull();
 });
 
 test('shows no signal for someone who is not a fellow nomad', async () => {
