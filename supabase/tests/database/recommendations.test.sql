@@ -1,5 +1,5 @@
 begin;
-select plan(27);
+select plan(28);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -155,14 +155,20 @@ select throws_ok(
   'the media item must exist'
 );
 
-select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-4'), array['Croon']);
-select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-5'), array['Crash']);
-
 select throws_ok(
-  $$select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-6'), array['Steaks'])$$,
-  'Your movie list for roy-donk is full',
-  'a list holds five picks'
+  $$select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-4'), array['Croon'])$$,
+  'Your movie route for roy-donk is full',
+  'a route holds three stops'
 );
+
+select tests.clear_authentication();
+select throws_ok(
+  $$insert into public.recommendations (recommender_id, recipient_id, media_item_id, rank, reasons)
+    values (tests.user_id('roy'), tests.user_id('taffy'), (select id from public.media_items where external_id = 'movie:test-5'), 4, array['Too far'])$$,
+  '23514', null,
+  'no stop is ranked past three'
+);
+select tests.authenticate_as('taffy');
 
 select lives_ok(
   $$select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'tv:test-1'), array['Spooky'])$$,

@@ -86,10 +86,10 @@ test('adds a pick with cleaned reasons, then refreshes', async () => {
 });
 
 test('passes along the reason a pick was refused', async () => {
-  mockAddRecommendation.mockRejectedValue(new Error('Your movie list for roy-donk is full'));
+  mockAddRecommendation.mockRejectedValue(new Error('Your movie route for roy-donk is full'));
   const { result } = await setup('roy-id');
   await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-  await expect(result.current.add('media-1', ['Hi'])).rejects.toThrow('Your movie list for roy-donk is full');
+  await expect(result.current.add('media-1', ['Hi'])).rejects.toThrow('Your movie route for roy-donk is full');
   expect(mockAdventureRecommendations).toHaveBeenCalledTimes(1);
 });

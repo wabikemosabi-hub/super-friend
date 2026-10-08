@@ -49,7 +49,7 @@ Then restart `npx expo start --web` if packages changed, and restart `npx supaba
 
 Everything below was built test-first. The fellow nomads work is merged (PR 12). The Adventure Page and `recommendations` are on `ebenbsmith/wab-14-adventure-page` until its PR merges.
 
-**Database** (ten migrations; the old schema is deleted):
+**Database** (eleven migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
@@ -61,8 +61,8 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - `respond_to_connection_request(connection_id, accept)`: only the addressee, only while pending; does nothing otherwise.
   - `my_connections()`: `connection_id`, `nomad_id`, `username`, `avatar_url`, `status`, `outgoing`. A declined request shows as `pending` to the asker and disappears for the decliner. Outgoing requests that aren't accepted drop out after 30 days since `last_asked_at`; incoming ones stay until answered.
   - Migrations `nomad_connections`, `declined_nomads_can_change_their_mind`, `outgoing_requests_fade`, `asking_again_restarts_the_fade`. 
-- `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 5, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
-  - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie list for <username> is full" (5 per media type per pair). New picks get the next rank.
+- `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 3, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
+  - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie route for <username> is full" (**3 per media type per pair**, decided 2026-10-08; migration `routes_hold_three_stops`). New picks get the next rank.
   - `adventure_recommendations(nomad_id)`: `id`, `outgoing`, `rank`, `reasons`, `media_item_id`, `type`, `external_id`, `title`, `year`, `metadata`, both directions between you and that nomad only, and nothing at all unless you're accepted fellow nomads (so picks hide if a connection ever ends).
   - Migration `recommendations`. No remove, reorder, edit, rate or pass yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
@@ -95,7 +95,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
   - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
 - `src/lib/connections.ts` also has `findNomad(nomads, username)` (ignores case, `null` when not a fellow nomad).
-- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 5`.
+- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 3`.
 - `src/hooks/use-adventure.ts`: `useAdventure(nomadId | null, type)` returns `{ fromThem, toThem, isLoading, error, add(mediaItemId, reasons) }`. Key `['adventure', nomadId]`, off until the nomad is known; `add` cleans reasons, then refreshes.
 - `src/hooks/use-connections.ts`: `useConnections()` returns `{ nomads, incoming, outgoing, isLoading, error, send(username), respond(id, accept) }`. React Query key `['connections']`; `send` and `respond` refresh the list afterwards; `send` rejects with the database's message so the screen can show it.
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
@@ -121,7 +121,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - Header: back (`adventure-back`; `router.back()` or `replace('/')` when there's no history), ADVENTURE plate, both avatars (`you` and `friend` colors), "You & <username>" (`adventure-title`), `@username · Fellow Nomad` (`adventure-nomad`). Your `AccountButton` sits on the right, so you can sign out from here too (WAB-38).
   - Tabs: Movies works; Series and Books are disabled with "SOON" (`adventure-tab-movies` and so on).
   - **Web: IN and OUT side by side at 900 px and wider; stacked below** (decided by Eben with Jake's go-ahead, 2026-10-07; Jake's canvas only has the phone version). Uses `useWindowDimensions`.
-  - IN (`adventure-in`): their picks for you, collapsible (`adventure-in-toggle`) with 5 pips, rows `adventure-in-<external_id>`, "Only <nomad> can change this list."
+  - IN (`adventure-in`): their picks for you, collapsible (`adventure-in-toggle`) with 3 pips, rows `adventure-in-<external_id>`, "Only <nomad> can change this list."
   - OUT (`adventure-out`): your picks, rows `adventure-out-<external_id>` with "<nomad> hasn't rated it yet". "Add a movie for <nomad>" (`adventure-add`, disabled when full) opens `MediaSearchModal`; picking shows a reasons form (`adventure-reason-1..3`, `adventure-save`, `adventure-cancel`, errors in `adventure-add-error`). Footer `adventure-slots`: "N SLOTS OPEN. MAKE THEM COUNT." or "LIST FULL".
 - Unused Expo template components and images were deleted. Still in place: `src/hooks/use-color-scheme.web.ts` (used, but its hydration guard is pointless now that output is `"single"`).
 
@@ -131,7 +131,7 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 
 ## Next steps
 
-1. **Eben clicks through the Adventure Page on web** (not done yet; this run had no browser): Paul asks Bart, Bart accepts, Paul taps Bart, adds a movie with reasons, Bart opens Paul and sees it under IN; fill to 5 and Add goes dim; `/adventure/nobody` shows NO SIGNAL; drag the window narrow and wide to see the lists stack and sit side by side. Then the PR.
+1. **Eben clicks through the Adventure Page on web** (not done yet; this run had no browser): Paul asks Bart, Bart accepts, Paul taps Bart, adds a movie with reasons, Bart opens Paul and sees it under IN; fill to 3 and Add goes dim; `/adventure/nobody` shows NO SIGNAL; drag the window narrow and wide to see the lists stack and sit side by side. Then the PR.
 2. **Adventure Page, next slice (WAB-14):** remove a pick, reorder (the mockup has drag handles), edit reasons. Then rate and pass (WAB-15, 20, 21), which take picks off every list and into History, then the LISTS / HISTORY toggle. Maybe a "NEW" tag when someone accepts (WAB-10's "is informed"), and remove or block (WAB-30).
 3. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
 4. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
@@ -163,7 +163,7 @@ Friends recommend movies, series and books to each other. Your friends know what
 ## The model (decided 2026-09-28, in the tickets)
 
 - **Sign-up:** Google sign-in, then pick a unique username and an avatar from the camera roll. That's it.
-- **The list belongs to the sherpa**: one per sherpa, per pilgrim, per media type ("Eben's movie list for Jake"). Hard cap of **5 active picks**. Sherpa adds, removes, reorders, edits reasons; the pilgrim can't edit it.
+- **The list belongs to the sherpa**: one per sherpa, per pilgrim, per media type ("Eben's movie list for Jake"). Hard cap of **3 active picks** (was 5 until 2026-10-08). Sherpa adds, removes, reorders, edits reasons; the pilgrim can't edit it.
 - **1 to 3 short reasons per pick**, at least one required, private to the pair.
 - **Ratings and passes belong to (pilgrim, media)**, not to one sherpa. Either one takes the pick off *every* sherpa's list (freeing spots) and into History, and **nobody can recommend that media to the pilgrim again**. Ratings can be changed later (rewatch). A pass is final, needs a reason, and every sherpa who had it on their list sees the reason. You can only rate or pass on media recommended to you, and not both.
 - **Sherpa's own rating is 2.0.** History shows only the pilgrim's rating or pass for now.
