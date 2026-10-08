@@ -1,6 +1,21 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-07 (Eben's Mac). **Adventure Page, first cut** (branch `ebenbsmith/wab-14-adventure-page`, not merged yet): tap a fellow nomad on Basecamp to open `/adventure/<username>`, see their movie picks for you (IN) and yours for them (OUT) side by side on web, stacked on phones, and add a movie with 1 to 3 reasons through the search modal. Sign out now works from your avatar on every screen (WAB-38). New `recommendations` table and two database functions. Built in one autonomous run on a branch (Eben's call), one commit at the end. Earlier the same day: **Fellow nomads work end to end on web** (WAB-9 add, WAB-10 accept or decline): the `nomad_connections` table and its three database functions, the request rules Eben decided (quiet declines, a change of heart connects you, outgoing requests fade after 30 days; see "Requests and declines" in WAB-9), and a real **Basecamp** built from Jake's canvas (header, CH-01 Fellow Nomads, CH-02 Nomad requests). Two **seed users with avatars** (`bart-harley-jarvis`, `paul-bufano`) sign in through a dev-only email form, so testing no longer needs Google. Branch `ebenbsmith/wab-9-fellow-nomads-add-a-nomad`. Next up: Playwright against the seed users, then the Adventure Page (WAB-14)._
+_Last sessions: 2026-10-07 and 08 (Eben's Mac)._
+
+- **Built and in PR #13** (`ebenbsmith/wab-14-adventure-page`, merging to `main`):
+  - The Adventure Page: tap a fellow nomad on Basecamp to open `/adventure/<username>`, with IN and OUT lists (side by side on web, stacked on phones) and adding a movie with 1 to 3 reasons (WAB-11, WAB-14).
+  - Sign out from your avatar on every screen (WAB-38).
+  - The `recommendations` table and its two functions, now capped at **3 stops** per route (WAB-40).
+- **Designed, not built:** the **wasteland world** (WAB-39). Sherpa and pilgrim are gone: **navigators** plot **routes** of **3 stops** for fellow **nomads**. Ratings show as **encounters** (Mutant Infestation … Found an Oasis), passing is a **reroute**, and history is the **Nomad's Log**. The Adventure Page becomes a **road map**. Everything is on the [Wasteland Adventure Map canvas](https://claude.ai/artifact/VXnLDmWxEd7C8DUYtg14Mx) and in WAB-39's sub-tickets **WAB-41 to WAB-44**, which are the build order.
+- **Way of working that went well, when Eben opts in:** Eben agreed a plan and a stopping point up front, then Claude ran it in auto mode on its own branch, still strictly test-first, with one commit at the end that Eben names. Check in when a product rule isn't in the tickets; make a conservative call and list it in the summary rather than stopping.
+
+## Next session: start here
+
+1. `git switch main && git pull`, then do **After you pull** below. PR #13 brings two migrations (`recommendations`, `routes_hold_three_stops`), so run `npx supabase migration up` (or `npx supabase db reset` for a clean slate with the seed users).
+2. Read **WAB-39** (the names, decisions and build order), then open the canvas. Every board is clickable, and the Tweaks have **Just Starting Out** (road) and **Route Full** (plot a stop).
+3. Branch for **WAB-41** (`ebenbsmith/wab-41-adventure-page-as-a-road-map-your-road-nav-console`, Linear's name). It's the road map with today's data and **no database changes**, rebuilt from the current `AdventureScreen`. Then WAB-42, WAB-43 and WAB-44, in that order.
+4. The old `ebenbsmith/wab-39-wasteland-road-map` branch is empty (just PR #13's commits) and can be deleted.
+5. Encounters 3 and 4, the log templates and the app rename (Media Wasteland Nomads) are waiting on Eben and Jake. Leave them as clearly marked placeholders in one place.
 
 ## Start here
 
@@ -21,6 +36,13 @@ _Last session: 2026-10-07 (Eben's Mac). **Adventure Page, first cut** (branch `e
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
 | WAB-11 | In progress, built: tapping a Fellow Nomads row opens the Adventure Page |
 | WAB-30 | Remove or block a nomad. Not started. Block is "never" where a decline is "not now" |
+| **WAB-39 Wasteland world** | **Read this before touching the Adventure Page.** New names, encounters, the Nomad's Log, the road map, plotting a stop. Its sub-tickets are the build order |
+| WAB-40 | A route holds 3 stops, not 5. **Done** in PR #13 (migration `routes_hold_three_stops`) |
+| WAB-41 | The Adventure Page as a road map with today's data (no database changes) |
+| WAB-42 | Plot a stop: search, reasons, live preview, replace when full, dimmed results |
+| WAB-43 | Reaching a stop: stars + reasons → encounter, reroute, field reports (new table) |
+| WAB-44 | Nomad's Log with ad-libbed stories (waits on Eben and Jake's templates) |
+| WAB-36, 37 | Small defects: request avatars, search placeholder |
 | WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
@@ -49,7 +71,7 @@ Then restart `npx expo start --web` if packages changed, and restart `npx supaba
 
 Everything below was built test-first. The fellow nomads work is merged (PR 12). The Adventure Page and `recommendations` are on `ebenbsmith/wab-14-adventure-page` until its PR merges.
 
-**Database** (ten migrations; the old schema is deleted):
+**Database** (eleven migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
@@ -61,8 +83,8 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - `respond_to_connection_request(connection_id, accept)`: only the addressee, only while pending; does nothing otherwise.
   - `my_connections()`: `connection_id`, `nomad_id`, `username`, `avatar_url`, `status`, `outgoing`. A declined request shows as `pending` to the asker and disappears for the decliner. Outgoing requests that aren't accepted drop out after 30 days since `last_asked_at`; incoming ones stay until answered.
   - Migrations `nomad_connections`, `declined_nomads_can_change_their_mind`, `outgoing_requests_fade`, `asking_again_restarts_the_fade`. 
-- `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 5, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
-  - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie list for <username> is full" (5 per media type per pair). New picks get the next rank.
+- `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 3, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
+  - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie route for <username> is full" (**3 per media type per pair**, decided 2026-10-08; migration `routes_hold_three_stops`). New picks get the next rank.
   - `adventure_recommendations(nomad_id)`: `id`, `outgoing`, `rank`, `reasons`, `media_item_id`, `type`, `external_id`, `title`, `year`, `metadata`, both directions between you and that nomad only, and nothing at all unless you're accepted fellow nomads (so picks hide if a connection ever ends).
   - Migration `recommendations`. No remove, reorder, edit, rate or pass yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
@@ -95,7 +117,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
   - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
 - `src/lib/connections.ts` also has `findNomad(nomads, username)` (ignores case, `null` when not a fellow nomad).
-- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 5`.
+- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 3`.
 - `src/hooks/use-adventure.ts`: `useAdventure(nomadId | null, type)` returns `{ fromThem, toThem, isLoading, error, add(mediaItemId, reasons) }`. Key `['adventure', nomadId]`, off until the nomad is known; `add` cleans reasons, then refreshes.
 - `src/hooks/use-connections.ts`: `useConnections()` returns `{ nomads, incoming, outgoing, isLoading, error, send(username), respond(id, accept) }`. React Query key `['connections']`; `send` and `respond` refresh the list afterwards; `send` rejects with the database's message so the screen can show it.
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
@@ -121,7 +143,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - Header: back (`adventure-back`; `router.back()` or `replace('/')` when there's no history), ADVENTURE plate, both avatars (`you` and `friend` colors), "You & <username>" (`adventure-title`), `@username · Fellow Nomad` (`adventure-nomad`). Your `AccountButton` sits on the right, so you can sign out from here too (WAB-38).
   - Tabs: Movies works; Series and Books are disabled with "SOON" (`adventure-tab-movies` and so on).
   - **Web: IN and OUT side by side at 900 px and wider; stacked below** (decided by Eben with Jake's go-ahead, 2026-10-07; Jake's canvas only has the phone version). Uses `useWindowDimensions`.
-  - IN (`adventure-in`): their picks for you, collapsible (`adventure-in-toggle`) with 5 pips, rows `adventure-in-<external_id>`, "Only <nomad> can change this list."
+  - IN (`adventure-in`): their picks for you, collapsible (`adventure-in-toggle`) with 3 pips, rows `adventure-in-<external_id>`, "Only <nomad> can change this list."
   - OUT (`adventure-out`): your picks, rows `adventure-out-<external_id>` with "<nomad> hasn't rated it yet". "Add a movie for <nomad>" (`adventure-add`, disabled when full) opens `MediaSearchModal`; picking shows a reasons form (`adventure-reason-1..3`, `adventure-save`, `adventure-cancel`, errors in `adventure-add-error`). Footer `adventure-slots`: "N SLOTS OPEN. MAKE THEM COUNT." or "LIST FULL".
 - Unused Expo template components and images were deleted. Still in place: `src/hooks/use-color-scheme.web.ts` (used, but its hydration guard is pointless now that output is `"single"`).
 
@@ -131,8 +153,8 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 
 ## Next steps
 
-1. **Eben clicks through the Adventure Page on web** (not done yet; this run had no browser): Paul asks Bart, Bart accepts, Paul taps Bart, adds a movie with reasons, Bart opens Paul and sees it under IN; fill to 5 and Add goes dim; `/adventure/nobody` shows NO SIGNAL; drag the window narrow and wide to see the lists stack and sit side by side. Then the PR.
-2. **Adventure Page, next slice (WAB-14):** remove a pick, reorder (the mockup has drag handles), edit reasons. Then rate and pass (WAB-15, 20, 21), which take picks off every list and into History, then the LISTS / HISTORY toggle. Maybe a "NEW" tag when someone accepts (WAB-10's "is informed"), and remove or block (WAB-30).
+1. **Merge PR #13** (Jake reviews). It includes WAB-40, so `main` never carries the 5-stop rule.
+2. **Build the road map in WAB-39's order:** WAB-41 (road map with today's data), WAB-42 (plot a stop), WAB-43 (reaching a stop), then WAB-44 (the log, once the templates exist). The canvas is the source of truth for the look. Every board is interactive, and the Tweaks have switches like Just Starting Out and Route Full.
 3. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
 4. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
 5. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
@@ -144,6 +166,8 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 Friends recommend movies, series and books to each other. Your friends know what you'll actually connect with. The product is the recommendation itself, and eventually knowing *whose* recommendations are reliably right for you. It should feel like an adventure between two friends: a community with zero advertising. Eben wants it **lightweight**: get opinionated later, once we know more.
 
 ## Vocabulary (from WAB-13)
+
+**Being replaced by WAB-39's wasteland words** (navigator, nomad, route, encounter, reroute, Nomad's Log). WAB-13 gets updated once Eben and Jake settle the open ones. The table below is the old vocabulary.
 
 | Term | Meaning |
 |---|---|
@@ -163,7 +187,7 @@ Friends recommend movies, series and books to each other. Your friends know what
 ## The model (decided 2026-09-28, in the tickets)
 
 - **Sign-up:** Google sign-in, then pick a unique username and an avatar from the camera roll. That's it.
-- **The list belongs to the sherpa**: one per sherpa, per pilgrim, per media type ("Eben's movie list for Jake"). Hard cap of **5 active picks**. Sherpa adds, removes, reorders, edits reasons; the pilgrim can't edit it.
+- **The list belongs to the sherpa**: one per sherpa, per pilgrim, per media type ("Eben's movie list for Jake"). Hard cap of **3 active picks** (was 5 until 2026-10-08). Sherpa adds, removes, reorders, edits reasons; the pilgrim can't edit it.
 - **1 to 3 short reasons per pick**, at least one required, private to the pair.
 - **Ratings and passes belong to (pilgrim, media)**, not to one sherpa. Either one takes the pick off *every* sherpa's list (freeing spots) and into History, and **nobody can recommend that media to the pilgrim again**. Ratings can be changed later (rewatch). A pass is final, needs a reason, and every sherpa who had it on their list sees the reason. You can only rate or pass on media recommended to you, and not both.
 - **Sherpa's own rating is 2.0.** History shows only the pilgrim's rating or pass for now.
@@ -222,6 +246,8 @@ Friends recommend movies, series and books to each other. Your friends know what
 - **Postgres won't take `position` as a column name in `returns table (...)`** (syntax error). Use another word (`rank`).
 - **macOS `sed` has no `\b`.** A `sed -E 's/\bword\b/.../'` silently matches nothing. Use `perl -pi -e` for word-boundary edits.
 - **`renderRouter` in RNTL 14 returns a promise with extras on it.** `await renderRouter(...)` loses `getPathname()`. Keep the result, then await it: `const router = renderRouter('src/app'); await router; router.getPathname()`.
+- **After `npx supabase db reset`, running one pgTAP file on its own fails** with `schema "tests" does not exist`. The reset wipes the helper schema, and only `00000-test-helpers.sql` recreates it. Run the whole suite (`npm run test:db`) once first.
+- **Design canvases use tape-label tiles for covers.** In the app, covers come from TMDB through `MediaPoster` (`src/components/media-poster.tsx`).
 - **Changing a database function that's already applied: add a new migration** with `create or replace function …` (it keeps the function's grants, so the `anon` revoke still holds). Editing an applied migration means everyone needs a `db reset`. A migration you're still iterating on can be re-applied by hand: `psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f <file>`. A fresh `db reset` before committing proves the migrations apply in order.
 - **Breaking code on purpose for a pgTAP test** without touching files: pipe an altered copy of the function through `psql` (e.g. `sed … migration.sql | psql …`), run `npm run test:db`, then re-apply the real migration file the same way.
 - **React Query in Jest:** a test `QueryClient` needs `gcTime: Infinity` (plus `retry: false`), or React Query's 5-minute cleanup timer keeps Jest running after the tests finish. Tests with fake timers (`use-media-search`) don't hit it.
@@ -240,6 +266,7 @@ The canvases are the source of truth for how screens should look; there are no c
 | Canvas | What's on it | Status | Owner | Linked from |
 |---|---|---|---|---|
 | [Basecamp](https://claude.ai/artifact/McuDsyS912uQUoDSAKoW7K) | The ship-computer look: Basecamp on web and phone, the "no nomads yet" empty state, and the Adventure Page on a phone | **Current** | Jake | WAB-33, WAB-14, WAB-31 |
+| [Wasteland Adventure Map](https://claude.ai/artifact/VXnLDmWxEd7C8DUYtg14Mx) | The Adventure Page as a road map: your road (web and phone), the Nav Console, field reports, the encounters field guide, and Plot a stop (web, phone, and the panel on its own). Sticky notes hold Eben's and Jake's decisions | **Current** (2026-10-08) | Eben | WAB-39 to WAB-44 |
 | [Adventure Page](https://claude.ai/artifact/2kVf1bEuKMdUR9h8p14bAA) | The first Adventure Page mockup, in the old purple palette with Bricolage Grotesque and Figtree. Eben's and Jake's notes are in WAB-14 | **Outdated** (the layout ideas still hold; the look doesn't) | Eben | WAB-14 |
 
 **Direction:** bold, exciting, fun. A muted, earthy first try was rejected. Letting each nomad pick their own colors is a 2.0 idea.
@@ -259,9 +286,9 @@ The canvases are the source of truth for how screens should look; there are no c
 
 | Command | Result |
 |---|---|
-| `npm test` | 134 passed, 19 files |
+| `npm test` | 136 passed, 19 files |
 | `npm run test:functions` | 18 passed, 2 files |
-| `npm run test:db` | 94 passed, 9 files |
+| `npm run test:db` | 95 passed, 9 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
 | `npx tsc --noEmit` | passes |
 | `npx expo lint` | passes |

@@ -59,10 +59,10 @@ test('adds a recommendation for a fellow nomad', async () => {
 });
 
 test('passes along the reason a recommendation was refused', async () => {
-  mockRpc.mockResolvedValue({ data: null, error: databaseError('Your movie list for roy-donk is full') });
+  mockRpc.mockResolvedValue({ data: null, error: databaseError('Your movie route for roy-donk is full') });
 
   await expect(addRecommendation('roy-id', 'media-1', ['Hi'])).rejects.toThrow(
-    'Your movie list for roy-donk is full',
+    'Your movie route for roy-donk is full',
   );
 });
 
@@ -118,7 +118,7 @@ test('splits one media type into their picks for you and your picks for them, by
 });
 
 test('counts the open slots in a list', () => {
-  expect(MAX_PICKS).toBe(5);
-  expect(openSlots([])).toBe(5);
-  expect(openSlots([recommendation('Coffin Flop', 1, true), recommendation('Little Buff Boys', 2, true)])).toBe(3);
+  expect(MAX_PICKS).toBe(3);
+  expect(openSlots([])).toBe(3);
+  expect(openSlots([recommendation('Coffin Flop', 1, true), recommendation('Little Buff Boys', 2, true)])).toBe(1);
 });

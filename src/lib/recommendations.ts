@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export type Recommendation =
   Database['public']['Functions']['adventure_recommendations']['Returns'][number];
 
-export const MAX_PICKS = 5;
+export const MAX_PICKS = 3;
 
 const MAX_REASONS = 3;
 const MAX_REASON_LENGTH = 140;
