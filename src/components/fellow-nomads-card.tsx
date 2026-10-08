@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { NomadAvatar } from '@/components/nomad-avatar';
 import { CrtScreen, ShipButton, ShipPanel } from '@/components/ship-panel';
@@ -13,9 +13,10 @@ type FellowNomadsCardProps = {
   isLoading: boolean;
   error: string | null;
   onSend: (username: string) => Promise<void>;
+  onOpenNomad: (username: string) => void;
 };
 
-export function FellowNomadsCard({ nomads, isLoading, error, onSend }: FellowNomadsCardProps) {
+export function FellowNomadsCard({ nomads, isLoading, error, onSend, onOpenNomad }: FellowNomadsCardProps) {
   const theme = useTheme();
 
   return (
@@ -46,7 +47,7 @@ export function FellowNomadsCard({ nomads, isLoading, error, onSend }: FellowNom
           </View>
         )}
         {nomads.map((nomad) => (
-          <NomadRow key={nomad.connection_id} nomad={nomad} />
+          <NomadRow key={nomad.connection_id} nomad={nomad} onOpen={() => onOpenNomad(nomad.username)} />
         ))}
       </CrtScreen>
       <AddNomad onSend={onSend} />
@@ -54,11 +55,16 @@ export function FellowNomadsCard({ nomads, isLoading, error, onSend }: FellowNom
   );
 }
 
-function NomadRow({ nomad }: { nomad: Connection }) {
+function NomadRow({ nomad, onOpen }: { nomad: Connection; onOpen: () => void }) {
   const theme = useTheme();
 
   return (
-    <View style={styles.row} testID={`fellow-nomad-${nomad.username}`}>
+    <Pressable
+      accessibilityLabel={`Open adventure with ${nomad.username}`}
+      accessibilityRole="button"
+      onPress={onOpen}
+      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? theme.bezel : 'transparent' }]}
+      testID={`fellow-nomad-${nomad.username}`}>
       <NomadAvatar
         avatarUrl={nomad.avatar_url}
         frameColor={theme.phosphor}
@@ -72,7 +78,8 @@ function NomadRow({ nomad }: { nomad: Connection }) {
         style={[styles.username, { color: theme.phosphor, textShadowColor: theme.phosphorDim }]}>
         {nomad.username}
       </ThemedText>
-    </View>
+      <ThemedText style={[styles.chevron, { color: theme.phosphorDim }]}>›</ThemedText>
+    </Pressable>
   );
 }
 
@@ -187,6 +194,11 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: Spacing.two,
     paddingVertical: 6,
+  },
+  chevron: {
+    fontFamily: Typefaces.screen,
+    fontSize: 28,
+    lineHeight: 28,
   },
   username: {
     flex: 1,

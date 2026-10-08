@@ -22,6 +22,11 @@ export function groupConnections(connections: Connection[]): ConnectionGroups {
   };
 }
 
+export function findNomad(nomads: Connection[], username: string): Connection | null {
+  const wanted = username.toLowerCase();
+  return nomads.find((nomad) => nomad.username.toLowerCase() === wanted) ?? null;
+}
+
 export async function sendConnectionRequest(username: string) {
   const { error } = await supabase.rpc('send_connection_request', { username });
   if (error) throw error;

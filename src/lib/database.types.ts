@@ -56,13 +56,52 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"recommendations": {
+                  Row: {
+                    "created_at": string,"id": string,"media_item_id": string,"rank": number,"reasons": (string)[],"recipient_id": string,"recommender_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"media_item_id": string,"rank": number,"reasons": (string)[],"recipient_id": string,"recommender_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"media_item_id"?: string,"rank"?: number,"reasons"?: (string)[],"recipient_id"?: string,"recommender_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "recommendations_media_item_id_fkey"
+      columns: ["media_item_id"]
+isOneToOne: false
+      referencedRelation: "media_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "recommendations_recipient_id_fkey"
+      columns: ["recipient_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "recommendations_recommender_id_fkey"
+      columns: ["recommender_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "my_connections":
+            "add_recommendation":
+{ Args: { "media_item_id": string,"nomad_id": string,"reasons": (string)[] }; Returns: string
+                           },
+"adventure_recommendations":
+{ Args: { "nomad_id": string }; Returns: {
+              "external_id": string,"id": string,"media_item_id": string,"metadata": Json,"outgoing": boolean,"rank": number,"reasons": (string)[],"title": string,"type": string,"year": number
+            }[]
+                           },
+"my_connections":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
             }[]

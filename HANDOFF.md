@@ -1,6 +1,6 @@
 # Handoff: Media Advisory Board
 
-_Last session: 2026-10-07 (Eben's Mac, Jake on a call for part of it). **Fellow nomads work end to end on web** (WAB-9 add, WAB-10 accept or decline): the `nomad_connections` table and its three database functions, the request rules Eben decided (quiet declines, a change of heart connects you, outgoing requests fade after 30 days; see "Requests and declines" in WAB-9), and a real **Basecamp** built from Jake's canvas (header, CH-01 Fellow Nomads, CH-02 Nomad requests). Two **seed users with avatars** (`bart-harley-jarvis`, `paul-bufano`) sign in through a dev-only email form, so testing no longer needs Google. Branch `ebenbsmith/wab-9-fellow-nomads-add-a-nomad`. Next up: Playwright against the seed users, then the Adventure Page (WAB-14)._
+_Last session: 2026-10-07 (Eben's Mac). **Adventure Page, first cut** (branch `ebenbsmith/wab-14-adventure-page`, not merged yet): tap a fellow nomad on Basecamp to open `/adventure/<username>`, see their movie picks for you (IN) and yours for them (OUT) side by side on web, stacked on phones, and add a movie with 1 to 3 reasons through the search modal. Sign out now works from your avatar on every screen (WAB-38). New `recommendations` table and two database functions. Built in one autonomous run on a branch (Eben's call), one commit at the end. Earlier the same day: **Fellow nomads work end to end on web** (WAB-9 add, WAB-10 accept or decline): the `nomad_connections` table and its three database functions, the request rules Eben decided (quiet declines, a change of heart connects you, outgoing requests fade after 30 days; see "Requests and declines" in WAB-9), and a real **Basecamp** built from Jake's canvas (header, CH-01 Fellow Nomads, CH-02 Nomad requests). Two **seed users with avatars** (`bart-harley-jarvis`, `paul-bufano`) sign in through a dev-only email form, so testing no longer needs Google. Branch `ebenbsmith/wab-9-fellow-nomads-add-a-nomad`. Next up: Playwright against the seed users, then the Adventure Page (WAB-14)._
 
 ## Start here
 
@@ -19,7 +19,8 @@ _Last session: 2026-10-07 (Eben's Mac, Jake on a call for part of it). **Fellow 
 | WAB-14 Adventure Page | The page between two nomads. Has a "Decisions" section |
 | WAB-15 Media Context Page | One piece of media: rate it or pass on it |
 | WAB-8 Sherpa Recommendation System | Overview. Sub-tickets WAB-16 to WAB-24 (search, recommend, reasons, ranking, rating, pass, scores, tagging) |
-| WAB-11, 30 | Fellow Nomads: open an Adventure Page, remove or block. Not started. Block is "never" where a decline is "not now" |
+| WAB-11 | In progress, built: tapping a Fellow Nomads row opens the Adventure Page |
+| WAB-30 | Remove or block a nomad. Not started. Block is "never" where a decline is "not now" |
 | WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
 | WAB-27 Stickers (2.0), WAB-24 Tagging (later) | Backlog |
@@ -46,9 +47,9 @@ Then restart `npx expo start --web` if packages changed, and restart `npx supaba
 
 ## Where things stand
 
-Everything below was built test-first. The fellow nomads work (connections, Basecamp, seed users) is on `ebenbsmith/wab-9-fellow-nomads-add-a-nomad` until its PR merges; the rest is on `main`.
+Everything below was built test-first. The fellow nomads work is merged (PR 12). The Adventure Page and `recommendations` are on `ebenbsmith/wab-14-adventure-page` until its PR merges.
 
-**Database** (nine migrations; the old schema is deleted):
+**Database** (ten migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
@@ -59,7 +60,11 @@ Everything below was built test-first. The fellow nomads work (connections, Base
   - `send_connection_request(username)`: case-insensitive lookup. Raises "No nomad named …" or "You can't connect with yourself". If they already asked you (pending **or** declined), you're connected on the spot. If you already asked them, only `last_asked_at` resets. Otherwise inserts a pending row.
   - `respond_to_connection_request(connection_id, accept)`: only the addressee, only while pending; does nothing otherwise.
   - `my_connections()`: `connection_id`, `nomad_id`, `username`, `avatar_url`, `status`, `outgoing`. A declined request shows as `pending` to the asker and disappears for the decliner. Outgoing requests that aren't accepted drop out after 30 days since `last_asked_at`; incoming ones stay until answered.
-  - Migrations `nomad_connections`, `declined_nomads_can_change_their_mind`, `outgoing_requests_fade`, `asking_again_restarts_the_fade`. No recommendations yet.
+  - Migrations `nomad_connections`, `declined_nomads_can_change_their_mind`, `outgoing_requests_fade`, `asking_again_restarts_the_fade`. 
+- `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 5, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
+  - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie list for <username> is full" (5 per media type per pair). New picks get the next rank.
+  - `adventure_recommendations(nomad_id)`: `id`, `outgoing`, `rank`, `reasons`, `media_item_id`, `type`, `external_id`, `title`, `year`, `metadata`, both directions between you and that nomad only, and nothing at all unless you're accepted fellow nomads (so picks hide if a connection ever ends).
+  - Migration `recommendations`. No remove, reorder, edit, rate or pass yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
 
 **Edge function `media-search`** (WAB-16; the old `search-media` was never run and is deleted):
@@ -89,23 +94,35 @@ Everything below was built test-first. The fellow nomads work (connections, Base
   - `avatar.ts`: `pickAvatar()` (one square image, 0.8 quality, falls back to `image/jpeg`) and `uploadAvatar(userId, avatar)` (to `<id>/avatar.<type>` with `upsert`, returns the public URL).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
   - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
+- `src/lib/connections.ts` also has `findNomad(nomads, username)` (ignores case, `null` when not a fellow nomad).
+- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 5`.
+- `src/hooks/use-adventure.ts`: `useAdventure(nomadId | null, type)` returns `{ fromThem, toThem, isLoading, error, add(mediaItemId, reasons) }`. Key `['adventure', nomadId]`, off until the nomad is known; `add` cleans reasons, then refreshes.
 - `src/hooks/use-connections.ts`: `useConnections()` returns `{ nomads, incoming, outgoing, isLoading, error, send(username), respond(id, accept) }`. React Query key `['connections']`; `send` and `respond` refresh the list afterwards; `send` rejects with the database's message so the screen can show it.
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
 - `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. While the field has focus its border lights up `phosphorDim` (instead of the browser's blue focus ring). No unit tests on purpose; Playwright will cover it.
 - `src/components/media-search-modal.tsx`: `MediaSearchModal` (props `visible`, `type`, `onPick(item)`, `onClose()`) wraps `MediaSearch` in React Native's `Modal`: a header with a `CH-01` plate, "SEARCH MOVIES" and a close button (`media-search-modal-close`). On web it's a centered panel (up to 640 px) over a `scrim` backdrop that closes it when clicked (`media-search-modal-backdrop`); on phones it slides up full screen. Picking a result calls `onPick`, then closes. This is how the Adventure Page's Movies tab (WAB-14) should open search. A `Modal` rather than a modal route because it's a self-contained task that hands a value back (Expo's docs recommend `Modal` for that).
-- **`src/app/dev/media-search.tsx` is temporary**: a page with a "Search movies" button that opens `MediaSearchModal`, signed-in nomads with a profile only (listed under the `ready` guard in `_layout.tsx`). Delete the file and its `Stack.Screen` once the Adventure Page uses the modal.
+- `src/components/account-button.tsx`: `AccountButton` (WAB-38), your avatar plus `OPERATOR: <USERNAME>` as one button (`account-button`, plate text `account-operator`) that opens Sign out (`account-sign-out`). On Basecamp and the Adventure Page; every new screen's header should use it.
+- `src/components/media-poster.tsx`: `MediaPoster` (w92 TMDB poster or the tape-label tile), shared by search results and the Adventure Page. `posterPath` takes anything with `metadata`.
+- The temporary `dev/media-search` page is gone; the Adventure Page uses the modal now.
 - `src/components/tmdb-attribution.tsx`: the notice TMDB requires wherever its data shows. Text only; TMDB also asks for its logo, which needs downloading from TMDB and hasn't been approved yet.
 - React Query's `QueryClientProvider` wraps everything in `src/app/_layout.tsx`.
 - Fonts: `useAppFonts()` (`src/hooks/use-app-fonts.ts`) loads the four faces in `Typefaces`, and counts as ready even if loading fails, so nobody is stuck on the splash screen. `RootNavigator` waits for both the session and the fonts. `ThemedText` titles and subtitles use Michroma; other text uses Space Mono.
 - `src/providers/session-provider.tsx`: `useSession()` returns `{ status, session, profile, refreshProfile }`, status one of `loading`, `signedOut`, `needsProfile`, `ready`.
-- `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp) and the temporary `dev/media-search`.
+- `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp) and `adventure/[username]`.
 - **Pick a username screen** (`PickUsernameScreen`, props `checkUsername`, `onSubmit`, `onSignOut`, `pickAvatar`): spaces and underscores become dashes as you type; half a second after you stop typing a valid name it shows "… is taken" / "… is available" (clears when you type, checks only the name you stop on, ignores stale answers); "Pick an avatar" with a round preview; Continue checks the name rule, then asks for a photo, then sends both. The route (`src/app/pick-username.tsx`) calls `finishSignUp`, then `refreshProfile()`.
 - Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. Both button components **require** a `testID`: `ActionButton` (the older rounded one, still on sign-in and pick-username) and `ShipButton` (ship-computer style, `hazard` | `phosphor` | `panel`, used on Basecamp).
 - **Basecamp** (`BasecampScreen`, built from Jake's canvas; the route `src/app/index.tsx` passes in `useConnections()` and the profile). No unit tests on purpose; Playwright will cover it:
-  - **Header:** "MEDIA ADVISORY BOARD · DEEP FIELD UNIT MAB-1", the red status eye beside a neon BASECAMP title. Your avatar and `OPERATOR: <USERNAME>` plate are one button (`basecamp-account`, plate text `basecamp-operator`) that opens Sign out (`basecamp-sign-out`). A red line and a hazard stripe run underneath.
+  - **Header:** "MEDIA ADVISORY BOARD · DEEP FIELD UNIT MAB-1", the red status eye beside a neon BASECAMP title. Your avatar and `OPERATOR: <USERNAME>` plate are the shared `AccountButton` (see below). A red line and a hazard stripe run underneath.
   - **CH-01 Fellow Nomads** (`fellow-nomads-card.tsx`): a two-digit count (`fellow-nomads-count`), rows `fellow-nomad-<username>` with an avatar, the "NO SIGNAL" empty state (`fellow-nomads-empty`), then "ADD A NOMAD BY USERNAME" (`add-nomad-input`, placeholder `#username` that hides on focus; `add-nomad-send`, disabled while empty). Shows `REQUEST SENT TO …` (`add-nomad-sent`) or the error in `alert` red (`add-nomad-error`).
   - **CH-02 Nomad requests** (`nomad-requests-card.tsx`): incoming as "INCOMING TRANSMISSION" with Accept / Decline (`incoming-<username>-accept`, `-decline`); outgoing as dim "OUTGOING TRANSMISSION · waiting for a yes" (`outgoing-<username>`); "NO TRANSMISSIONS" when empty.
   - Shared pieces in `ship-panel.tsx`: `ShipPanel` (riveted card with a `CH-xx` plate), `Plate`, `CrtScreen`, `ShipButton`, `HazardStripe`. `nomad-avatar.tsx`: `NomadAvatar` shows the picture, or the initial when there's no `avatar_url`.
+- **Adventure Page** (`AdventureScreen`, route `src/app/adventure/[username].tsx`, under the `ready` guard; WAB-11, WAB-14). No unit tests for the look on purpose; routing tests cover reaching it, and Playwright will cover the rest:
+  - Basecamp rows (`fellow-nomad-<username>`) are buttons that `router.push('/adventure/<username>')`. The page finds the nomad in `my_connections()` with `findNomad`; anyone else gets "NO SIGNAL" (`adventure-not-found`).
+  - Header: back (`adventure-back`; `router.back()` or `replace('/')` when there's no history), ADVENTURE plate, both avatars (`you` and `friend` colors), "You & <username>" (`adventure-title`), `@username · Fellow Nomad` (`adventure-nomad`). Your `AccountButton` sits on the right, so you can sign out from here too (WAB-38).
+  - Tabs: Movies works; Series and Books are disabled with "SOON" (`adventure-tab-movies` and so on).
+  - **Web: IN and OUT side by side at 900 px and wider; stacked below** (decided by Eben with Jake's go-ahead, 2026-10-07; Jake's canvas only has the phone version). Uses `useWindowDimensions`.
+  - IN (`adventure-in`): their picks for you, collapsible (`adventure-in-toggle`) with 5 pips, rows `adventure-in-<external_id>`, "Only <nomad> can change this list."
+  - OUT (`adventure-out`): your picks, rows `adventure-out-<external_id>` with "<nomad> hasn't rated it yet". "Add a movie for <nomad>" (`adventure-add`, disabled when full) opens `MediaSearchModal`; picking shows a reasons form (`adventure-reason-1..3`, `adventure-save`, `adventure-cancel`, errors in `adventure-add-error`). Footer `adventure-slots`: "N SLOTS OPEN. MAKE THEM COUNT." or "LIST FULL".
 - Unused Expo template components and images were deleted. Still in place: `src/hooks/use-color-scheme.web.ts` (used, but its hydration guard is pointless now that output is `"single"`).
 
 Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees it in CH-02 and accepts, and both show up in each other's Fellow Nomads list with their pictures.
@@ -114,12 +131,13 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 
 ## Next steps
 
-1. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
-2. **The Adventure Page (WAB-11, WAB-14):** make a Fellow Nomads row open the page between two nomads. Jake's canvas has a phone version. Then remove or block (WAB-30), and maybe a "NEW" tag when someone accepts (WAB-10's "is informed").
-3. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
-4. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
-5. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
-6. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
+1. **Eben clicks through the Adventure Page on web** (not done yet; this run had no browser): Paul asks Bart, Bart accepts, Paul taps Bart, adds a movie with reasons, Bart opens Paul and sees it under IN; fill to 5 and Add goes dim; `/adventure/nobody` shows NO SIGNAL; drag the window narrow and wide to see the lists stack and sit side by side. Then the PR.
+2. **Adventure Page, next slice (WAB-14):** remove a pick, reorder (the mockup has drag handles), edit reasons. Then rate and pass (WAB-15, 20, 21), which take picks off every list and into History, then the LISTS / HISTORY toggle. Maybe a "NEW" tag when someone accepts (WAB-10's "is informed"), and remove or block (WAB-30).
+3. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
+4. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
+5. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
+6. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
+7. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
 
 ## What this is
 
@@ -201,6 +219,9 @@ Friends recommend movies, series and books to each other. Your friends know what
 - `supabase.functions.invoke` returns `any`. Assert the response type (`as SearchResponse`); a type annotation alone doesn't satisfy `no-unsafe-assignment`.
 - `deno check` on an edge function from the repo root gets confused by the app's `node_modules` (it looks there for `npm:` packages). The real check is `npx supabase functions serve`, which runs Supabase's own runtime. `deno test` is unaffected.
 - Edge function tests import JSON fixtures with `import x from './fixtures/x.json' with { type: 'json' };`.
+- **Postgres won't take `position` as a column name in `returns table (...)`** (syntax error). Use another word (`rank`).
+- **macOS `sed` has no `\b`.** A `sed -E 's/\bword\b/.../'` silently matches nothing. Use `perl -pi -e` for word-boundary edits.
+- **`renderRouter` in RNTL 14 returns a promise with extras on it.** `await renderRouter(...)` loses `getPathname()`. Keep the result, then await it: `const router = renderRouter('src/app'); await router; router.getPathname()`.
 - **Changing a database function that's already applied: add a new migration** with `create or replace function …` (it keeps the function's grants, so the `anon` revoke still holds). Editing an applied migration means everyone needs a `db reset`. A migration you're still iterating on can be re-applied by hand: `psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f <file>`. A fresh `db reset` before committing proves the migrations apply in order.
 - **Breaking code on purpose for a pgTAP test** without touching files: pipe an altered copy of the function through `psql` (e.g. `sed … migration.sql | psql …`), run `npm run test:db`, then re-apply the real migration file the same way.
 - **React Query in Jest:** a test `QueryClient` needs `gcTime: Infinity` (plus `retry: false`), or React Query's 5-minute cleanup timer keeps Jest running after the tests finish. Tests with fake timers (`use-media-search`) don't hit it.
@@ -238,9 +259,9 @@ The canvases are the source of truth for how screens should look; there are no c
 
 | Command | Result |
 |---|---|
-| `npm test` | 111 passed, 17 files |
+| `npm test` | 134 passed, 19 files |
 | `npm run test:functions` | 18 passed, 2 files |
-| `npm run test:db` | 67 passed, 8 files |
+| `npm run test:db` | 94 passed, 9 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
 | `npx tsc --noEmit` | passes |
 | `npx expo lint` | passes |
