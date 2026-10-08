@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+
 import { BasecampScreen } from '@/components/basecamp-screen';
 import { useConnections } from '@/hooks/use-connections';
 import { signOut } from '@/lib/auth';
@@ -19,6 +21,7 @@ export default function BasecampRoute() {
       error={error}
       onSend={send}
       onRespond={respond}
+      onOpenNomad={(nomad) => router.push(`/adventure/${nomad}`)}
     />
   );
 }

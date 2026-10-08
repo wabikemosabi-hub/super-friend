@@ -2,6 +2,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 
 import {
   type Connection,
+  findNomad,
   groupConnections,
   myConnections,
   respondToConnectionRequest,
@@ -117,4 +118,21 @@ test('sorts each group by username, ignoring case', () => {
   const bart = connection('bart-harley-jarvis', 'accepted', true);
 
   expect(groupConnections([taffy, roy, bart]).nomads).toEqual([bart, roy, taffy]);
+});
+
+test('finds a fellow nomad by username', () => {
+  const roy = connection('roy-donk', 'accepted', true);
+
+  expect(findNomad([connection('taffy-lee-fubbins', 'accepted', false), roy], 'roy-donk')).toBe(roy);
+});
+
+test('finds a fellow nomad whatever the case of the username', () => {
+  const taffy = connection('Taffy-Lee-Fubbins', 'accepted', false);
+
+  expect(findNomad([taffy], 'taffy-lee-fubbins')).toBe(taffy);
+});
+
+test('finds nobody when the username is not a fellow nomad', () => {
+  expect(findNomad([connection('roy-donk', 'accepted', true)], 'taffy-lee-fubbins')).toBeNull();
+  expect(findNomad([], 'roy-donk')).toBeNull();
 });

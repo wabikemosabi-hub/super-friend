@@ -1,4 +1,4 @@
-import type { Tables } from '@/lib/database.types';
+import type { Json, Tables } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 export type MediaType = 'movie' | 'series' | 'book';
@@ -22,7 +22,7 @@ export async function searchMedia(type: MediaType, query: string): Promise<Media
   return data.results;
 }
 
-export function posterPath(item: MediaItem): string | null {
+export function posterPath(item: { metadata: Json }): string | null {
   const { metadata } = item;
   if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) return null;
   return typeof metadata.poster_path === 'string' ? metadata.poster_path : null;

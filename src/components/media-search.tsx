@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { MediaPoster } from '@/components/media-poster';
 import { ThemedText } from '@/components/themed-text';
 import { TmdbAttribution } from '@/components/tmdb-attribution';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useMediaSearch } from '@/hooks/use-media-search';
 import { useTheme } from '@/hooks/use-theme';
-import { posterPath, tmdbImage, type MediaItem, type MediaType } from '@/lib/media-search';
+import { type MediaItem, type MediaType } from '@/lib/media-search';
 
 const plural: Record<MediaType, string> = { movie: 'movies', series: 'series', book: 'books' };
 const singular: Record<MediaType, string> = { movie: 'Movie', series: 'Series', book: 'Book' };
@@ -75,7 +76,7 @@ export function MediaSearch({ type, onPick }: MediaSearchProps) {
               },
             ]}
             testID={`media-search-result-${item.external_id}`}>
-            <Poster item={item} />
+            <MediaPoster item={item} />
             <View style={styles.details}>
               <ThemedText style={styles.title}>{item.title}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -87,22 +88,6 @@ export function MediaSearch({ type, onPick }: MediaSearchProps) {
       </View>
 
       <TmdbAttribution />
-    </View>
-  );
-}
-
-function Poster({ item }: { item: MediaItem }) {
-  const theme = useTheme();
-  const uri = tmdbImage(posterPath(item), 'w92');
-
-  if (uri) {
-    return <Image source={{ uri }} style={[styles.poster, { borderColor: theme.edge }]} />;
-  }
-
-  return (
-    <View style={[styles.poster, styles.tape, { backgroundColor: theme.backgroundSelected, borderColor: theme.edge }]}>
-      <View style={[styles.stripe, { backgroundColor: theme.hazard }]} />
-      <ThemedText style={styles.initial}>{item.title.charAt(0)}</ThemedText>
     </View>
   );
 }
@@ -147,24 +132,5 @@ const styles = StyleSheet.create({
     fontFamily: Typefaces.display,
     fontSize: 14,
     lineHeight: 20,
-  },
-  poster: {
-    borderRadius: 2,
-    borderWidth: 2,
-    height: 69,
-    width: 46,
-  },
-  tape: {
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  stripe: {
-    alignSelf: 'stretch',
-    height: 12,
-  },
-  initial: {
-    fontFamily: Typefaces.display,
-    fontSize: 18,
-    lineHeight: 50,
   },
 });
