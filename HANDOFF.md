@@ -173,14 +173,15 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 
 ## Next steps
 
-1. **Merge WAB-41** (Jake reviews).
+1. **Merge WAB-42** (PR #16, Jake reviews).
 2. **Deploy for friends (WAB-45)** whenever it's wanted; it doesn't depend on the road map.
-3. **Keep building the road map in WAB-39's order:** WAB-42 (plot a stop), WAB-43 (reaching a stop), then WAB-44 (the log, once the templates exist). The canvas is the source of truth for the look. Every board is interactive, and the Tweaks have switches like Just Starting Out and Route Full.
-4. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
-5. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
-6. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
-7. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
-8. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
+3. **Keep building the road map in WAB-39's order:** WAB-43 (reaching a stop), then WAB-44 (the log, once the templates exist). The canvas is the source of truth for the look. Every board is interactive, and the Tweaks have switches like Just Starting Out and Route Full.
+4. **Manual test plan:** [`docs/manual-test-plan.md`](docs/manual-test-plan.md) lists everything built so far as click-through checks, with the testIDs each one touches. Add checks in the same PR as each feature. When Playwright covers a check, delete it from the plan.
+5. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
+6. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
+7. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
+8. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
+9. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
 
 ## What this is
 
