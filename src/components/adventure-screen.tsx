@@ -26,6 +26,7 @@ type AdventureScreenProps = {
   picksLoading: boolean;
   picksError: string | null;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
+  onReplace: (recommendationId: string, mediaItemId: string, reasons: string[]) => Promise<void>;
   onBack: () => void;
   onSignOut: () => void;
 };
@@ -42,6 +43,7 @@ export function AdventureScreen({
   picksLoading,
   picksError,
   onAdd,
+  onReplace,
   onBack,
   onSignOut,
 }: AdventureScreenProps) {
@@ -70,7 +72,13 @@ export function AdventureScreen({
                 )}
                 {(sideBySide || showing === 'console') && (
                   <View style={sideBySide ? styles.console : undefined}>
-                    <NavConsole isLoading={picksLoading} nomadName={nomad.username} onAdd={onAdd} plotted={toThem} />
+                    <NavConsole
+                      isLoading={picksLoading}
+                      nomadName={nomad.username}
+                      onAdd={onAdd}
+                      onReplace={onReplace}
+                      plotted={toThem}
+                    />
                   </View>
                 )}
               </View>

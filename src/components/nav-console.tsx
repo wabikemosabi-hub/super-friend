@@ -15,13 +15,15 @@ type NavConsoleProps = {
   plotted: Recommendation[];
   isLoading: boolean;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
+  onReplace: (recommendationId: string, mediaItemId: string, reasons: string[]) => Promise<void>;
 };
 
-export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleProps) {
+export function NavConsole({ nomadName, plotted, isLoading, onAdd, onReplace }: NavConsoleProps) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(null);
   const [plotting, setPlotting] = useState(false);
   const slots = openSlots(plotted);
+  const full = slots === 0;
 
   return (
     <ShipPanel channel="NAV-02" title={`Nav console · plot ${nomadName}'s route`} testID="nav-console">
@@ -64,16 +66,20 @@ export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleP
         </View>
       </CrtScreen>
       <ShipButton
-        disabled={slots === 0}
-        label={`Plot a stop for ${nomadName}`}
+        label={full ? `Replace a stop on ${nomadName}'s route` : `Plot a stop for ${nomadName}`}
         onPress={() => setPlotting(true)}
         testID="plot-stop-open"
+        variant={full ? 'alert' : 'hazard'}
       />
       <PlotStopPanel
         landingRank={plotted.length + 1}
         nomadName={nomadName}
         onClose={() => setPlotting(false)}
-        onPlot={(item, reasons) => onAdd(item.id, reasons)}
+        onPlot={(item, reasons, replacing) =>
+          replacing ? onReplace(replacing.id, item.id, reasons) : onAdd(item.id, reasons)
+        }
+        routeFull={full}
+        route={plotted}
         visible={plotting}
       />
     </ShipPanel>

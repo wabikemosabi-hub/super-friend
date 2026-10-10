@@ -66,13 +66,13 @@ type ShipButtonProps = {
   label: string;
   onPress: () => void;
   testID: string;
-  variant?: 'hazard' | 'phosphor' | 'panel';
+  variant?: 'hazard' | 'phosphor' | 'panel' | 'alert';
   disabled?: boolean;
 };
 
 export function ShipButton({ label, onPress, testID, variant = 'hazard', disabled = false }: ShipButtonProps) {
   const theme = useTheme();
-  const fill = { hazard: theme.hazard, phosphor: theme.phosphor, panel: theme.backgroundSelected }[variant];
+  const fill = { hazard: theme.hazard, phosphor: theme.phosphor, panel: theme.backgroundSelected, alert: theme.alert }[variant];
   const ink = variant === 'panel' ? theme.text : theme.onAccent;
 
   return (
