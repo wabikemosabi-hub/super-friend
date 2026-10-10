@@ -6,7 +6,7 @@ import { ScreenLine, ShipButton } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { MediaItem } from '@/lib/media-search';
+import { overviewLine, type MediaItem } from '@/lib/media-search';
 import { reasonsProblem, type Recommendation } from '@/lib/recommendations';
 
 type ReasonsFormProps = {
@@ -24,6 +24,7 @@ export function ReasonsForm({ item, nomadName, onBack, onSave, submitLabel, repl
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [focused, setFocused] = useState<number | null>(null);
+  const overview = overviewLine(item);
 
   async function save() {
     if (saving) return;
@@ -46,10 +47,17 @@ export function ReasonsForm({ item, nomadName, onBack, onSave, submitLabel, repl
     <View style={styles.form} testID="plot-stop-reasons">
       <View style={[styles.heading, { backgroundColor: theme.screen, borderColor: theme.edge }]}>
         <MediaPoster item={item} />
-        <ThemedText style={[styles.title, { color: theme.phosphor }]} testID="plot-stop-title">
-          {item.title}
-          {item.year ? <ThemedText style={[styles.year, { color: theme.phosphorDim }]}> ({item.year})</ThemedText> : null}
-        </ThemedText>
+        <View style={styles.details}>
+          <ThemedText style={[styles.title, { color: theme.phosphor }]} testID="plot-stop-title">
+            {item.title}
+            {item.year ? <ThemedText style={[styles.year, { color: theme.phosphorDim }]}> ({item.year})</ThemedText> : null}
+          </ThemedText>
+          {overview && (
+            <ThemedText style={[styles.overview, { color: theme.textSecondary }]} testID="plot-stop-overview">
+              {overview}
+            </ThemedText>
+          )}
+        </View>
       </View>
       <ThemedText style={[styles.because, { color: theme.hazard }]}>GREAT STOP BECAUSE:</ThemedText>
       {reasons.map((reason, i) => (
@@ -116,11 +124,20 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 12,
   },
-  title: {
+  details: {
     flex: 1,
+    gap: 4,
+    minWidth: 0,
+  },
+  title: {
     fontFamily: Typefaces.screen,
     fontSize: 28,
     lineHeight: 30,
+  },
+  overview: {
+    fontFamily: Typefaces.screen,
+    fontSize: 19,
+    lineHeight: 21,
   },
   year: {
     fontFamily: Typefaces.screen,
