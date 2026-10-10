@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { MediaRow, StopReasons } from '@/components/media-row';
-import { MediaSearchModal } from '@/components/media-search-modal';
-import { ReasonsForm } from '@/components/reasons-form';
+import { PlotStopPanel } from '@/components/plot-stop-panel';
 import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { MediaItem } from '@/lib/media-search';
 import { MAX_PICKS, openSlots, type Recommendation } from '@/lib/recommendations';
 import { slotsLine, toggleOpen } from '@/lib/road-map';
 
@@ -17,14 +15,15 @@ type NavConsoleProps = {
   plotted: Recommendation[];
   isLoading: boolean;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
+  onReplace: (recommendationId: string, mediaItemId: string, reasons: string[]) => Promise<void>;
 };
 
-export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleProps) {
+export function NavConsole({ nomadName, plotted, isLoading, onAdd, onReplace }: NavConsoleProps) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [picked, setPicked] = useState<MediaItem | null>(null);
+  const [plotting, setPlotting] = useState(false);
   const slots = openSlots(plotted);
+  const full = slots === 0;
 
   return (
     <ShipPanel channel="NAV-02" title={`Nav console · plot ${nomadName}'s route`} testID="nav-console">
@@ -66,25 +65,23 @@ export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleP
           ))}
         </View>
       </CrtScreen>
-      {picked ? (
-        <ReasonsForm
-          item={picked}
-          nomadName={nomadName}
-          onCancel={() => setPicked(null)}
-          onSave={async (reasons) => {
-            await onAdd(picked.id, reasons);
-            setPicked(null);
-          }}
-        />
-      ) : (
-        <ShipButton
-          disabled={slots === 0}
-          label={`Plot a stop for ${nomadName}`}
-          onPress={() => setSearching(true)}
-          testID="console-plot"
-        />
-      )}
-      <MediaSearchModal visible={searching} type="movie" onPick={setPicked} onClose={() => setSearching(false)} />
+      <ShipButton
+        label={full ? `Replace a stop on ${nomadName}'s route` : `Plot a stop for ${nomadName}`}
+        onPress={() => setPlotting(true)}
+        testID="plot-stop-open"
+        variant={full ? 'alert' : 'hazard'}
+      />
+      <PlotStopPanel
+        landingRank={plotted.length + 1}
+        nomadName={nomadName}
+        onClose={() => setPlotting(false)}
+        onPlot={(item, reasons, replacing) =>
+          replacing ? onReplace(replacing.id, item.id, reasons) : onAdd(item.id, reasons)
+        }
+        routeFull={full}
+        route={plotted}
+        visible={plotting}
+      />
     </ShipPanel>
   );
 }

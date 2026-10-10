@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { MediaPoster } from '@/components/media-poster';
 import { MediaRow, StopReasons } from '@/components/media-row';
 import { CrtScreen, ScreenLine, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
+import { useDegauss } from '@/hooks/use-degauss';
 import { useTheme } from '@/hooks/use-theme';
 import type { Recommendation } from '@/lib/recommendations';
 import { dottedLine, lineWeight, roadStops, toggleOpen, youAreHere, type RoadStop } from '@/lib/road-map';
@@ -16,6 +17,10 @@ const stopBox = 56;
 const stopWidth = 150;
 const scanBarHeight = 3;
 const useNativeDriver = Platform.OS !== 'web';
+const wobbleSteps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85, 1];
+const jolt = [0, -7, 6, -5, 4, -3, 2, -1, 0.5, 0];
+const tilt = ['0deg', '-2deg', '1.6deg', '-1.2deg', '0.9deg', '-0.6deg', '0.4deg', '-0.2deg', '0.1deg', '0deg'];
+const flicker = [1, 0.45, 0.9, 0.6, 0.95, 0.8, 1, 0.9, 1, 1];
 
 type RoadMapProps = {
   nomadName: string;
@@ -28,6 +33,19 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
   const theme = useTheme();
   const stops = roadStops(picks);
   const count = stops.length;
+  const { scanning, degauss } = useDegauss();
+  const [shake] = useState(() => new Animated.Value(0));
+
+  async function degaussWithWobble() {
+    if (await AccessibilityInfo.isReduceMotionEnabled()) {
+      degauss();
+      return;
+    }
+    shake.setValue(0);
+    Animated.timing(shake, { toValue: 1, duration: 520, easing: Easing.linear, useNativeDriver }).start(({ finished }) => {
+      if (finished) degauss();
+    });
+  }
 
   return (
     <ShipPanel
@@ -35,9 +53,14 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
       title={`Your road · plotted by ${nomadName}`}
       testID="road-map"
       badge={
-        <ThemedText style={[styles.readout, { color: theme.textSecondary }]}>
-          {count} {count === 1 ? 'STOP' : 'STOPS'} · JUST STARTING OUT
-        </ThemedText>
+        <View style={styles.badge}>
+          <ThemedText style={[styles.readout, { color: theme.textSecondary }]}>
+            {count} {count === 1 ? 'STOP' : 'STOPS'} · JUST STARTING OUT
+          </ThemedText>
+          {wide && (
+            <DegaussButton on={scanning} onPress={degaussWithWobble} />
+          )}
+        </View>
       }>
       {isLoading && (
         <CrtScreen>
@@ -49,12 +72,22 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
           <ScreenLine text={`NO STOPS YET. ${nomadName} hasn't plotted a route for you.`} testID="road-empty" />
         </CrtScreen>
       )}
-      {!isLoading && count > 0 && (wide ? <WideRoad nomadName={nomadName} stops={stops} /> : <StripRoad nomadName={nomadName} stops={stops} />)}
+      {!isLoading && count > 0 && (wide ? <WideRoad nomadName={nomadName} scanning={scanning} shake={shake} stops={stops} /> : <StripRoad nomadName={nomadName} stops={stops} />)}
     </ShipPanel>
   );
 }
 
-function WideRoad({ nomadName, stops }: { nomadName: string; stops: RoadStop[] }) {
+function WideRoad({
+  nomadName,
+  scanning,
+  shake,
+  stops,
+}: {
+  nomadName: string;
+  scanning: boolean;
+  shake: Animated.Value;
+  stops: RoadStop[];
+}) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -63,43 +96,53 @@ function WideRoad({ nomadName, stops }: { nomadName: string; stops: RoadStop[] }
 
   return (
     <>
-      <CrtScreen>
-        <View style={styles.mapHeading}>
-          <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>◂ JUST STARTING OUT</ThemedText>
-          <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>
-            {ways} {ways === 1 ? 'WAY' : 'WAYS'} FORWARD ▸
-          </ThemedText>
-        </View>
-        <View onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
-          <Grid width={width} />
-          {width > 0 &&
-            stops.map((stop) => <RouteLine key={stop.pick.id} stop={stop} width={width} />)}
-          {width > 0 &&
-            stops.map((stop) => (
-              <MapStop
-                key={stop.pick.id}
-                onPress={() => setSelectedId(stop.pick.id)}
-                selected={stop.pick.id === selected.pick.id}
-                stop={stop}
-                width={width}
-              />
-            ))}
-          {width > 0 && (
-            <View
-              pointerEvents="none"
-              style={[styles.hereSpot, { left: (youAreHere.x * width) / 100 - 60, top: (youAreHere.y * mapHeight) / 100 - 12 }]}>
-              <YouAreHere />
-            </View>
-          )}
-          <ScanBar />
-        </View>
-        <View style={[styles.legend, { borderTopColor: theme.backgroundElement }]}>
-          <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>
-            <ThemedText style={[styles.legendText, { color: theme.friend }]}>■</ThemedText> STOP AHEAD (
-            {nomadName.toUpperCase()}&apos;S RANK)
-          </ThemedText>
-        </View>
-      </CrtScreen>
+      <Animated.View
+        style={{
+          opacity: shake.interpolate({ inputRange: wobbleSteps, outputRange: flicker }),
+          transform: [
+            { translateX: shake.interpolate({ inputRange: wobbleSteps, outputRange: jolt }) },
+            { skewX: shake.interpolate({ inputRange: wobbleSteps, outputRange: tilt }) },
+          ],
+        }}
+        testID="road-screen">
+        <CrtScreen>
+          <View style={styles.mapHeading}>
+            <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>◂ JUST STARTING OUT</ThemedText>
+            <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>
+              {ways} {ways === 1 ? 'WAY' : 'WAYS'} FORWARD ▸
+            </ThemedText>
+          </View>
+          <View onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
+            <Grid width={width} />
+            {width > 0 &&
+              stops.map((stop) => <RouteLine key={stop.pick.id} stop={stop} width={width} />)}
+            {width > 0 &&
+              stops.map((stop) => (
+                <MapStop
+                  key={stop.pick.id}
+                  onPress={() => setSelectedId(stop.pick.id)}
+                  selected={stop.pick.id === selected.pick.id}
+                  stop={stop}
+                  width={width}
+                />
+              ))}
+            {width > 0 && (
+              <View
+                pointerEvents="none"
+                style={[styles.hereSpot, { left: (youAreHere.x * width) / 100 - 60, top: (youAreHere.y * mapHeight) / 100 - 12 }]}>
+                <YouAreHere />
+              </View>
+            )}
+            {scanning && <ScanBar />}
+          </View>
+          <View style={[styles.legend, { borderTopColor: theme.backgroundElement }]}>
+            <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>
+              <ThemedText style={[styles.legendText, { color: theme.friend }]}>■</ThemedText> STOP AHEAD (
+              {nomadName.toUpperCase()}&apos;S RANK)
+            </ThemedText>
+          </View>
+        </CrtScreen>
+      </Animated.View>
       <StopDetail nomadName={nomadName} stop={selected} />
     </>
   );
@@ -311,6 +354,42 @@ function useBlink() {
   return opacity;
 }
 
+function DegaussButton({ on, onPress }: { on: boolean; onPress: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <View style={styles.degauss}>
+      <View
+        style={[
+          styles.led,
+          on
+            ? { backgroundColor: theme.phosphor, borderColor: theme.phosphorDim, boxShadow: `0px 0px 6px 1px ${theme.phosphor}` }
+            : { backgroundColor: theme.bezel, borderColor: theme.edge },
+        ]}
+        testID="road-degauss-light"
+      />
+      <Pressable
+        accessibilityLabel="Degauss, scan line"
+        accessibilityRole="switch"
+        accessibilityState={{ checked: on }}
+        hitSlop={12}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.degaussKey,
+          {
+            backgroundColor: theme.backgroundSelected,
+            borderColor: theme.edge,
+            boxShadow: pressed ? `0px 0px 0px ${theme.edge}` : `0px 2px 0px ${theme.edge}`,
+            transform: [{ translateY: pressed ? 2 : 0 }],
+          },
+        ]}
+        testID="road-degauss">
+        <ThemedText style={[styles.degaussText, { color: theme.textSecondary }]}>DEGAUSS</ThemedText>
+      </Pressable>
+    </View>
+  );
+}
+
 function ScanBar() {
   const theme = useTheme();
   const [sweep] = useState(() => new Animated.Value(0));
@@ -339,6 +418,35 @@ function ScanBar() {
 }
 
 const styles = StyleSheet.create({
+  badge: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  degauss: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  led: {
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 8,
+    width: 8,
+  },
+  degaussKey: {
+    borderRadius: 2,
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  degaussText: {
+    fontFamily: Typefaces.labelBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    lineHeight: 12,
+  },
   readout: {
     fontFamily: Typefaces.screen,
     fontSize: 20,

@@ -8,7 +8,7 @@ export const youAreHere: Spot = { x: 34, y: 58 };
 
 const stopSpots: Spot[] = [
   { x: 55, y: 18 },
-  { x: 66, y: 82 },
+  { x: 66, y: 70 },
   { x: 88, y: 46 },
 ];
 

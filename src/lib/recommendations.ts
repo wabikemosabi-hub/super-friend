@@ -19,6 +19,16 @@ export async function addRecommendation(nomadId: string, mediaItemId: string, re
   return data;
 }
 
+export async function replaceRecommendation(recommendationId: string, mediaItemId: string, reasons: string[]) {
+  const { data, error } = await supabase.rpc('replace_recommendation', {
+    recommendation_id: recommendationId,
+    media_item_id: mediaItemId,
+    reasons,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function adventureRecommendations(nomadId: string) {
   const { data, error } = await supabase.rpc('adventure_recommendations', { nomad_id: nomadId });
   if (error) throw error;
@@ -49,4 +59,8 @@ export function splitRecommendations(recommendations: Recommendation[], type: st
 
 export function openSlots(list: Recommendation[]) {
   return Math.max(0, MAX_PICKS - list.length);
+}
+
+export function onRoute(route: Recommendation[], externalId: string) {
+  return route.some((stop) => stop.external_id === externalId);
 }
