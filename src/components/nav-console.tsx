@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { MediaRow, StopReasons } from '@/components/media-row';
-import { MediaSearchModal } from '@/components/media-search-modal';
-import { ReasonsForm } from '@/components/reasons-form';
+import { PlotStopPanel } from '@/components/plot-stop-panel';
 import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { MediaItem } from '@/lib/media-search';
 import { MAX_PICKS, openSlots, type Recommendation } from '@/lib/recommendations';
 import { slotsLine, toggleOpen } from '@/lib/road-map';
 
@@ -22,8 +20,7 @@ type NavConsoleProps = {
 export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleProps) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [picked, setPicked] = useState<MediaItem | null>(null);
+  const [plotting, setPlotting] = useState(false);
   const slots = openSlots(plotted);
 
   return (
@@ -66,25 +63,19 @@ export function NavConsole({ nomadName, plotted, isLoading, onAdd }: NavConsoleP
           ))}
         </View>
       </CrtScreen>
-      {picked ? (
-        <ReasonsForm
-          item={picked}
-          nomadName={nomadName}
-          onCancel={() => setPicked(null)}
-          onSave={async (reasons) => {
-            await onAdd(picked.id, reasons);
-            setPicked(null);
-          }}
-        />
-      ) : (
-        <ShipButton
-          disabled={slots === 0}
-          label={`Plot a stop for ${nomadName}`}
-          onPress={() => setSearching(true)}
-          testID="console-plot"
-        />
-      )}
-      <MediaSearchModal visible={searching} type="movie" onPick={setPicked} onClose={() => setSearching(false)} />
+      <ShipButton
+        disabled={slots === 0}
+        label={`Plot a stop for ${nomadName}`}
+        onPress={() => setPlotting(true)}
+        testID="plot-stop-open"
+      />
+      <PlotStopPanel
+        landingRank={plotted.length + 1}
+        nomadName={nomadName}
+        onClose={() => setPlotting(false)}
+        onPlot={(item, reasons) => onAdd(item.id, reasons)}
+        visible={plotting}
+      />
     </ShipPanel>
   );
 }

@@ -1,29 +1,24 @@
+import type { ReactNode } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { MediaSearch } from '@/components/media-search';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { MediaItem, MediaType } from '@/lib/media-search';
 
-const heading: Record<MediaType, string> = { movie: 'SEARCH MOVIES', series: 'SEARCH SERIES', book: 'SEARCH BOOKS' };
-
-type MediaSearchModalProps = {
+type ShipModalProps = {
   visible: boolean;
-  type: MediaType;
-  onPick: (item: MediaItem) => void;
+  channel: string;
+  heading: string;
   onClose: () => void;
+  closeLabel: string;
+  testID: string;
+  children: ReactNode;
 };
 
-export function MediaSearchModal({ visible, type, onPick, onClose }: MediaSearchModalProps) {
+export function ShipModal({ visible, channel, heading, onClose, closeLabel, testID, children }: ShipModalProps) {
   const theme = useTheme();
   const isWeb = Platform.OS === 'web';
-
-  function pick(item: MediaItem) {
-    onPick(item);
-    onClose();
-  }
 
   return (
     <Modal
@@ -36,10 +31,10 @@ export function MediaSearchModal({ visible, type, onPick, onClose }: MediaSearch
         <View style={[styles.backdrop, isWeb && { backgroundColor: theme.scrim }]}>
           {isWeb && (
             <Pressable
-              accessibilityLabel="Close search"
+              accessibilityLabel={closeLabel}
               onPress={onClose}
               style={StyleSheet.absoluteFill}
-              testID="media-search-modal-backdrop"
+              testID={`${testID}-backdrop`}
             />
           )}
           <SafeAreaView
@@ -50,11 +45,11 @@ export function MediaSearchModal({ visible, type, onPick, onClose }: MediaSearch
             ]}>
             <View style={[styles.header, { borderBottomColor: theme.edge }]}>
               <View style={[styles.plate, { backgroundColor: theme.hazard }]}>
-                <ThemedText style={[styles.plateText, { color: theme.onAccent }]}>CH-01</ThemedText>
+                <ThemedText style={[styles.plateText, { color: theme.onAccent }]}>{channel}</ThemedText>
               </View>
-              <ThemedText style={styles.heading}>{heading[type]}</ThemedText>
+              <ThemedText style={styles.heading}>{heading}</ThemedText>
               <Pressable
-                accessibilityLabel="Close search"
+                accessibilityLabel={closeLabel}
                 accessibilityRole="button"
                 onPress={onClose}
                 style={({ pressed }) => [
@@ -64,12 +59,12 @@ export function MediaSearchModal({ visible, type, onPick, onClose }: MediaSearch
                     borderColor: theme.edge,
                   },
                 ]}
-                testID="media-search-modal-close">
+                testID={`${testID}-close`}>
                 <ThemedText style={styles.closeText}>✕</ThemedText>
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <MediaSearch type={type} onPick={pick} />
+              {children}
             </ScrollView>
           </SafeAreaView>
         </View>
