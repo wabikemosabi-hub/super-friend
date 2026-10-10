@@ -23,7 +23,7 @@ test('spreads the stops ahead across the map in rank order', () => {
 
   expect(stops.map((s) => [s.pick.title, s.rank, s.spot])).toEqual([
     ['Coffin Flop', 1, { x: 55, y: 18 }],
-    ['Hot Dog Car', 2, { x: 66, y: 82 }],
+    ['Hot Dog Car', 2, { x: 66, y: 70 }],
     ['Driving Crooner', 3, { x: 88, y: 46 }],
   ]);
 });
@@ -39,7 +39,7 @@ test("keeps the navigator's rank numbers when ranks leave gaps", () => {
 
   expect(stops.map((s) => [s.rank, s.spot])).toEqual([
     [1, { x: 55, y: 18 }],
-    [3, { x: 66, y: 82 }],
+    [3, { x: 66, y: 70 }],
   ]);
 });
 
