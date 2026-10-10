@@ -31,14 +31,17 @@ export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRan
   const [chosen, setChosen] = useState<Recommendation | null>(null);
   const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState<MediaItem | null>(null);
-  const steps: Step[] = routeFull ? ['replace', 'search', 'plot'] : ['search', 'plot'];
-  const step: Step = picked ? 'plot' : routeFull && !searching ? 'replace' : 'search';
+  const [done, setDone] = useState<{ rank: number; replaced: boolean } | null>(null);
+  const full = done ? done.replaced : routeFull;
+  const steps: Step[] = full ? ['replace', 'search', 'plot'] : ['search', 'plot'];
+  const step: Step | 'done' = done ? 'done' : picked ? 'plot' : full && !searching ? 'replace' : 'search';
   const name = nomadName.toUpperCase();
 
   function close() {
     setChosen(null);
     setSearching(false);
     setPicked(null);
+    setDone(null);
     onClose();
   }
 
@@ -47,7 +50,9 @@ export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRan
       channel="NAV-02"
       closeLabel="Close plot a stop"
       heading={
-        routeFull ? `REPLACE A STOP ON ${name}'S ROUTE` : `PLOT A STOP FOR ${name} · STOP ${landingRank} OF ${MAX_PICKS}`
+        full
+          ? `REPLACE A STOP ON ${name}'S ROUTE`
+          : `PLOT A STOP FOR ${name} · STOP ${done?.rank ?? landingRank} OF ${MAX_PICKS}`
       }
       onClose={close}
       testID="plot-stop"
@@ -59,7 +64,7 @@ export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRan
               key={s}
               style={[
                 styles.step,
-                s === step
+                s === step || (step === 'done' && s === 'plot')
                   ? { backgroundColor: theme.hazard, color: theme.onAccent }
                   : { backgroundColor: theme.screen, color: theme.textSecondary },
               ]}
@@ -130,18 +135,37 @@ export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRan
           />
         </View>
 
-        {picked && (
+        {picked && !done && (
           <ReasonsForm
             item={picked}
             nomadName={nomadName}
             onBack={() => setPicked(null)}
             onSave={async (reasons) => {
+              const rank = chosen?.rank ?? landingRank;
               await onPlot(picked, reasons, chosen);
-              close();
+              setDone({ rank, replaced: chosen !== null });
             }}
             submitLabel={chosen ? 'Replace' : 'Plot it'}
             replacing={chosen}
           />
+        )}
+
+        {done && (
+          <View style={styles.done}>
+            <CrtScreen>
+              <View style={styles.doneScreen}>
+                <ThemedText style={[styles.doneLine, { color: theme.phosphor }]} testID="plot-stop-done-line">
+                  STOP {done.rank} {done.replaced ? 'REPLACED' : 'PLOTTED'}
+                </ThemedText>
+                <ThemedText style={[styles.doneNote, { color: theme.phosphorDim }]}>
+                  {nomadName} will see it on their road.
+                </ThemedText>
+              </View>
+            </CrtScreen>
+            <View style={styles.next}>
+              <ShipButton label="Back to the console" onPress={close} testID="plot-stop-done" variant="panel" />
+            </View>
+          </View>
         )}
       </View>
     </ShipModal>
@@ -207,6 +231,26 @@ const styles = StyleSheet.create({
   footnote: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  done: {
+    gap: 12,
+  },
+  doneScreen: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: Spacing.three,
+  },
+  doneLine: {
+    fontFamily: Typefaces.screen,
+    fontSize: 32,
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+  doneNote: {
+    fontFamily: Typefaces.screen,
+    fontSize: 20,
+    lineHeight: 22,
+    textAlign: 'center',
   },
   next: {
     alignItems: 'flex-end',
