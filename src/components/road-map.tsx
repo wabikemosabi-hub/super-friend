@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { MediaPoster } from '@/components/media-poster';
 import { MediaRow, StopReasons } from '@/components/media-row';
@@ -17,6 +17,10 @@ const stopBox = 56;
 const stopWidth = 150;
 const scanBarHeight = 3;
 const useNativeDriver = Platform.OS !== 'web';
+const wobbleSteps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85, 1];
+const jolt = [0, -7, 6, -5, 4, -3, 2, -1, 0.5, 0];
+const tilt = ['0deg', '-2deg', '1.6deg', '-1.2deg', '0.9deg', '-0.6deg', '0.4deg', '-0.2deg', '0.1deg', '0deg'];
+const flicker = [1, 0.45, 0.9, 0.6, 0.95, 0.8, 1, 0.9, 1, 1];
 
 type RoadMapProps = {
   nomadName: string;
@@ -30,6 +34,18 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
   const stops = roadStops(picks);
   const count = stops.length;
   const { scanning, degauss } = useDegauss();
+  const [shake] = useState(() => new Animated.Value(0));
+
+  async function degaussWithWobble() {
+    if (await AccessibilityInfo.isReduceMotionEnabled()) {
+      degauss();
+      return;
+    }
+    shake.setValue(0);
+    Animated.timing(shake, { toValue: 1, duration: 520, easing: Easing.linear, useNativeDriver }).start(({ finished }) => {
+      if (finished) degauss();
+    });
+  }
 
   return (
     <ShipPanel
@@ -42,7 +58,7 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
             {count} {count === 1 ? 'STOP' : 'STOPS'} · JUST STARTING OUT
           </ThemedText>
           {wide && (
-            <DegaussButton on={scanning} onPress={degauss} />
+            <DegaussButton on={scanning} onPress={degaussWithWobble} />
           )}
         </View>
       }>
@@ -56,12 +72,22 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
           <ScreenLine text={`NO STOPS YET. ${nomadName} hasn't plotted a route for you.`} testID="road-empty" />
         </CrtScreen>
       )}
-      {!isLoading && count > 0 && (wide ? <WideRoad nomadName={nomadName} scanning={scanning} stops={stops} /> : <StripRoad nomadName={nomadName} stops={stops} />)}
+      {!isLoading && count > 0 && (wide ? <WideRoad nomadName={nomadName} scanning={scanning} shake={shake} stops={stops} /> : <StripRoad nomadName={nomadName} stops={stops} />)}
     </ShipPanel>
   );
 }
 
-function WideRoad({ nomadName, scanning, stops }: { nomadName: string; scanning: boolean; stops: RoadStop[] }) {
+function WideRoad({
+  nomadName,
+  scanning,
+  shake,
+  stops,
+}: {
+  nomadName: string;
+  scanning: boolean;
+  shake: Animated.Value;
+  stops: RoadStop[];
+}) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -70,43 +96,53 @@ function WideRoad({ nomadName, scanning, stops }: { nomadName: string; scanning:
 
   return (
     <>
-      <CrtScreen>
-        <View style={styles.mapHeading}>
-          <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>◂ JUST STARTING OUT</ThemedText>
-          <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>
-            {ways} {ways === 1 ? 'WAY' : 'WAYS'} FORWARD ▸
-          </ThemedText>
-        </View>
-        <View onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
-          <Grid width={width} />
-          {width > 0 &&
-            stops.map((stop) => <RouteLine key={stop.pick.id} stop={stop} width={width} />)}
-          {width > 0 &&
-            stops.map((stop) => (
-              <MapStop
-                key={stop.pick.id}
-                onPress={() => setSelectedId(stop.pick.id)}
-                selected={stop.pick.id === selected.pick.id}
-                stop={stop}
-                width={width}
-              />
-            ))}
-          {width > 0 && (
-            <View
-              pointerEvents="none"
-              style={[styles.hereSpot, { left: (youAreHere.x * width) / 100 - 60, top: (youAreHere.y * mapHeight) / 100 - 12 }]}>
-              <YouAreHere />
-            </View>
-          )}
-          {scanning && <ScanBar />}
-        </View>
-        <View style={[styles.legend, { borderTopColor: theme.backgroundElement }]}>
-          <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>
-            <ThemedText style={[styles.legendText, { color: theme.friend }]}>■</ThemedText> STOP AHEAD (
-            {nomadName.toUpperCase()}&apos;S RANK)
-          </ThemedText>
-        </View>
-      </CrtScreen>
+      <Animated.View
+        style={{
+          opacity: shake.interpolate({ inputRange: wobbleSteps, outputRange: flicker }),
+          transform: [
+            { translateX: shake.interpolate({ inputRange: wobbleSteps, outputRange: jolt }) },
+            { skewX: shake.interpolate({ inputRange: wobbleSteps, outputRange: tilt }) },
+          ],
+        }}
+        testID="road-screen">
+        <CrtScreen>
+          <View style={styles.mapHeading}>
+            <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>◂ JUST STARTING OUT</ThemedText>
+            <ThemedText style={[styles.mapLabel, { color: theme.phosphorDim }]}>
+              {ways} {ways === 1 ? 'WAY' : 'WAYS'} FORWARD ▸
+            </ThemedText>
+          </View>
+          <View onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
+            <Grid width={width} />
+            {width > 0 &&
+              stops.map((stop) => <RouteLine key={stop.pick.id} stop={stop} width={width} />)}
+            {width > 0 &&
+              stops.map((stop) => (
+                <MapStop
+                  key={stop.pick.id}
+                  onPress={() => setSelectedId(stop.pick.id)}
+                  selected={stop.pick.id === selected.pick.id}
+                  stop={stop}
+                  width={width}
+                />
+              ))}
+            {width > 0 && (
+              <View
+                pointerEvents="none"
+                style={[styles.hereSpot, { left: (youAreHere.x * width) / 100 - 60, top: (youAreHere.y * mapHeight) / 100 - 12 }]}>
+                <YouAreHere />
+              </View>
+            )}
+            {scanning && <ScanBar />}
+          </View>
+          <View style={[styles.legend, { borderTopColor: theme.backgroundElement }]}>
+            <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>
+              <ThemedText style={[styles.legendText, { color: theme.friend }]}>■</ThemedText> STOP AHEAD (
+              {nomadName.toUpperCase()}&apos;S RANK)
+            </ThemedText>
+          </View>
+        </CrtScreen>
+      </Animated.View>
       <StopDetail nomadName={nomadName} stop={selected} />
     </>
   );
