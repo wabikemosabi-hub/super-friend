@@ -1,5 +1,5 @@
 begin;
-select plan(20);
+select plan(22);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -38,7 +38,9 @@ update public.recommendations set created_at = now() + interval '1 minute' where
 create temp table movies on commit drop as
 select
   (select id from public.media_items where external_id = 'movie:test-1') as flop,
-  (select id from public.media_items where external_id = 'movie:test-4') as crooner;
+  (select id from public.media_items where external_id = 'movie:test-4') as crooner,
+  (select x.id from public.recommendations x join public.media_items m on m.id = x.media_item_id
+     where x.recipient_id = tests.user_id('roy') and m.external_id = 'movie:test-2') as buff;
 grant select on movies to authenticated, anon;
 
 select has_function('public', 'rate_stop', array['uuid', 'integer', 'integer', 'text[]', 'text[]', 'date'], 'rate_stop exists');
@@ -157,6 +159,18 @@ select throws_ok(
   $$select public.rate_stop((select flop from movies), 3, 0, array['Hi'], array[]::text[], current_date)$$,
   'You can only rate stops plotted for you',
   'a navigator cannot rate a stop they plotted for someone else'
+);
+
+select throws_ok(
+  $$select public.add_recommendation(tests.user_id('roy'), (select flop from movies), array['Try again'])$$,
+  'roy-donk already reached that stop',
+  'nobody can plot a stop the nomad already reached'
+);
+
+select throws_ok(
+  $$select public.replace_recommendation((select buff from movies), (select flop from movies), array['Try again'])$$,
+  'roy-donk already reached that stop',
+  'nobody can swap in a stop the nomad already reached'
 );
 
 select throws_ok(
