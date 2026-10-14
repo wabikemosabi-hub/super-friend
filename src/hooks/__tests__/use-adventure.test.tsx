@@ -7,6 +7,7 @@ import type { Recommendation } from '@/lib/recommendations';
 
 const mockAdventureRecommendations = jest.fn<Promise<Recommendation[]>, [string]>();
 const mockAddRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
+const mockReplaceRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/lib/recommendations', () => ({
@@ -14,6 +15,8 @@ jest.mock('@/lib/recommendations', () => ({
   adventureRecommendations: (nomadId: string) => mockAdventureRecommendations(nomadId),
   addRecommendation: (nomadId: string, mediaItemId: string, reasons: string[]) =>
     mockAddRecommendation(nomadId, mediaItemId, reasons),
+  replaceRecommendation: (recommendationId: string, mediaItemId: string, reasons: string[]) =>
+    mockReplaceRecommendation(recommendationId, mediaItemId, reasons),
 }));
 
 function recommendation(title: string, rank: number, outgoing: boolean, type = 'movie'): Recommendation {
@@ -46,6 +49,7 @@ function setup(nomadId: string | null) {
 beforeEach(() => {
   mockAdventureRecommendations.mockReset().mockResolvedValue([coffinFlop, drivingCrooner, ghostTour]);
   mockAddRecommendation.mockReset().mockResolvedValue('new-id');
+  mockReplaceRecommendation.mockReset().mockResolvedValue('replacement-id');
 });
 
 test('loads the picks between you and the nomad for one media type', async () => {
@@ -91,5 +95,27 @@ test('passes along the reason a pick was refused', async () => {
   await waitFor(() => expect(result.current.isLoading).toBe(false));
 
   await expect(result.current.add('media-1', ['Hi'])).rejects.toThrow('Your movie route for roy-donk is full');
+  expect(mockAdventureRecommendations).toHaveBeenCalledTimes(1);
+});
+
+test('replaces a stop with cleaned reasons, then refreshes', async () => {
+  const { result } = await setup('roy-id');
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+  await act(() => result.current.replace('Coffin Flop-id', 'media-2', [' Croon ', '', 'Drive']));
+
+  expect(mockReplaceRecommendation).toHaveBeenCalledTimes(1);
+  expect(mockReplaceRecommendation).toHaveBeenCalledWith('Coffin Flop-id', 'media-2', ['Croon', 'Drive']);
+  await waitFor(() => expect(mockAdventureRecommendations).toHaveBeenCalledTimes(2));
+});
+
+test('passes along the reason a replacement was refused', async () => {
+  mockReplaceRecommendation.mockRejectedValue(new Error('Replace a movie stop with another movie'));
+  const { result } = await setup('roy-id');
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+  await expect(result.current.replace('Coffin Flop-id', 'media-2', ['Hi'])).rejects.toThrow(
+    'Replace a movie stop with another movie',
+  );
   expect(mockAdventureRecommendations).toHaveBeenCalledTimes(1);
 });

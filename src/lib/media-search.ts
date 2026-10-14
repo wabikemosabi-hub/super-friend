@@ -33,3 +33,14 @@ export type TmdbImageSize = 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' |
 export function tmdbImage(path: string | null | undefined, size: TmdbImageSize) {
   return path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
 }
+
+const OVERVIEW_LINE_LENGTH = 120;
+
+export function overviewLine(item: Pick<MediaItem, 'overview'>) {
+  const overview = item.overview?.trim();
+  if (!overview) return null;
+  const sentence = overview.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? overview;
+  if (sentence.length <= OVERVIEW_LINE_LENGTH) return sentence;
+  const lastSpace = sentence.slice(0, OVERVIEW_LINE_LENGTH + 1).lastIndexOf(' ');
+  return `${sentence.slice(0, lastSpace > 0 ? lastSpace : OVERVIEW_LINE_LENGTH)}…`;
+}

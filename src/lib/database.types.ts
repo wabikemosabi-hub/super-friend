@@ -106,6 +106,9 @@ isOneToOne: false
               "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
             }[]
                            },
+"replace_recommendation":
+{ Args: { "media_item_id": string,"reasons": (string)[],"recommendation_id": string }; Returns: string
+                           },
 "respond_to_connection_request":
 { Args: { "accept": boolean,"connection_id": string }; Returns: undefined
                            },

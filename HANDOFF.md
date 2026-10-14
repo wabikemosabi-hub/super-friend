@@ -1,8 +1,9 @@
 # Handoff: Media Advisory Board
 
-_Last sessions: 2026-10-07 and 08 (Eben's Mac). WAB-41 built 2026-10-08._
+_Last sessions: 2026-10-07, 08 and 10 (Eben's Mac). WAB-42 built 2026-10-10._
 
-- **Built on `ebenbsmith/wab-41-adventure-page-as-a-road-map-your-road-nav-console`** (2026-10-08, not merged yet): **WAB-41**, the Adventure Page as a road map. Your road (the stops your navigator plotted for you) plus the Nav Console (your route for them). No database changes. See **Adventure Page** under "Where things stand".
+- **Built on `ebenbsmith/wab-42-plot-a-stop-search-reasons-and-replacing-a-stop`** (2026-10-10, PR not open yet): **WAB-42**, Plot a stop. One panel for search and reasons, replacing a stop when the route is full, dimmed "already on your route" results, and a done screen. Plus **Degauss**, a switch on the road map that turns the green scan line off (not in a ticket; mention it in the PR). One new migration. See **Adventure Page** under "Where things stand".
+- **Merged to `main`** (PR #15, 2026-10-08): **WAB-41**, the Adventure Page as a road map. Your road (the stops your navigator plotted for you) plus the Nav Console (your route for them).
 - **Merged to `main`** (PR #13 and #14):
   - The Adventure Page: tap a fellow nomad on Basecamp to open `/adventure/<username>`, with IN and OUT lists (side by side on web, stacked on phones) and adding a movie with 1 to 3 reasons (WAB-11, WAB-14).
   - Sign out from your avatar on every screen (WAB-38).
@@ -12,12 +13,13 @@ _Last sessions: 2026-10-07 and 08 (Eben's Mac). WAB-41 built 2026-10-08._
 
 ## Next session: start here
 
-1. Get WAB-41 reviewed and merged (Jake), after Eben's click-through on web at a wide and a narrow window.
-2. Read **WAB-42** (Plot a stop) and the canvas's Plot boards. It replaces the console's "Plot a stop" button flow (today it's still `MediaSearchModal` plus `ReasonsForm`) and adds replacing a stop when the route is full.
-3. Then WAB-43 (rating, reroute, stops behind you, field reports) and WAB-44 (the log). WAB-43 has a comment to settle once field reports are in: is the Adventure Page too full on web? (Options there: keep it, a Nav Console drawer, or layout tweaks.)
-4. **WAB-45, deploy for friends** on a subdomain of Eben's onlyfins.wtf: hosted Supabase, Google sign-in settings, `npx expo export -p web`, then DNS. Eben checks how onlyfins.wtf is hosted (it's set up on his other computer). Agree with Jake first.
-5. The old `ebenbsmith/wab-39-wasteland-road-map` branch is empty (just PR #13's commits) and can be deleted, once Eben says so.
-6. Encounters 3 and 4, the log templates and the app rename (Media Wasteland Nomads) are waiting on Eben and Jake. Leave them as clearly marked placeholders in one place.
+1. Open the WAB-42 PR (Eben names it) and get it reviewed and merged (Jake). The PR should mention Degauss, and that Eben cut the canvas's live preview after trying it.
+2. **WAB-43** (rating, reroute, stops behind you, field reports). It also brings the second kind of dimmed search result, "<NAME> ALREADY REACHED THIS: <ENCOUNTER>": return that note from the panel's `unavailable` (see Plot a stop below). WAB-43 has a comment to settle once field reports are in: is the Adventure Page too full on web? (Options there: keep it, a Nav Console drawer, or layout tweaks.)
+3. Then WAB-44 (the log).
+4. **WAB-46 Unanswered questions** is where open product questions go for Eben and Jake to settle together. Add new ones there rather than making a ticket each.
+5. **WAB-45, deploy for friends** on a subdomain of Eben's onlyfins.wtf: hosted Supabase, Google sign-in settings, `npx expo export -p web`, then DNS. Eben checks how onlyfins.wtf is hosted (it's set up on his other computer). Agree with Jake first.
+6. The old `ebenbsmith/wab-39-wasteland-road-map` branch is empty (just PR #13's commits) and can be deleted, once Eben says so.
+7. Encounters 3 and 4, the log templates and the app rename (Media Wasteland Nomads) are waiting on Eben and Jake. Leave them as clearly marked placeholders in one place.
 
 ## Start here
 
@@ -40,11 +42,12 @@ _Last sessions: 2026-10-07 and 08 (Eben's Mac). WAB-41 built 2026-10-08._
 | WAB-30 | Remove or block a nomad. Not started. Block is "never" where a decline is "not now" |
 | **WAB-39 Wasteland world** | **Read this before touching the Adventure Page.** New names, encounters, the Nomad's Log, the road map, plotting a stop. Its sub-tickets are the build order |
 | WAB-40 | A route holds 3 stops, not 5. **Done** in PR #13 (migration `routes_hold_three_stops`) |
-| WAB-41 | The Adventure Page as a road map with today's data (no database changes) |
-| WAB-42 | Plot a stop: search, reasons, live preview, replace when full, dimmed results |
+| WAB-41 | The Adventure Page as a road map with today's data (no database changes). **Merged** in PR #15 |
+| WAB-42 | Plot a stop: search, reasons, replace when full, dimmed results. **Built** 2026-10-10 (the live preview was cut, see Plot a stop) |
 | WAB-43 | Reaching a stop: stars + reasons → encounter, reroute, field reports (new table) |
 | WAB-44 | Nomad's Log with ad-libbed stories (waits on Eben and Jake's templates) |
 | WAB-45 | Deploy the web build for friends on a subdomain of onlyfins.wtf |
+| **WAB-46 Unanswered questions** | A running list of open product questions for Eben and Jake to settle together. Add new ones under "Open" instead of making a ticket each. First one: should the map's "ROUTE 1" tags say "STOP 1"? |
 | WAB-36, 37 | Small defects: request avatars, search placeholder |
 | WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
 | WAB-26 | New database functions are callable by `anon`. Parked, but every new function must revoke it (see Gotchas) |
@@ -74,9 +77,9 @@ Then restart `npx expo start --web` if packages changed, and restart `npx supaba
 
 ## Where things stand
 
-Everything below was built test-first. The fellow nomads work is merged (PR 12). The Adventure Page and `recommendations` are on `ebenbsmith/wab-14-adventure-page` until its PR merges.
+Everything below was built test-first. Everything through WAB-41 is merged (PR 12 to 15). WAB-42 and Degauss are on `ebenbsmith/wab-42-plot-a-stop-search-reasons-and-replacing-a-stop` until its PR merges.
 
-**Database** (eleven migrations; the old schema is deleted):
+**Database** (twelve migrations; the old schema is deleted):
 
 - `profiles`: `id` (references `auth.users`, cascades), `username`, `avatar_url` (nullable). Signed-in users read everyone's; you can only create your own and only update `username` / `avatar_url`. **No trigger**: the app creates the profile at sign-up.
 - **Usernames use dashes, not underscores** (decided 2026-10-01): 3 to 24 letters or numbers, single dashes between words (`taffy-lee-fubbins`). No dash at the start or end, no double dashes. Unique ignoring case. Migration `usernames_use_dashes`.
@@ -91,6 +94,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
 - `recommendations` (WAB-14): one row per pick (`recommender_id`, `recipient_id`, `media_item_id`, `rank` 1 to 3, `reasons text[]` 1 to 3, `created_at`), unique per (recommender, recipient, media item). The column is `rank`, not `position` (`position` is a reserved word Postgres refuses as an output column, and "Ranking" is the glossary word). RLS on, **no policies, and every privilege revoked**: only two `security definer` functions, `anon` revoked:
   - `add_recommendation(nomad_id, media_item_id, reasons) returns uuid`: trims reasons and drops blanks, then raises (in order) "You can only recommend to fellow nomads" (pending, declined, yourself, strangers), "No media item with that id", "Give 1 to 3 reasons", "Keep each reason under 140 characters", "That's already on your list", "Your movie route for <username> is full" (**3 per media type per pair**, decided 2026-10-08; migration `routes_hold_three_stops`). New picks get the next rank.
   - `adventure_recommendations(nomad_id)`: `id`, `outgoing`, `rank`, `reasons`, `media_item_id`, `type`, `external_id`, `title`, `year`, `metadata`, both directions between you and that nomad only, and nothing at all unless you're accepted fellow nomads (so picks hide if a connection ever ends).
+  - `replace_recommendation(recommendation_id, media_item_id, reasons) returns uuid` (WAB-42, migration `replace_a_stop`): swaps one of your stops for another movie. It raises, in order, "No stop like that on your route" (someone else's stop, or no such id), "You can only recommend to fellow nomads", "No media item with that id", "Replace a movie stop with another movie" (same media type only), the two reasons messages, then "That's already on your list". The old row is deleted and the new one takes its rank. The nomad isn't told it was swapped. `anon` revoked.
   - Migration `recommendations`. No remove, reorder, edit, rate or pass yet.
 - Generated types: `src/lib/database.types.ts` (from `npm run db:types`), passed to `createClient<Database>`.
 
@@ -120,14 +124,15 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - `profile.ts`: `createProfile()` (turns `23505` into "That username is taken") and `usernameAvailable()` (calls the database function).
   - `avatar.ts`: `pickAvatar()` (one square image, 0.8 quality, falls back to `image/jpeg`) and `uploadAvatar(userId, avatar)` (to `<id>/avatar.<type>` with `upsert`, returns the public URL).
   - `sign-up.ts`: `finishSignUp(userId, username, avatar)`: upload, then create the profile; returns an error message or `null`.
-  - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`).
+  - `media-search.ts`: `searchMedia(type, query)` (calls `media-search`; any failure becomes "Search is having trouble. Try again in a moment."), `shouldSearch(query)` (2+ characters), `tmdbImage(path, size)`, `posterPath(item)` (TMDB's poster path from a row's `metadata`), `overviewLine(item)` (TMDB's first sentence; over 120 characters it's cut at a word with "…"; `null` when there's no overview).
 - `src/lib/connections.ts` also has `findNomad(nomads, username)` (ignores case, `null` when not a fellow nomad).
-- `src/lib/recommendations.ts`: `addRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `MAX_PICKS = 3`.
-- `src/hooks/use-adventure.ts`: `useAdventure(nomadId | null, type)` returns `{ fromThem, toThem, isLoading, error, add(mediaItemId, reasons) }`. Key `['adventure', nomadId]`, off until the nomad is known; `add` cleans reasons, then refreshes.
+- `src/lib/recommendations.ts`: `addRecommendation`, `replaceRecommendation`, `adventureRecommendations` (database errors pass through), `cleanReasons`, `reasonsProblem` (the database's rule, same messages), `splitRecommendations(rows, type)` → `{ fromThem, toThem }` by rank, `openSlots`, `onRoute(route, externalId)`, `MAX_PICKS = 3`.
+- `src/hooks/use-adventure.ts`: `useAdventure(nomadId | null, type)` returns `{ fromThem, toThem, isLoading, error, add(mediaItemId, reasons), replace(recommendationId, mediaItemId, reasons) }`. Key `['adventure', nomadId]`, off until the nomad is known. `add` and `replace` clean the reasons, then refresh; a refusal comes back as an error and nothing refreshes.
+- `src/lib/scan-line.ts` and `src/hooks/use-degauss.ts` (Degauss): `useDegauss()` returns `{ scanning, degauss() }`. The choice is kept in `localStorage` under `scan-line` (`'on'` / `'off'`). On phones that `localStorage` comes from `expo-sqlite/localStorage/install`, the same thing Supabase uses. If storage is blocked, the line runs and the switch still works for that visit.
 - `src/hooks/use-connections.ts`: `useConnections()` returns `{ nomads, incoming, outgoing, isLoading, error, send(username), respond(id, accept) }`. React Query key `['connections']`; `send` and `respond` refresh the list afterwards; `send` rejects with the database's message so the screen can show it.
 - `src/hooks/use-media-search.ts`: `useMediaSearch(type, query)` returns `{ results, isSearching, error, noMatches }`. Waits for a 300 ms pause in typing (counted as searching), skips queries under 2 characters, keeps the last results showing while the next load. `noMatches` is true only after a finished search finds nothing.
-- `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. While the field has focus its border lights up `phosphorDim` (instead of the browser's blue focus ring). No unit tests on purpose; Playwright will cover it.
-- `src/components/media-search-modal.tsx`: `MediaSearchModal` (props `visible`, `type`, `onPick(item)`, `onClose()`) wraps `MediaSearch` in React Native's `Modal`: a header with a `CH-01` plate, "SEARCH MOVIES" and a close button (`media-search-modal-close`). On web it's a centered panel (up to 640 px) over a `scrim` backdrop that closes it when clicked (`media-search-modal-backdrop`); on phones it slides up full screen. Picking a result calls `onPick`, then closes. This is how the Adventure Page's Movies tab (WAB-14) should open search. A `Modal` rather than a modal route because it's a self-contained task that hands a value back (Expo's docs recommend `Modal` for that).
+- `src/components/media-search.tsx`: `MediaSearch` (props `type`, `onPick(item)`), in the ship-computer style. A CRT search field (`media-search-input`), "SCANNING…", "NO SIGNAL. Nothing matches …" and the error message, result rows (`media-search-result-<external_id>`) with a w92 TMDB poster or a tape-label tile, and the TMDB notice. Optional `unavailable(item)` returns `{ note, testID }` or `null`: a row with a note is dimmed, shows the note, and can't be picked. Search itself knows nothing about routes. While the field has focus its border lights up `phosphorDim` (instead of the browser's blue focus ring). No unit tests on purpose; Playwright will cover it.
+- `src/components/ship-modal.tsx`: `ShipModal` (props `visible`, `channel`, `heading`, `onClose`, `closeLabel`, `testID`, `children`; it was `MediaSearchModal` until WAB-42) puts anything in React Native's `Modal`: a header with a channel plate, the heading and a close button (`<testID>-close`). On web it's a centered panel (up to 640 px) over a `scrim` backdrop that closes it when clicked (`<testID>-backdrop`); on phones it slides up full screen. A `Modal` rather than a modal route because it's a self-contained task that hands a value back (Expo's docs recommend `Modal` for that). Closing unmounts what's inside, so the next open starts fresh.
 - `src/components/account-button.tsx`: `AccountButton` (WAB-38), your avatar plus `OPERATOR: <USERNAME>` as one button (`account-button`, plate text `account-operator`) that opens Sign out (`account-sign-out`). On Basecamp and the Adventure Page; every new screen's header should use it.
 - `src/components/media-poster.tsx`: `MediaPoster` (w92 TMDB poster or the tape-label tile), shared by search results and the Adventure Page. `posterPath` takes anything with `metadata`.
 - The temporary `dev/media-search` page is gone; the Adventure Page uses the modal now.
@@ -137,7 +142,7 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
 - `src/providers/session-provider.tsx`: `useSession()` returns `{ status, session, profile, refreshProfile }`, status one of `loading`, `signedOut`, `needsProfile`, `ready`.
 - `src/app/_layout.tsx`: `SessionProvider` + `Stack.Protected`. Signed out → `sign-in`; no profile → `pick-username`; ready → `index` (Basecamp) and `adventure/[username]`.
 - **Pick a username screen** (`PickUsernameScreen`, props `checkUsername`, `onSubmit`, `onSignOut`, `pickAvatar`): spaces and underscores become dashes as you type; half a second after you stop typing a valid name it shows "… is taken" / "… is available" (clears when you type, checks only the name you stop on, ignores stale answers); "Pick an avatar" with a round preview; Continue checks the name rule, then asks for a photo, then sends both. The route (`src/app/pick-username.tsx`) calls `finishSignUp`, then `refreshProfile()`.
-- Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. Both button components **require** a `testID`: `ActionButton` (the older rounded one, still on sign-in and pick-username) and `ShipButton` (ship-computer style, `hazard` | `phosphor` | `panel`, used on Basecamp).
+- Screens live in `src/components/` as plain components taking props; route files in `src/app/` are thin wrappers. Both button components **require** a `testID`: `ActionButton` (the older rounded one, still on sign-in and pick-username) and `ShipButton` (ship-computer style, `hazard` | `phosphor` | `panel` | `alert`, used on Basecamp and the Adventure Page).
 - **Basecamp** (`BasecampScreen`, built from Jake's canvas; the route `src/app/index.tsx` passes in `useConnections()` and the profile). No unit tests on purpose; Playwright will cover it:
   - **Header:** "MEDIA ADVISORY BOARD · DEEP FIELD UNIT MAB-1", the red status eye beside a neon BASECAMP title. Your avatar and `OPERATOR: <USERNAME>` plate are the shared `AccountButton` (see below). A red line and a hazard stripe run underneath.
   - **CH-01 Fellow Nomads** (`fellow-nomads-card.tsx`): a two-digit count (`fellow-nomads-count`), rows `fellow-nomad-<username>` with an avatar, the "NO SIGNAL" empty state (`fellow-nomads-empty`), then "ADD A NOMAD BY USERNAME" (`add-nomad-input`, placeholder `#username` that hides on focus; `add-nomad-send`, disabled while empty). Shows `REQUEST SENT TO …` (`add-nomad-sent`) or the error in `alert` red (`add-nomad-error`).
@@ -148,8 +153,16 @@ Everything below was built test-first. The fellow nomads work is merged (PR 12).
   - Header (unchanged): back (`adventure-back`), ADVENTURE plate, both avatars, "You & <username>" (`adventure-title`), `@username · Fellow Nomad` (`adventure-nomad`), and your `AccountButton`.
   - Tabs: Movies works; Series and Books are disabled with "SOON" (`adventure-tab-movies` and so on).
   - **900 px and wider:** the road (2/3) and the Nav Console (1/3) side by side. **Narrower:** a switch between "MY ROAD" and "PLOT <NAME>'S ROUTE" (`adventure-view-road`, `adventure-view-console`).
-  - **Your road** (`road-map.tsx`, NAV-01, `road-map`): the canvas's "Just Starting Out" view, because nothing can be reached until rating exists (WAB-43). Wide: a CRT map with a grid (theme role `grid`), a blinking YOU ARE HERE (`road-here`), and the stops spread out (`road-stop-<external_id>`), each with its own dotted line from YOU ARE HERE (line 1 boldest). A faint green CRT scan bar sweeps down the map every 4 seconds (Eben tried the canvas's jiggle and it felt like the map was breathing). Tapping a stop shows it in the detail screen below (`road-detail`, stop 1 at first). Narrow: a strip map running top to bottom, each stop a `MediaRow` that opens to its reasons. `road-empty`, `road-loading`. Lines are rows of small `View`s (no `react-native-svg`), and the animations use React Native's own `Animated`.
-  - **Nav Console** (`nav-console.tsx`, NAV-02, `nav-console`): 3 pips and `console-slots` ("N SLOTS OPEN…", "ROUTE FULL"), then your stops (`console-stop-<external_id>`) that open to the reasons and "<NAME> HASN'T REACHED IT YET". "Plot a stop for <name>" (`console-plot`, disabled when full) opens `MediaSearchModal`, then `ReasonsForm` (`reasons-form.tsx`, same testIDs as before: `adventure-reason-1..3`, `adventure-save`, `adventure-cancel`, `adventure-add-error`). There's no edit or remove yet (Eben, 2026-10-08: they wait for the database functions) and no field reports yet (they wait for WAB-43).
+  - **Your road** (`road-map.tsx`, NAV-01, `road-map`): the canvas's "Just Starting Out" view, because nothing can be reached until rating exists (WAB-43). Wide: a CRT map with a grid (theme role `grid`), a blinking YOU ARE HERE (`road-here`), and the stops spread out (`road-stop-<external_id>`), each with its own dotted line from YOU ARE HERE (line 1 boldest). A faint green CRT scan bar sweeps down the map every 4 seconds (Eben tried the canvas's jiggle and it felt like the map was breathing). Stop 2 sits at 70% down the map (was 82%, which cut off its label): a stop's center has to stay above about 75%, because its box, two-line title and tag hang about 94 px below it on a 380 px map. Tapping a stop shows it in the detail screen below (`road-detail`, stop 1 at first). Narrow: a strip map running top to bottom, each stop a `MediaRow` that opens to its reasons. `road-empty`, `road-loading`. Lines are rows of small `View`s (no `react-native-svg`), and the animations use React Native's own `Animated`.
+  - **Degauss** (Eben, 2026-10-10; two people didn't like the scan line and Eben loves it): on the wide map only, the road map's header has a small monitor-style key (`road-degauss`, a `switch` for screen readers) with an LED beside it (`road-degauss-light`, glowing `phosphor` while the line runs). Pressing it makes the map screen (`road-screen`) wobble for about half a second, then switches the line, and the choice is remembered (`useDegauss`). The wobble is three lists at the top of `road-map.tsx`: `jolt` (px sideways), `tilt` (`skewX`) and `flicker` (opacity), over `duration: 520`. With "reduce motion" on (`AccessibilityInfo`), it skips the wobble and just switches. Mashing it restarts the wobble, and only the last press switches.
+  - **Nav Console** (`nav-console.tsx`, NAV-02, `nav-console`): 3 pips and `console-slots` ("N SLOTS OPEN…", "ROUTE FULL"), then your stops (`console-stop-<external_id>`) that open to the reasons and "<NAME> HASN'T REACHED IT YET". The button (`plot-stop-open`) reads "Plot a stop for <name>", or "Replace a stop on <name>'s route" in `alert` red when the route is full. It opens the Plot a stop panel. There's no edit, remove or reorder yet (Eben, 2026-10-08: they wait for the database functions) and no field reports yet (they wait for WAB-43).
+  - **Plot a stop** (`plot-stop-panel.tsx`, WAB-42, built to the canvas's `PlotPanel` board): one `ShipModal` (`plot-stop`, NAV-02 plate). Step chips (`plot-stop-step-<step>`) are 1 · SEARCH and 2 · REASONS, or 1 · STOP TO REPLACE first when the route is full.
+    - **Stop to replace** (full route only): "<NAME>'S ROUTE IS FULL. WHICH STOP ARE YOU REPLACING?", your stops as radio rows (`plot-stop-replace-<rank>`, the chosen one outlined in `alert` with REPLACING), the footnote about the swap, and "Find its replacement" (`plot-stop-replace-next`). **Nothing is chosen at first** and the button is disabled until you choose (the canvas pre-chose stop 2; changed on purpose so nobody replaces by accident).
+    - **Search:** `MediaSearch` with `unavailable`. Anything already on your route (including the stop being replaced) shows "ALREADY ON YOUR ROUTE" (`plot-stop-unavailable-<external_id>`). Search stays mounted (just hidden) while you're on reasons, so Back to search keeps the query and results.
+    - **Reasons** (`reasons-form.tsx`, `plot-stop-reasons`): the cover, title (`plot-stop-title`), year and `overviewLine` (`plot-stop-overview`), then "GREAT STOP BECAUSE:" with REASON 1 · REQUIRED and 2, 3 · OPTIONAL (`plot-stop-reason-1..3`). Reason 1's placeholder hides on focus and the focused field's border lights up `phosphorDim`. When replacing, a red dashed swap card (`plot-stop-swap`) shows STOP N · THE SWAP with OUT (the old stop, `plot-stop-swap-out`) and IN (the new one, `plot-stop-swap-in`). Then `plot-stop-error`, Back to search (`plot-stop-back`), and Plot it or Replace (`plot-stop-submit`).
+    - **Done:** "STOP N PLOTTED" / "STOP N REPLACED" (`plot-stop-done-line`) and Back to the console (`plot-stop-done`). It keeps the mode and number from when you saved, so plotting the 3rd stop doesn't flip the header to "Replace…" underneath. The canvas's "drag it in the console to change its rank" is left out until reorder exists.
+    - **Cut:** the canvas's live "PREVIEW · HOW IT SHOWS UP ON <NAME>'S MAP" box. Eben tried it and cut it (2026-10-10): it only repeated what's already on screen.
+    - Not yet: "<NAME> ALREADY REACHED THIS: <ENCOUNTER>" dimming, which needs WAB-43's ratings. Return it from the panel's `unavailable`, and search won't need to change.
   - Shared pieces: `MediaRow` and `StopReasons` (`media-row.tsx`: cover, title, ▸/▾, opens in place) and `ScreenLine` (now in `ship-panel.tsx`).
   - Logic in `src/lib/road-map.ts` (unit tested): `roadStops`, `youAreHere`, `dottedLine`, `lineWeight`, `slotsLine`, `toggleOpen`.
 - Unused Expo template components and images were deleted. Still in place: `src/hooks/use-color-scheme.web.ts` (used, but its hydration guard is pointless now that output is `"single"`).
@@ -160,14 +173,15 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 
 ## Next steps
 
-1. **Merge WAB-41** (Jake reviews).
+1. **Merge WAB-42** (PR #16, Jake reviews).
 2. **Deploy for friends (WAB-45)** whenever it's wanted; it doesn't depend on the road map.
-3. **Keep building the road map in WAB-39's order:** WAB-42 (plot a stop), WAB-43 (reaching a stop), then WAB-44 (the log, once the templates exist). The canvas is the source of truth for the look. Every board is interactive, and the Tweaks have switches like Just Starting Out and Route Full.
-4. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
-5. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
-6. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
-7. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
-8. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
+3. **Keep building the road map in WAB-39's order:** WAB-43 (reaching a stop), then WAB-44 (the log, once the templates exist). The canvas is the source of truth for the look. Every board is interactive, and the Tweaks have switches like Just Starting Out and Route Full.
+4. **Manual test plan:** [`docs/manual-test-plan.md`](docs/manual-test-plan.md) lists everything built so far as click-through checks, with the testIDs each one touches. Add checks in the same PR as each feature. When Playwright covers a check, delete it from the plan.
+5. **Playwright** end-to-end tests against the web build, signing in as the seed users through the dev email form. Every interactive element has a `testID` (`data-testid` on web). Good first flows: sign in → Basecamp; Paul asks Bart → Bart accepts → both lists; decline → asker still sees "waiting for a yes"; unknown username → red error. A test image for the file picker goes in `e2e/fixtures/` (not `assets/`, which ships with the app; keep it small). Decide whether WAB-34 closes.
+6. **Series search (WAB-16):** TMDB `/search/tv`, `external_id` `tv:<id>`, `type: 'series'`, recorded fixtures first. `MediaSearch` already takes a `type`. Then decide on the TMDB logo for `TmdbAttribution`.
+7. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
+8. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
+9. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
 
 ## What this is
 
@@ -263,6 +277,9 @@ Friends recommend movies, series and books to each other. Your friends know what
 - **`test:functions` runs `deno test --no-lock`** and `deno.lock` is gitignored: Deno kept rewriting the lock file differently on each Mac.
 - **Shadows:** use `boxShadow` (works on web and phones in React Native 0.86 with the New Architecture). The old `shadow*` props warn on web. Text glows still use `textShadowColor` / `textShadowRadius`: React Native has no `textShadow` shorthand on phones, so the web-only "textShadow* style props are deprecated" warning is expected.
 - **Storage seeding:** `[storage.buckets.<name>]` with `objects_path` in `config.toml` uploads that folder on `npx supabase db reset` (after `seed.sql`). Keep the bucket's rules there identical to its migration.
+- **pgTAP tests can't read `recommendations` directly** (every privilege is revoked), so a test acting as a signed-in user gets `42501 permission denied` if it looks up a stop's id with `select … from public.recommendations`. Look the ids up before authenticating, into a temp table granted to `authenticated` and `anon` (see `replace-recommendation.test.sql`'s `stops`).
+- **The routing test fakes `@/lib/scan-line`** because the road map now loads it, and it loads `expo-sqlite`. Any new `src/lib/` module that touches storage or a native module needs the same fake in `routing.test.tsx`; otherwise the whole file fails to load (`NativeDatabase is not a constructor`) and Jest's total quietly drops.
+- **Prettier isn't set up**, and the files aren't Prettier-formatted, so don't run `npx prettier --write` on a file: it reformats all of it. Indent by hand.
 - **Removing the browser's focus ring on a `TextInput` (web)** takes `outlineStyle: 'solid'` plus `outlineWidth: 0`. `outlineWidth: 0` alone does nothing, because the browser's own focus style is `outline-style: auto`, which ignores the width. Always give focus another visible signal (the search field lights its border).
 
 ## Design
@@ -294,9 +311,9 @@ The canvases are the source of truth for how screens should look; there are no c
 
 | Command | Result |
 |---|---|
-| `npm test` | 149 passed, 20 files |
+| `npm test` | 165 passed, 21 files |
 | `npm run test:functions` | 18 passed, 2 files |
-| `npm run test:db` | 95 passed, 9 files |
+| `npm run test:db` | 110 passed, 10 files |
 | `npm run db:types` | regenerates `src/lib/database.types.ts` from local Supabase |
 | `npx tsc --noEmit` | passes |
 | `npx expo lint` | passes |

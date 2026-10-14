@@ -39,6 +39,11 @@ jest.mock('@/lib/profile', () => ({
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
+jest.mock('@/lib/scan-line', () => ({
+  scanLineOn: () => true,
+  rememberScanLine: jest.fn(),
+}));
+
 jest.mock('@/lib/connections', () => ({
   ...jest.requireActual<typeof import('@/lib/connections')>('@/lib/connections'),
   myConnections: () =>

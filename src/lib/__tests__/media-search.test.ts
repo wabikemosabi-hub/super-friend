@@ -1,6 +1,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
 import {
+  overviewLine,
   posterPath,
   searchMedia,
   searchTrouble,
@@ -92,4 +93,31 @@ test.each([
   ['metadata that is a list', ['/kMKyx1k8hWWscYFnPbnxxN4Eqo4.jpg']],
 ])('a row with %s has no poster path', (_case, metadata) => {
   expect(posterPath({ ...fullMetalJacket, metadata })).toBeNull();
+});
+
+test('the overview line is the first sentence', () => {
+  expect(
+    overviewLine({
+      overview: 'A pragmatic Marine sees the war through boot camp. Then he goes to Vietnam! It is long?',
+    }),
+  ).toBe('A pragmatic Marine sees the war through boot camp.');
+});
+
+test('a short overview with one sentence stays whole', () => {
+  expect(overviewLine({ overview: 'Boot camp, then the war' })).toBe('Boot camp, then the war');
+});
+
+test('a long first sentence is cut at a word and trailed off', () => {
+  const words = 'The drill instructor yells at the new recruits '.repeat(4).trim();
+
+  const line = overviewLine({ overview: `${words}.` });
+
+  expect(line).toBe(
+    'The drill instructor yells at the new recruits The drill instructor yells at the new recruits The drill instructor yells…',
+  );
+  expect(line?.length).toBeLessThanOrEqual(121);
+});
+
+test.each([null, '', '   '])('no overview means no line (%p)', (overview) => {
+  expect(overviewLine({ overview })).toBeNull();
 });

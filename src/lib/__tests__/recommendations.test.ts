@@ -5,9 +5,11 @@ import {
   adventureRecommendations,
   cleanReasons,
   MAX_PICKS,
+  onRoute,
   openSlots,
   reasonsProblem,
   type Recommendation,
+  replaceRecommendation,
   splitRecommendations,
 } from '@/lib/recommendations';
 
@@ -66,6 +68,28 @@ test('passes along the reason a recommendation was refused', async () => {
   );
 });
 
+test('replaces a stop on your route', async () => {
+  mockRpc.mockResolvedValue({ data: 'recommendation-2', error: null });
+
+  const id = await replaceRecommendation('recommendation-1', 'media-2', ['Croon', 'Drive']);
+
+  expect(id).toBe('recommendation-2');
+  expect(mockRpc).toHaveBeenCalledTimes(1);
+  expect(mockRpc).toHaveBeenCalledWith('replace_recommendation', {
+    recommendation_id: 'recommendation-1',
+    media_item_id: 'media-2',
+    reasons: ['Croon', 'Drive'],
+  });
+});
+
+test('passes along the reason a replacement was refused', async () => {
+  mockRpc.mockResolvedValue({ data: null, error: databaseError('Replace a movie stop with another movie') });
+
+  await expect(replaceRecommendation('recommendation-1', 'media-2', ['Hi'])).rejects.toThrow(
+    'Replace a movie stop with another movie',
+  );
+});
+
 test('loads the recommendations between you and a fellow nomad', async () => {
   const rows = [recommendation('Coffin Flop', 1, true)];
   mockRpc.mockResolvedValue({ data: rows, error: null });
@@ -121,4 +145,12 @@ test('counts the open slots in a list', () => {
   expect(MAX_PICKS).toBe(3);
   expect(openSlots([])).toBe(3);
   expect(openSlots([recommendation('Coffin Flop', 1, true), recommendation('Little Buff Boys', 2, true)])).toBe(1);
+});
+
+test('knows when a search result is already on your route', () => {
+  const route = [recommendation('Coffin Flop', 1, true), recommendation('Little Buff Boys', 2, true)];
+
+  expect(onRoute(route, 'movie:Little Buff Boys')).toBe(true);
+  expect(onRoute(route, 'movie:Driving Crooner')).toBe(false);
+  expect(onRoute([], 'movie:Coffin Flop')).toBe(false);
 });

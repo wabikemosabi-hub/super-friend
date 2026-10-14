@@ -12,7 +12,7 @@ export default function AdventureRoute() {
   const { profile } = useSession();
   const { nomads, isLoading } = useConnections();
   const nomad = findNomad(nomads, username ?? '');
-  const { fromThem, toThem, isLoading: picksLoading, error, add } = useAdventure(nomad?.nomad_id ?? null, 'movie');
+  const { fromThem, toThem, isLoading: picksLoading, error, add, replace } = useAdventure(nomad?.nomad_id ?? null, 'movie');
 
   return (
     <AdventureScreen
@@ -25,6 +25,7 @@ export default function AdventureRoute() {
       picksLoading={picksLoading}
       picksError={error}
       onAdd={add}
+      onReplace={replace}
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       onSignOut={signOut}
     />

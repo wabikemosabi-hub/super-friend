@@ -4,6 +4,7 @@ import {
   addRecommendation,
   adventureRecommendations,
   cleanReasons,
+  replaceRecommendation,
   splitRecommendations,
 } from '@/lib/recommendations';
 
@@ -23,6 +24,10 @@ export function useAdventure(nomadId: string | null, type: string) {
     add: async (mediaItemId: string, reasons: string[]) => {
       if (nomadId === null) return;
       await addRecommendation(nomadId, mediaItemId, cleanReasons(reasons));
+      await client.invalidateQueries({ queryKey: key });
+    },
+    replace: async (recommendationId: string, mediaItemId: string, reasons: string[]) => {
+      await replaceRecommendation(recommendationId, mediaItemId, cleanReasons(reasons));
       await client.invalidateQueries({ queryKey: key });
     },
   };

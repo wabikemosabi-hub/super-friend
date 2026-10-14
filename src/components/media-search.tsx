@@ -12,12 +12,15 @@ import { type MediaItem, type MediaType } from '@/lib/media-search';
 const plural: Record<MediaType, string> = { movie: 'movies', series: 'series', book: 'books' };
 const singular: Record<MediaType, string> = { movie: 'Movie', series: 'Series', book: 'Book' };
 
+export type Unavailable = { note: string; testID: string };
+
 type MediaSearchProps = {
   type: MediaType;
   onPick: (item: MediaItem) => void;
+  unavailable?: (item: MediaItem) => Unavailable | null;
 };
 
-export function MediaSearch({ type, onPick }: MediaSearchProps) {
+export function MediaSearch({ type, onPick, unavailable }: MediaSearchProps) {
   const theme = useTheme();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
@@ -62,29 +65,40 @@ export function MediaSearch({ type, onPick }: MediaSearchProps) {
       )}
 
       <View style={styles.results}>
-        {results.map((item) => (
-          <Pressable
-            accessibilityLabel={item.year ? `${item.title}, ${item.year}` : item.title}
-            accessibilityRole="button"
-            key={item.id}
-            onPress={() => onPick(item)}
-            style={({ pressed }) => [
-              styles.row,
-              {
-                backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement,
-                borderColor: theme.edge,
-              },
-            ]}
-            testID={`media-search-result-${item.external_id}`}>
-            <MediaPoster item={item} />
-            <View style={styles.details}>
-              <ThemedText style={styles.title}>{item.title}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.year ? `${item.year} · ${singular[type]}` : singular[type]}
-              </ThemedText>
-            </View>
-          </Pressable>
-        ))}
+        {results.map((item) => {
+          const blocked = unavailable?.(item) ?? null;
+          return (
+            <Pressable
+              accessibilityLabel={item.year ? `${item.title}, ${item.year}` : item.title}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: blocked !== null }}
+              disabled={blocked !== null}
+              key={item.id}
+              onPress={() => onPick(item)}
+              style={({ pressed }) => [
+                styles.row,
+                {
+                  backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement,
+                  borderColor: theme.edge,
+                  opacity: blocked ? 0.45 : 1,
+                },
+              ]}
+              testID={`media-search-result-${item.external_id}`}>
+              <MediaPoster item={item} />
+              <View style={styles.details}>
+                <ThemedText style={styles.title}>{item.title}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {item.year ? `${item.year} · ${singular[type]}` : singular[type]}
+                </ThemedText>
+                {blocked && (
+                  <ThemedText style={[styles.note, { color: theme.textSecondary }]} testID={blocked.testID}>
+                    {blocked.note}
+                  </ThemedText>
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
 
       <TmdbAttribution />
@@ -131,6 +145,11 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Typefaces.display,
     fontSize: 14,
+    lineHeight: 20,
+  },
+  note: {
+    fontFamily: Typefaces.screen,
+    fontSize: 18,
     lineHeight: 20,
   },
 });
