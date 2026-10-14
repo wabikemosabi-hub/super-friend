@@ -28,9 +28,9 @@ select public.add_recommendation(tests.user_id('roy'), (select id from public.me
 select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-3'), array['Pants']);
 
 select tests.authenticate_as('roy');
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 1, 2, array[]::text[], array['Flop'], current_date - 5);
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 3, 1, array['Grew on me'], array[]::text[], current_date);
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-2'), 5, 0, array['Buff'], array[]::text[], current_date - 1);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 1, 2, array['Flop'], current_date - 5);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 3, 1, array['Grew on me'], current_date);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-2'), 5, 0, array['Buff'], current_date - 1);
 
 select has_function('public', 'reached_stops', array['uuid'], 'reached_stops exists');
 

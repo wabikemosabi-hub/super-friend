@@ -1,7 +1,7 @@
 import type { Stars } from '@/constants/encounters';
 import type { Database } from '@/lib/database.types';
 import { encounterFor, STARS } from '@/lib/encounters';
-import { onRoute, reasonsProblem, type Recommendation } from '@/lib/recommendations';
+import { onRoute, type Recommendation } from '@/lib/recommendations';
 import { supabase } from '@/lib/supabase';
 
 export type ReachedStop = Database['public']['Functions']['reached_stops']['Returns'][number];
@@ -14,24 +14,18 @@ export async function rateStop(
   mediaItemId: string,
   stars: Stars,
   encounter: number,
-  goodReasons: string[],
-  badReasons: string[],
+  reasons: string[],
   watchedOn: string,
 ) {
   const { data, error } = await supabase.rpc('rate_stop', {
     media_item_id: mediaItemId,
     stars,
     encounter,
-    good_reasons: goodReasons,
-    bad_reasons: badReasons,
+    reasons,
     watched_on: watchedOn,
   });
   if (error) throw error;
   return data;
-}
-
-export function ratingReasonsProblem(goodReasons: string[], badReasons: string[]) {
-  return reasonsProblem([...goodReasons, ...badReasons]);
 }
 
 export async function reachedStops(nomadId: string) {

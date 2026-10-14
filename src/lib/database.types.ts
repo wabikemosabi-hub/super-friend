@@ -89,13 +89,13 @@ isOneToOne: false
                   ]
                 },"stop_ratings": {
                   Row: {
-                    "bad_reasons": (string)[],"created_at": string,"encounter": number,"good_reasons": (string)[],"id": string,"media_item_id": string,"navigator_id": string | null,"nomad_id": string,"promised_reasons": (string)[],"stars": number,"watched_on": string
+                    "created_at": string,"encounter": number,"id": string,"media_item_id": string,"navigator_id": string | null,"nomad_id": string,"promised_reasons": (string)[],"reasons": (string)[],"stars": number,"watched_on": string
                   }
                   Insert: {
-                    "bad_reasons"?: (string)[],"created_at"?: string,"encounter": number,"good_reasons"?: (string)[],"id"?: string,"media_item_id": string,"navigator_id"?: string | null,"nomad_id": string,"promised_reasons"?: (string)[],"stars": number,"watched_on": string
+                    "created_at"?: string,"encounter": number,"id"?: string,"media_item_id": string,"navigator_id"?: string | null,"nomad_id": string,"promised_reasons"?: (string)[],"reasons": (string)[],"stars": number,"watched_on": string
                   }
                   Update: {
-                    "bad_reasons"?: (string)[],"created_at"?: string,"encounter"?: number,"good_reasons"?: (string)[],"id"?: string,"media_item_id"?: string,"navigator_id"?: string | null,"nomad_id"?: string,"promised_reasons"?: (string)[],"stars"?: number,"watched_on"?: string
+                    "created_at"?: string,"encounter"?: number,"id"?: string,"media_item_id"?: string,"navigator_id"?: string | null,"nomad_id"?: string,"promised_reasons"?: (string)[],"reasons"?: (string)[],"stars"?: number,"watched_on"?: string
                   }
                   Relationships: [
                     {
@@ -138,7 +138,7 @@ isOneToOne: false
             }[]
                            },
 "rate_stop":
-{ Args: { "bad_reasons": (string)[],"encounter": number,"good_reasons": (string)[],"media_item_id": string,"stars": number,"watched_on"?: string }; Returns: string
+{ Args: { "encounter": number,"media_item_id": string,"reasons": (string)[],"stars": number,"watched_on"?: string }; Returns: string
                            },
 "reached_stops":
 { Args: { "nomad_id": string }; Returns: {

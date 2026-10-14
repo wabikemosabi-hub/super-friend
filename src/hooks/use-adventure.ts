@@ -39,15 +39,8 @@ export function useAdventure(nomadId: string | null, type: string) {
       await replaceRecommendation(recommendationId, mediaItemId, cleanReasons(reasons));
       await client.invalidateQueries({ queryKey: key });
     },
-    rate: async (mediaItemId: string, stars: Stars, goodReasons: string[], badReasons: string[], watchedOn: string) => {
-      await rateStop(
-        mediaItemId,
-        stars,
-        randomEncounterIndex(stars),
-        cleanReasons(goodReasons),
-        cleanReasons(badReasons),
-        watchedOn,
-      );
+    rate: async (mediaItemId: string, stars: Stars, reasons: string[], watchedOn: string) => {
+      await rateStop(mediaItemId, stars, randomEncounterIndex(stars), cleanReasons(reasons), watchedOn);
       await client.invalidateQueries({ queryKey: key });
     },
   };
