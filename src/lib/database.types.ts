@@ -87,6 +87,37 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"stop_ratings": {
+                  Row: {
+                    "bad_reasons": (string)[],"created_at": string,"encounter": number,"good_reasons": (string)[],"id": string,"media_item_id": string,"navigator_id": string | null,"nomad_id": string,"promised_reasons": (string)[],"stars": number,"watched_on": string
+                  }
+                  Insert: {
+                    "bad_reasons"?: (string)[],"created_at"?: string,"encounter": number,"good_reasons"?: (string)[],"id"?: string,"media_item_id": string,"navigator_id"?: string | null,"nomad_id": string,"promised_reasons"?: (string)[],"stars": number,"watched_on": string
+                  }
+                  Update: {
+                    "bad_reasons"?: (string)[],"created_at"?: string,"encounter"?: number,"good_reasons"?: (string)[],"id"?: string,"media_item_id"?: string,"navigator_id"?: string | null,"nomad_id"?: string,"promised_reasons"?: (string)[],"stars"?: number,"watched_on"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stop_ratings_media_item_id_fkey"
+      columns: ["media_item_id"]
+isOneToOne: false
+      referencedRelation: "media_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stop_ratings_navigator_id_fkey"
+      columns: ["navigator_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stop_ratings_nomad_id_fkey"
+      columns: ["nomad_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -105,6 +136,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
             }[]
+                           },
+"rate_stop":
+{ Args: { "bad_reasons": (string)[],"encounter": number,"good_reasons": (string)[],"media_item_id": string,"stars": number,"watched_on"?: string }; Returns: string
                            },
 "replace_recommendation":
 { Args: { "media_item_id": string,"reasons": (string)[],"recommendation_id": string }; Returns: string
