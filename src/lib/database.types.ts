@@ -140,6 +140,11 @@ isOneToOne: false
 "rate_stop":
 { Args: { "bad_reasons": (string)[],"encounter": number,"good_reasons": (string)[],"media_item_id": string,"stars": number,"watched_on"?: string }; Returns: string
                            },
+"reached_stops":
+{ Args: { "nomad_id": string }; Returns: {
+              "encounter": number,"external_id": string,"media_item_id": string,"stars": number,"watched_on": string
+            }[]
+                           },
 "replace_recommendation":
 { Args: { "media_item_id": string,"reasons": (string)[],"recommendation_id": string }; Returns: string
                            },
