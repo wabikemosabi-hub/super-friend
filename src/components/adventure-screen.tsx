@@ -12,6 +12,7 @@ import { TmdbAttribution } from '@/components/tmdb-attribution';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Connection } from '@/lib/connections';
+import type { ReachedStop } from '@/lib/ratings';
 import type { Recommendation } from '@/lib/recommendations';
 
 const sideBySideWidth = 900;
@@ -23,6 +24,7 @@ type AdventureScreenProps = {
   isLoading: boolean;
   fromThem: Recommendation[];
   toThem: Recommendation[];
+  reached: ReachedStop[];
   picksLoading: boolean;
   picksError: string | null;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
@@ -40,6 +42,7 @@ export function AdventureScreen({
   isLoading,
   fromThem,
   toThem,
+  reached,
   picksLoading,
   picksError,
   onAdd,
@@ -78,6 +81,7 @@ export function AdventureScreen({
                       onAdd={onAdd}
                       onReplace={onReplace}
                       plotted={toThem}
+                      reached={reached}
                     />
                   </View>
                 )}

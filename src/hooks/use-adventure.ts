@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { reachedStops } from '@/lib/ratings';
 import {
   addRecommendation,
   adventureRecommendations,
@@ -16,9 +17,15 @@ export function useAdventure(nomadId: string | null, type: string) {
     queryFn: () => adventureRecommendations(nomadId ?? ''),
     enabled: nomadId !== null,
   });
+  const reached = useQuery({
+    queryKey: ['reached', nomadId],
+    queryFn: () => reachedStops(nomadId ?? ''),
+    enabled: nomadId !== null,
+  });
 
   return {
     ...splitRecommendations(picks.data ?? [], type),
+    reached: reached.data ?? [],
     isLoading: nomadId !== null && picks.isPending && !picks.error,
     error: picks.error ? picks.error.message : null,
     add: async (mediaItemId: string, reasons: string[]) => {

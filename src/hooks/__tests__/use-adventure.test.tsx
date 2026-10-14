@@ -3,11 +3,13 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import { useAdventure } from '@/hooks/use-adventure';
+import type { ReachedStop } from '@/lib/ratings';
 import type { Recommendation } from '@/lib/recommendations';
 
 const mockAdventureRecommendations = jest.fn<Promise<Recommendation[]>, [string]>();
 const mockAddRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 const mockReplaceRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
+const mockReachedStops = jest.fn<Promise<ReachedStop[]>, [string]>();
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/lib/recommendations', () => ({
@@ -17,6 +19,10 @@ jest.mock('@/lib/recommendations', () => ({
     mockAddRecommendation(nomadId, mediaItemId, reasons),
   replaceRecommendation: (recommendationId: string, mediaItemId: string, reasons: string[]) =>
     mockReplaceRecommendation(recommendationId, mediaItemId, reasons),
+}));
+jest.mock('@/lib/ratings', () => ({
+  ...jest.requireActual<typeof import('@/lib/ratings')>('@/lib/ratings'),
+  reachedStops: (nomadId: string) => mockReachedStops(nomadId),
 }));
 
 function recommendation(title: string, rank: number, outgoing: boolean, type = 'movie'): Recommendation {
@@ -37,6 +43,13 @@ function recommendation(title: string, rank: number, outgoing: boolean, type = '
 const coffinFlop = recommendation('Coffin Flop', 1, true);
 const drivingCrooner = recommendation('Driving Crooner', 1, false);
 const ghostTour = recommendation('The Ghost Tour', 1, false, 'series');
+const latrine: ReachedStop = {
+  media_item_id: 'Calico Cut Pants-media',
+  external_id: 'movie:Calico Cut Pants',
+  stars: 1,
+  encounter: 0,
+  watched_on: '2026-10-12',
+};
 
 function setup(nomadId: string | null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -50,6 +63,7 @@ beforeEach(() => {
   mockAdventureRecommendations.mockReset().mockResolvedValue([coffinFlop, drivingCrooner, ghostTour]);
   mockAddRecommendation.mockReset().mockResolvedValue('new-id');
   mockReplaceRecommendation.mockReset().mockResolvedValue('replacement-id');
+  mockReachedStops.mockReset().mockResolvedValue([latrine]);
 });
 
 test('loads the picks between you and the nomad for one media type', async () => {
@@ -63,10 +77,29 @@ test('loads the picks between you and the nomad for one media type', async () =>
   expect(result.current.error).toBeNull();
 });
 
+test('loads the stops the nomad has already reached', async () => {
+  const { result } = await setup('roy-id');
+
+  await waitFor(() => expect(result.current.reached).toEqual([latrine]));
+  expect(mockReachedStops).toHaveBeenCalledWith('roy-id');
+});
+
+test('still shows the picks when the reached stops will not load', async () => {
+  mockReachedStops.mockRejectedValue(new Error('connection failure'));
+  const { result } = await setup('roy-id');
+
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  await waitFor(() => expect(mockReachedStops).toHaveBeenCalled());
+  expect(result.current.reached).toEqual([]);
+  expect(result.current.error).toBeNull();
+});
+
 test('waits without loading until it knows the nomad', async () => {
   const { result } = await setup(null);
 
   expect(mockAdventureRecommendations).not.toHaveBeenCalled();
+  expect(mockReachedStops).not.toHaveBeenCalled();
+  expect(result.current.reached).toEqual([]);
   expect(result.current.fromThem).toEqual([]);
   expect(result.current.toThem).toEqual([]);
 });
