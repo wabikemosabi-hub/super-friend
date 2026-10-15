@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 test('asks for stars before showing an encounter', async () => {
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   expect(screen.getByTestId('reach-stop-close')).toBeTruthy();
   expect(screen.getByText(/COFFIN FLOP/)).toBeTruthy();
@@ -37,7 +37,7 @@ test('asks for stars before showing an encounter', async () => {
 
 test('picking stars reveals a random encounter for that many stars', async () => {
   jest.spyOn(Math, 'random').mockReturnValue(0);
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-1'));
 
@@ -48,7 +48,7 @@ test('picking stars reveals a random encounter for that many stars', async () =>
 
 test('changing the stars draws a new encounter for the new star count', async () => {
   jest.spyOn(Math, 'random').mockReturnValue(0.99);
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-1'));
   await fireEvent.press(screen.getByTestId('reach-star-2'));
@@ -59,7 +59,7 @@ test('changing the stars draws a new encounter for the new star count', async ()
 
 test('tapping the same stars again keeps the encounter', async () => {
   const random = jest.spyOn(Math, 'random').mockReturnValue(0);
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-1'));
   random.mockReturnValue(0.99);
@@ -70,7 +70,7 @@ test('tapping the same stars again keeps the encounter', async () => {
 
 test('closing the panel tells the road', async () => {
   const onClose = jest.fn();
-  await render(<ReachStopPanel onClose={onClose} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={onClose} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-stop-close'));
 
@@ -78,7 +78,7 @@ test('closing the panel tells the road', async () => {
 });
 
 test('waits for stars before heading on to reasons', async () => {
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   expect(screen.queryByTestId('reach-to-reasons')).toBeNull();
 
@@ -89,7 +89,7 @@ test('waits for stars before heading on to reasons', async () => {
 
 test('heading on asks for up to three things found out there', async () => {
   jest.spyOn(Math, 'random').mockReturnValue(0);
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-1'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));
@@ -105,7 +105,7 @@ test('heading on asks for up to three things found out there', async () => {
 });
 
 test('only two steps: stars and reasons', async () => {
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   expect(screen.getByTestId('reach-step-stars')).toBeTruthy();
   expect(screen.getByTestId('reach-step-reasons')).toBeTruthy();
@@ -114,7 +114,7 @@ test('only two steps: stars and reasons', async () => {
 
 test('needs at least one reason before logging it', async () => {
   const onLog = jest.fn();
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={onLog} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={onLog} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-2'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));
@@ -125,11 +125,10 @@ test('needs at least one reason before logging it', async () => {
   expect(onLog).not.toHaveBeenCalled();
 });
 
-test('logging it sends the stars, the encounter shown and the reasons, then closes', async () => {
+test('logging it sends the stars, the encounter shown and the reasons', async () => {
   jest.spyOn(Math, 'random').mockReturnValue(0.99);
   const onLog = jest.fn().mockResolvedValue(undefined);
-  const onClose = jest.fn();
-  await render(<ReachStopPanel onClose={onClose} onLog={onLog} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={onLog} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-2'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));
@@ -138,13 +137,37 @@ test('logging it sends the stars, the encounter shown and the reasons, then clos
 
   expect(onLog).toHaveBeenCalledTimes(1);
   expect(onLog).toHaveBeenCalledWith(2, 2, ['', 'a goat with opinions', '']);
+});
+
+test('once logged, the new journal entry shows up', async () => {
+  jest.spyOn(Math, 'random').mockReturnValue(0);
+  const onClose = jest.fn();
+  await render(
+    <ReachStopPanel navigator="taffy-lee-fubbins" onClose={onClose} onLog={jest.fn().mockResolvedValue(undefined)} stop={coffinFlop} visible />,
+  );
+
+  await fireEvent.press(screen.getByTestId('reach-star-1'));
+  await fireEvent.press(screen.getByTestId('reach-to-reasons'));
+  await fireEvent.changeText(screen.getByTestId('reach-reason-1'), '  a goat with opinions ');
+  await fireEvent.press(screen.getByTestId('reach-log'));
+
+  expect(screen.getByTestId('log-entry-title')).toHaveTextContent('MUTANT LATRINE FOUND');
+  expect(screen.getByTestId('log-entry-story')).toHaveTextContent(
+    /taffy-lee-fubbins pointed me towards a stop in the wasteland known as Coffin Flop\. Instead of the Bones that I was promised I found a goat with opinions!/,
+  );
+  expect(screen.getAllByTestId('log-entry-redacted')).toHaveLength(4);
+  expect(screen.queryByTestId('reach-reason-1')).toBeNull();
+  expect(onClose).not.toHaveBeenCalled();
+
+  await fireEvent.press(screen.getByTestId('reach-done'));
+
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 test('stays open with the problem when the log does not go through', async () => {
   const onLog = jest.fn().mockRejectedValue(new Error('You can only rate stops plotted for you'));
   const onClose = jest.fn();
-  await render(<ReachStopPanel onClose={onClose} onLog={onLog} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={onClose} onLog={onLog} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-3'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));
@@ -158,7 +181,7 @@ test('stays open with the problem when the log does not go through', async () =>
 
 test('going back to stars keeps the encounter and the reasons', async () => {
   const random = jest.spyOn(Math, 'random').mockReturnValue(0);
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-1'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));
@@ -174,7 +197,7 @@ test('going back to stars keeps the encounter and the reasons', async () => {
 });
 
 test('closing starts the next visit back at the stars', async () => {
-  await render(<ReachStopPanel onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
+  await render(<ReachStopPanel navigator="taffy-lee-fubbins" onClose={jest.fn()} onLog={jest.fn()} stop={coffinFlop} visible />);
 
   await fireEvent.press(screen.getByTestId('reach-star-4'));
   await fireEvent.press(screen.getByTestId('reach-to-reasons'));

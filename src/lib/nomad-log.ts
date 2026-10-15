@@ -1,9 +1,21 @@
+import type { Stars } from '@/constants/encounters';
+
 export type LogFill = {
   date: string;
   navigator: string | null;
   title: string;
   promised: string[];
   found: string[];
+};
+
+export type JournalEntry = {
+  stars: Stars;
+  encounter: number;
+  title: string;
+  navigator: string | null;
+  promised: string[];
+  found: string[];
+  date: Date;
 };
 
 export type StoryPiece = { kind: 'text'; text: string } | { kind: 'redacted' };

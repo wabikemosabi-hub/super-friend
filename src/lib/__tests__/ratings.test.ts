@@ -2,10 +2,13 @@ import { PostgrestError } from '@supabase/supabase-js';
 
 import {
   blockedStop,
+  logEntry,
+  nomadLog,
   rateStop,
   reachedNote,
   reachedStop,
   reachedStops,
+  type LogRow,
   type ReachedStop,
 } from '@/lib/ratings';
 import type { Recommendation } from '@/lib/recommendations';
@@ -128,4 +131,55 @@ test('passes along the reason a rating was refused', async () => {
   await expect(rateStop('media-1', 3, 0, ['Hi'])).rejects.toThrow(
     'You can only rate stops plotted for you',
   );
+});
+
+function row(overrides: Partial<LogRow>): LogRow {
+  return {
+    id: 'rating-1',
+    mine: true,
+    navigator: 'taffy-lee-fubbins',
+    media_item_id: 'media-1',
+    title: 'Coffin Flop',
+    year: 2019,
+    stars: 1,
+    encounter: 2,
+    reasons: ['The dog'],
+    promised_reasons: ['Bones'],
+    created_at: '2026-10-15T21:00:00+00:00',
+    ...overrides,
+  };
+}
+
+test('reads the log between you and a fellow nomad', async () => {
+  mockRpc.mockResolvedValue({ data: [row({})], error: null });
+
+  const log = await nomadLog('taffy-id');
+
+  expect(log).toEqual([row({})]);
+  expect(mockRpc).toHaveBeenCalledWith('nomad_log', { nomad_id: 'taffy-id' });
+});
+
+test('passes along why the log would not load', async () => {
+  mockRpc.mockResolvedValue({
+    data: null,
+    error: new PostgrestError({ code: '42501', message: 'permission denied', details: '', hint: '' }),
+  });
+
+  await expect(nomadLog('taffy-id')).rejects.toThrow('permission denied');
+});
+
+test('turns a log row into a journal entry', () => {
+  expect(logEntry(row({}))).toEqual({
+    stars: 1,
+    encounter: 2,
+    title: 'Coffin Flop',
+    navigator: 'taffy-lee-fubbins',
+    promised: ['Bones'],
+    found: ['The dog'],
+    date: new Date('2026-10-15T21:00:00+00:00'),
+  });
+});
+
+test('skips a log row with stars the app does not know', () => {
+  expect(logEntry(row({ stars: 7 }))).toBeNull();
 });

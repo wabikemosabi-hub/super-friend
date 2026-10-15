@@ -85,6 +85,7 @@ export function RoadMap({ nomadName, picks, isLoading, wide, onRate }: RoadMapPr
         ))}
       {reaching && (
         <ReachStopPanel
+          navigator={nomadName}
           onClose={() => setReaching(null)}
           onLog={(stars, encounter, reasons) => onRate(reaching.media_item_id, stars, encounter, reasons)}
           stop={reaching}

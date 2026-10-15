@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccountButton } from '@/components/account-button';
 import { NavConsole } from '@/components/nav-console';
 import { NomadAvatar } from '@/components/nomad-avatar';
+import { NomadLog } from '@/components/nomad-log';
 import { RoadMap } from '@/components/road-map';
 import { CrtScreen, HazardStripe, Plate, ScreenLine } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
@@ -13,7 +14,7 @@ import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Connection } from '@/lib/connections';
-import type { ReachedStop } from '@/lib/ratings';
+import type { LogRow, ReachedStop } from '@/lib/ratings';
 import type { Recommendation } from '@/lib/recommendations';
 
 const sideBySideWidth = 900;
@@ -26,6 +27,8 @@ type AdventureScreenProps = {
   fromThem: Recommendation[];
   toThem: Recommendation[];
   reached: ReachedStop[];
+  log: LogRow[];
+  reports: LogRow[];
   picksLoading: boolean;
   picksError: string | null;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
@@ -45,6 +48,8 @@ export function AdventureScreen({
   fromThem,
   toThem,
   reached,
+  log,
+  reports,
   picksLoading,
   picksError,
   onAdd,
@@ -72,7 +77,7 @@ export function AdventureScreen({
               {!sideBySide && <ViewSwitch nomadName={nomad.username} showing={showing} onShow={setShowing} />}
               <View style={[styles.panels, sideBySide && styles.panelsSideBySide]}>
                 {(sideBySide || showing === 'road') && (
-                  <View style={sideBySide ? styles.road : undefined}>
+                  <View style={[styles.stack, sideBySide && styles.road]}>
                     <RoadMap
                       isLoading={picksLoading}
                       nomadName={nomad.username}
@@ -80,10 +85,17 @@ export function AdventureScreen({
                       picks={fromThem}
                       wide={sideBySide}
                     />
+                    <NomadLog
+                      channel="LOG-01"
+                      empty="NO ENTRIES YET. THE ROAD AWAITS."
+                      rows={log}
+                      testID="nomad-log"
+                      title={`Nomad's log · stops from ${nomad.username}`}
+                    />
                   </View>
                 )}
                 {(sideBySide || showing === 'console') && (
-                  <View style={sideBySide ? styles.console : undefined}>
+                  <View style={[styles.stack, sideBySide && styles.console]}>
                     <NavConsole
                       isLoading={picksLoading}
                       nomadName={nomad.username}
@@ -91,6 +103,13 @@ export function AdventureScreen({
                       onReplace={onReplace}
                       plotted={toThem}
                       reached={reached}
+                    />
+                    <NomadLog
+                      channel="LOG-02"
+                      empty={`NO FIELD REPORTS YET. ${nomad.username.toUpperCase()} HASN'T REACHED YOUR STOPS.`}
+                      rows={reports}
+                      testID="field-reports"
+                      title={`Field reports · from ${nomad.username}`}
                     />
                   </View>
                 )}
@@ -404,6 +423,9 @@ const styles = StyleSheet.create({
   panelsSideBySide: {
     alignItems: 'flex-start',
     flexDirection: 'row',
+  },
+  stack: {
+    gap: 28,
   },
   road: {
     flex: 2,

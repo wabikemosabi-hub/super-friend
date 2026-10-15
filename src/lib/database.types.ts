@@ -137,6 +137,11 @@ isOneToOne: false
               "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
             }[]
                            },
+"nomad_log":
+{ Args: { "nomad_id": string }; Returns: {
+              "created_at": string,"encounter": number,"id": string,"media_item_id": string,"mine": boolean,"navigator": string,"promised_reasons": (string)[],"reasons": (string)[],"stars": number,"title": string,"year": number
+            }[]
+                           },
 "rate_stop":
 { Args: { "encounter": number,"media_item_id": string,"reasons": (string)[],"stars": number }; Returns: string
                            },

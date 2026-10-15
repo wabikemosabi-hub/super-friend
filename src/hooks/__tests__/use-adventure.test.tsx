@@ -3,13 +3,14 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import { useAdventure } from '@/hooks/use-adventure';
-import type { ReachedStop } from '@/lib/ratings';
+import type { LogRow, ReachedStop } from '@/lib/ratings';
 import type { Recommendation } from '@/lib/recommendations';
 
 const mockAdventureRecommendations = jest.fn<Promise<Recommendation[]>, [string]>();
 const mockAddRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 const mockReplaceRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 const mockReachedStops = jest.fn<Promise<ReachedStop[]>, [string]>();
+const mockNomadLog = jest.fn<Promise<LogRow[]>, [string]>();
 const mockRateStop = jest.fn<Promise<string>, [string, number, number, string[]]>();
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -24,6 +25,7 @@ jest.mock('@/lib/recommendations', () => ({
 jest.mock('@/lib/ratings', () => ({
   ...jest.requireActual<typeof import('@/lib/ratings')>('@/lib/ratings'),
   reachedStops: (nomadId: string) => mockReachedStops(nomadId),
+  nomadLog: (nomadId: string) => mockNomadLog(nomadId),
   rateStop: (mediaItemId: string, stars: number, encounter: number, reasons: string[]) =>
     mockRateStop(mediaItemId, stars, encounter, reasons),
 }));
@@ -53,6 +55,21 @@ const latrine: ReachedStop = {
   encounter: 0,
 };
 
+const yours: LogRow = {
+  id: 'yours-id',
+  mine: true,
+  navigator: 'roy-donk',
+  media_item_id: 'Driving Crooner-media',
+  title: 'Driving Crooner',
+  year: 2019,
+  stars: 1,
+  encounter: 0,
+  reasons: ['The dog'],
+  promised_reasons: ['Watch Driving Crooner'],
+  created_at: '2026-10-15T21:00:00+00:00',
+};
+const theirs: LogRow = { ...yours, id: 'theirs-id', mine: false, navigator: 'taffy-lee-fubbins', title: 'Coffin Flop' };
+
 function setup(nomadId: string | null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -67,6 +84,7 @@ beforeEach(() => {
   mockReplaceRecommendation.mockReset().mockResolvedValue('replacement-id');
   mockReachedStops.mockReset().mockResolvedValue([latrine]);
   mockRateStop.mockReset().mockResolvedValue('rating-id');
+  mockNomadLog.mockReset().mockResolvedValue([yours, theirs]);
 });
 
 afterEach(() => {
@@ -101,8 +119,30 @@ test('still shows the picks when the reached stops will not load', async () => {
   expect(result.current.error).toBeNull();
 });
 
+test('splits the log into your entries and their field reports', async () => {
+  const { result } = await setup('roy-id');
+
+  await waitFor(() => expect(result.current.log).toEqual([yours]));
+  expect(result.current.reports).toEqual([theirs]);
+  expect(mockNomadLog).toHaveBeenCalledWith('roy-id');
+});
+
+test('still shows the picks when the log will not load', async () => {
+  mockNomadLog.mockRejectedValue(new Error('connection failure'));
+  const { result } = await setup('roy-id');
+
+  await waitFor(() => expect(mockNomadLog).toHaveBeenCalled());
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  expect(result.current.log).toEqual([]);
+  expect(result.current.reports).toEqual([]);
+  expect(result.current.error).toBeNull();
+});
+
 test('waits without loading until it knows the nomad', async () => {
   const { result } = await setup(null);
+
+  expect(mockNomadLog).not.toHaveBeenCalled();
+  expect(result.current.log).toEqual([]);
 
   expect(mockAdventureRecommendations).not.toHaveBeenCalled();
   expect(mockReachedStops).not.toHaveBeenCalled();
@@ -169,6 +209,7 @@ test('rates a stop with the encounter the nomad saw and cleaned reasons, then re
   expect(mockRateStop).toHaveBeenCalledTimes(1);
   expect(mockRateStop).toHaveBeenCalledWith('Driving Crooner-media', 1, 2, ['The dog', 'Too long']);
   await waitFor(() => expect(mockAdventureRecommendations).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(mockNomadLog).toHaveBeenCalledTimes(2));
 });
 
 test('passes along the reason a rating was refused', async () => {
