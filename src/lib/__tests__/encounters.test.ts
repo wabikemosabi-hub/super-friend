@@ -1,5 +1,5 @@
 import { encounters } from '@/constants/encounters';
-import { encounterFor, randomEncounterIndex, STARS } from '@/lib/encounters';
+import { encounterColor, encounterFor, randomEncounterIndex, STARS, starsLine } from '@/lib/encounters';
 
 test('finds the encounter for a star rating and its number', () => {
   expect(encounterFor(1, 0).title).toBe('Mutant Latrine Found');
@@ -30,4 +30,14 @@ test('picks a random encounter number from the ones that exist for those stars',
 
   expect(randomEncounterIndex(2, () => 0)).toBe(0);
   expect(randomEncounterIndex(2, () => 0.999)).toBe(count - 1);
+});
+
+test('draws the stars as filled and empty', () => {
+  expect(starsLine(1)).toBe('★☆☆☆☆');
+  expect(starsLine(3)).toBe('★★★☆☆');
+  expect(starsLine(5)).toBe('★★★★★');
+});
+
+test('colors each star level like the field guide', () => {
+  expect(STARS.map(encounterColor)).toEqual(['alert', 'hazard', 'text', 'phosphorDim', 'phosphor']);
 });
