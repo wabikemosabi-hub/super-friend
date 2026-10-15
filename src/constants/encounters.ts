@@ -51,21 +51,46 @@ I was tooling around what used to be called the Bible Belt before the Great Medi
     {
       title: 'Found a new album!',
       story: `{date}
-In my recent forays into the ruins of Old New Hampshire, I found a copy of Rumours by Fleetwood Mac. I was so excited that I ran back to the convoy and told everybody about {promised1} and {promised2}. Everybody gathered around, and I put the record on the player, only to realize that instead of Fleetwood Mac, we were listening to a Polka Cover Band that focused on {found1} and {found2} in their performances. I find it to still be strangely calming, and while I didn't get {promised3} I will always have {found3}.`,
+{navigator} alerted me to a place that still had some albums for sale. In my recent forays into the ruins of Old New Hampshire, or {title} as it is known colloquially, I found a copy of Rumours by Fleetwood Mac. I was so excited that I ran back to the convoy and told everybody about {promised1} and {promised2}. Everybody gathered around, and I put the record on the player, only to realize that instead of Fleetwood Mac, we were listening to a Polka Cover Band that focused on {found1} and {found2} in their performances. I find it to still be strangely calming, and while I didn't get {promised3} I will always have {found3}.`,
+    },
+    {
+      title: 'Had a day',
+      story: `{date}
+There are days that make a nomad wonder why they wander. Days that make nomads praise whatever higher power they deem worthy of such praise for the oasis they find along the way. But most days are days that are just neutral. {title} stop is just this: a stop that is a stop. You won't find {promised1} here, but just another {found1}. A glimpse of {promised2} is nothing more than the everyday {found2}. But in the end, you'll never see {found3} come close to being {promised3}. It will blur into all those others that have come upon this wasteland of ours, neither particularly good nor particularly bad.`,
     },
   ],
   4: [
     {
-      title: 'PLACEHOLDER 4 STAR ENCOUNTER',
+      title: "Found a hot spring that hasn't been used by cannibals to make soup!",
       story: `{date}
-PLACEHOLDER. {navigator} promised {promised1}, {promised2} and {promised3}. I found {found1}, {found2} and {found3}.`,
+This stop was amazing! When {navigator} said that {title} was a must-see stop for {promised1}, I'd only add that {found1} was there, too! This hot spring hotspot is filled to the brim with {promised2} and {found2}, with none of the usual femurs or skull fragments found at other such natural locations. {navigator} will tell you that {promised3} is the main reason for visiting {title}, but they have again buried the lede of {found3}! Would highly recommend!`,
+    },
+    {
+      title: 'Found a music player filled with music!',
+      story: `{date}
+I can't believe it! I found a fully functioning music player filled with music at stop {title}! It has a charger, and the music has everything from {promised1} to {found1}! I've played most of the music for {navigator}, and while they loved {promised2}, I was more excited about {found2}. But it doesn't matter if you like {promised3} or {found3}, because this player has it all. The only negative is that it's a Zune.`,
+    },
+    {
+      title: 'Found a crate of toothpaste',
+      story: `{date}
+What a day, what a day! When {navigator} told me about {title}, I was already excited! I can't even tell you how amazing it is! I found a whole crate of toothpaste! It's covered with stickers that say things like, "Now contains more {promised1} and {found1}!" and "9 out of 10 dentists agree that Flurp is {promised2} and prone to help with {found2}." I am just so excited to have something worth {found3}! When {navigator} said {promised3}, they weren't kidding!`,
     },
   ],
   5: [
     {
-      title: 'PLACEHOLDER 5 STAR ENCOUNTER',
+      title: 'Found a fully stocked Winnebago with amenities',
       story: `{date}
-PLACEHOLDER. {navigator} promised {promised1}, {promised2} and {promised3}. I found {found1}, {found2} and {found3}.`,
+Oh, glorious day! {navigator} told me about {title} a while back, and I thought they must have been exaggerating, but I was so pleasantly surprised. When they said that the stop had {promised1}, they were right! It also has {found1} as well! A fully stocked bar, with a grow lab for weed! I'm beyond {promised2} and well into {found2} territory! But the thing that I was most excited about, {promised3}, doesn't even come close to {found3}! IT HAS A BIDET! I haven't spent time looking for "magazines or soft leaves" in ages now! Thanks, {navigator}!`,
+    },
+    {
+      title: 'Porn stash found!',
+      story: `{date}
+{navigator} told me about a little place they like to call {title}! I stopped by and while at first glance it just looked like a normal hangout for teens before the collapse, but when I rolled over the moldy mattress with piss stains, I found it! A porn stash that I can use to set myself up as a porn czar in this wasteland! The stash is perfect because it has a ton of {promised1} and {found1}. The amount of watersports is very small! Which leaves way more room for {promised2} and {found2} in the catalogue. So if you are into {promised3} or {found3}, come on down to Porn Czar's Crazy Empire today!`,
+    },
+    {
+      title: 'New business idea fully realized!',
+      story: `{date}
+{navigator} told me that the mutants at {title} were up for ANYTHING, and boy were they not kidding. I was able to open a new LAST MUTANT STANDING fight club, where {promised1} and {found1} are just the beginning! Come see a mutant with {promised2} fight a mutated pig with {found2} for only 18 Kohl$ Ka$h! Come for the {found3} but stay for the {promised3}! Kids 8 and under are free with a legal guardian or slaver. Winner gets to keep the organs!`,
     },
   ],
 };
