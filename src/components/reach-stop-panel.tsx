@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { MediaPoster } from '@/components/media-poster';
 import { ShipModal } from '@/components/ship-modal';
-import { CrtScreen, ScreenLine } from '@/components/ship-panel';
+import { CrtScreen, ScreenLine, ShipButton } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { encounterColor, encounterFor, randomEncounterIndex, STARS, starsLine } from '@/lib/encounters';
-import type { Recommendation } from '@/lib/recommendations';
+import { reasonsProblem, type Recommendation } from '@/lib/recommendations';
 
 type ReachStopPanelProps = {
   visible: boolean;
@@ -28,6 +28,10 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
   const theme = useTheme();
   const [stars, setStars] = useState<Stars | null>(null);
   const [encounter, setEncounter] = useState(0);
+  const [step, setStep] = useState<Step>('stars');
+  const [reasons, setReasons] = useState(['', '', '']);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [focused, setFocused] = useState<number | null>(null);
   const title = `${stop.title}${stop.year ? ` (${stop.year})` : ''}`;
 
   function pick(next: Stars) {
@@ -36,9 +40,22 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
     setEncounter(randomEncounterIndex(next));
   }
 
+  function toWhen() {
+    const issue = reasonsProblem(reasons);
+    if (issue) {
+      setProblem(issue);
+      return;
+    }
+    setProblem(null);
+    setStep('when');
+  }
+
   function close() {
     setStars(null);
     setEncounter(0);
+    setStep('stars');
+    setReasons(['', '', '']);
+    setProblem(null);
     onClose();
   }
 
@@ -57,7 +74,7 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
               key={s}
               style={[
                 styles.step,
-                s === 'stars'
+                s === step
                   ? { backgroundColor: theme.hazard, color: theme.onAccent }
                   : { backgroundColor: theme.screen, color: theme.textSecondary },
               ]}
@@ -72,28 +89,30 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
           <ThemedText style={[styles.question, { color: theme.hazard }]}>HOW DID IT GO OUT THERE?</ThemedText>
         </View>
 
-        <View accessibilityLabel="Stars" accessibilityRole="radiogroup" style={styles.stars}>
-          {STARS.map((n) => {
-            const lit = stars !== null && n <= stars;
-            return (
-              <Pressable
-                accessibilityLabel={`${n} ${n === 1 ? 'star' : 'stars'}`}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: stars === n }}
-                key={n}
-                onPress={() => pick(n)}
-                style={({ pressed }) => [
-                  styles.star,
-                  { backgroundColor: pressed ? theme.backgroundSelected : theme.screen, borderColor: theme.bezel },
-                ]}
-                testID={`reach-star-${n}`}>
-                <ThemedText style={[styles.starText, { color: lit ? theme.hazard : theme.textSecondary }]}>
-                  {lit ? '★' : '☆'}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+        {step === 'stars' && (
+          <View accessibilityLabel="Stars" accessibilityRole="radiogroup" style={styles.stars}>
+            {STARS.map((n) => {
+              const lit = stars !== null && n <= stars;
+              return (
+                <Pressable
+                  accessibilityLabel={`${n} ${n === 1 ? 'star' : 'stars'}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: stars === n }}
+                  key={n}
+                  onPress={() => pick(n)}
+                  style={({ pressed }) => [
+                    styles.star,
+                    { backgroundColor: pressed ? theme.backgroundSelected : theme.screen, borderColor: theme.bezel },
+                  ]}
+                  testID={`reach-star-${n}`}>
+                  <ThemedText style={[styles.starText, { color: lit ? theme.hazard : theme.textSecondary }]}>
+                    {lit ? '★' : '☆'}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {stars === null ? (
           <CrtScreen>
@@ -101,6 +120,54 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
           </CrtScreen>
         ) : (
           <EncounterCard encounter={encounter} stars={stars} />
+        )}
+
+        {step === 'stars' && stars !== null && (
+          <View style={styles.buttons}>
+            <ShipButton label="Next: reasons" onPress={() => setStep('reasons')} testID="reach-to-reasons" variant="phosphor" />
+          </View>
+        )}
+
+        {step === 'reasons' && (
+          <View style={styles.reasons}>
+            <ThemedText style={[styles.question, { color: theme.hazard }]}>WHAT DID YOU FIND OUT THERE?</ThemedText>
+            {reasons.map((reason, i) => (
+              <View key={i} style={styles.field}>
+                <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
+                  {i === 0 ? 'FOUND 1 · REQUIRED' : `FOUND ${i + 1} · OPTIONAL`}
+                </ThemedText>
+                <TextInput
+                  accessibilityLabel={i === 0 ? 'Found 1 (required)' : `Found ${i + 1} (optional)`}
+                  maxLength={140}
+                  onBlur={() => setFocused(null)}
+                  onChangeText={(text) => {
+                    setReasons(reasons.map((r, j) => (j === i ? text : r)));
+                    setProblem(null);
+                  }}
+                  onFocus={() => setFocused(i)}
+                  placeholder={i === 0 && focused !== 0 ? 'Something you found at this stop' : ''}
+                  placeholderTextColor={theme.phosphorDim}
+                  style={[
+                    styles.input,
+                    { backgroundColor: theme.screen, borderColor: focused === i ? theme.phosphorDim : theme.edge, color: theme.phosphor },
+                  ]}
+                  testID={`reach-reason-${i + 1}`}
+                  value={reason}
+                />
+              </View>
+            ))}
+            {problem && <ScreenLine color={theme.alert} testID="reach-error" text={problem} />}
+            <View style={styles.buttons}>
+              <ShipButton label="Back to stars" onPress={() => setStep('stars')} testID="reach-back-to-stars" variant="panel" />
+              <ShipButton label="Next: when" onPress={toWhen} testID="reach-to-when" variant="phosphor" />
+            </View>
+          </View>
+        )}
+
+        {step === 'when' && (
+          <View style={styles.buttons} testID="reach-when">
+            <ShipButton label="Back to reasons" onPress={() => setStep('reasons')} testID="reach-back-to-reasons" variant="panel" />
+          </View>
         )}
       </View>
     </ShipModal>
@@ -190,6 +257,35 @@ const styles = StyleSheet.create({
   starText: {
     fontSize: 30,
     lineHeight: 34,
+  },
+  reasons: {
+    gap: 12,
+  },
+  field: {
+    gap: 4,
+  },
+  label: {
+    fontFamily: Typefaces.labelBold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    lineHeight: 16,
+  },
+  input: {
+    borderRadius: 3,
+    borderWidth: 2,
+    fontFamily: Typefaces.screen,
+    fontSize: 22,
+    height: 46,
+    minWidth: 0,
+    outlineStyle: 'solid',
+    outlineWidth: 0,
+    paddingHorizontal: 12,
+  },
+  buttons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    justifyContent: 'flex-end',
   },
   encounter: {
     borderRadius: 4,
