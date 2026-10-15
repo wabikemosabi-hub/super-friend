@@ -87,7 +87,7 @@ export function AdventureScreen({
                     />
                     <NomadLog
                       channel="LOG-01"
-                      empty="NO ENTRIES YET. THE ROAD AWAITS."
+                      empty="NO NAVIGATION FOUND, PLEASE CONSULT YOUR LOCAL NAVIGATOR"
                       rows={log}
                       tape={`Navigator: ${nomad.username}`}
                       testID="nomad-log"
@@ -107,7 +107,7 @@ export function AdventureScreen({
                     />
                     <NomadLog
                       channel="LOG-02"
-                      empty={`NO FIELD REPORTS YET. ${nomad.username.toUpperCase()} HASN'T REACHED YOUR STOPS.`}
+                      empty={`NO FIELD REPORTS YET. PLEASE REACH OUT TO ${nomad.username.toUpperCase()} FOR A REPORT.`}
                       rows={reports}
                       tape={`Nomad: ${nomad.username}`}
                       testID="field-reports"

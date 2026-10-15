@@ -125,7 +125,7 @@ export function ReachStopPanel({ visible, stop, navigator, onClose, onLog }: Rea
             <View style={[styles.cardCorner, { borderTopColor: theme.backgroundElement }]} />
             <View style={styles.stopRow}>
               <MediaPoster item={stop} />
-              <ThemedText style={[styles.question, { color: theme.ink }]}>HOW DID IT GO OUT THERE?</ThemedText>
+              <ThemedText style={[styles.question, { color: theme.ink }]}>PLEASE RATE NOMAD STOP</ThemedText>
             </View>
 
             {step === 'stars' && (
@@ -155,7 +155,7 @@ export function ReachStopPanel({ visible, stop, navigator, onClose, onLog }: Rea
 
             {step === 'reasons' && (
               <View style={styles.reasons}>
-                <ThemedText style={[styles.question, { color: theme.ink }]}>WHAT DID YOU FIND OUT THERE?</ThemedText>
+                <ThemedText style={[styles.question, { color: theme.ink }]}>REASONS FOR RATING</ThemedText>
                 <ThemedText style={[styles.help, { color: theme.inkSecondary }]} testID="reach-reasons-help">
                   Help your navigator get you safely through this Wasteland! Give good reasons so that they can tailor their
                   navigation to your specific desires!

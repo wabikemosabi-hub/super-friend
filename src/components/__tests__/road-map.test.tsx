@@ -35,7 +35,7 @@ test('wide: the rate key sits on the console, outside the stop screen', async ()
 
   expect(screen.getByTestId('road-rate-movie:Coffin Flop')).toHaveTextContent('RATE');
   expect(within(screen.getByTestId('road-detail')).queryByTestId('road-rate-movie:Coffin Flop')).toBeNull();
-  expect(screen.getByText('WATCHED IT?')).toBeTruthy();
+  expect(screen.getByText('RATE THIS STOP')).toBeTruthy();
 });
 
 test('wide: the rate key rates the stop on the screen', async () => {
@@ -50,11 +50,13 @@ test('narrow: the rate key sits under the screen and rates the open stop', async
   await render(<RoadMap isLoading={false} nomadName="taffy-lee-fubbins" onRate={jest.fn()} picks={picks} wide={false} />);
 
   expect(within(screen.getByTestId('road-stop-movie:Coffin Flop')).queryByTestId('road-rate-movie:Coffin Flop')).toBeNull();
-  expect(screen.getByText('WATCHED STOP 1?')).toBeTruthy();
+  expect(screen.getByText('RATE THIS STOP')).toBeTruthy();
+  expect(screen.getByText("▾ END OF TAFFY-LEE-FUBBINS'S ROUTE.")).toBeTruthy();
+  expect(screen.queryByText(/3 STOPS, ALWAYS/)).toBeNull();
 
   await fireEvent.press(screen.getByTestId('road-stop-movie:Hot Dog Car'));
 
-  expect(screen.getByText('WATCHED STOP 2?')).toBeTruthy();
+  expect(screen.getByText('RATE THIS STOP')).toBeTruthy();
   await fireEvent.press(screen.getByTestId('road-rate-movie:Hot Dog Car'));
   expect(screen.getByText('RATE · HOT DOG CAR (2019)')).toBeTruthy();
 });

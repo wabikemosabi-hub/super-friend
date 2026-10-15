@@ -336,7 +336,7 @@ function StopDetail({
           <StopReasons reasons={stop.pick.reasons} />
         </View>
       </CrtScreen>
-      <RateKey onPress={() => onReach(stop.pick)} prompt="WATCHED IT?" testID={`road-rate-${stop.pick.external_id}`} />
+      <RateKey onPress={() => onReach(stop.pick)} prompt="Rate this stop" testID={`road-rate-${stop.pick.external_id}`} />
     </View>
   );
 }
@@ -387,14 +387,14 @@ function StripRoad({
             </View>
           ))}
           <ThemedText style={[styles.roadEnd, { color: theme.textSecondary }]}>
-            ▾ END OF {nomadName.toUpperCase()}&apos;S ROUTE. 3 STOPS, ALWAYS.
+            ▾ END OF {nomadName.toUpperCase()}&apos;S ROUTE.
           </ThemedText>
         </View>
       </CrtScreen>
       {open ? (
         <RateKey
           onPress={() => onReach(open.pick)}
-          prompt={`WATCHED STOP ${open.rank}?`}
+          prompt="Rate this stop"
           testID={`road-rate-${open.pick.external_id}`}
         />
       ) : (

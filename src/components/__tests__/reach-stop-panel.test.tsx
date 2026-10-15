@@ -32,6 +32,7 @@ test('opens on a punch card with stars and no encounter', async () => {
   expect(screen.getByTestId('reach-stop-close')).toBeTruthy();
   expect(screen.getByText('RATE · COFFIN FLOP (2019)')).toBeTruthy();
   expect(screen.getByTestId('reach-card')).toBeTruthy();
+  expect(screen.getByText('PLEASE RATE NOMAD STOP')).toBeTruthy();
   expect(screen.queryByTestId('reach-encounter')).toBeNull();
   expect(screen.queryByText(/THE ROAD DECIDES/)).toBeNull();
 });
@@ -74,6 +75,8 @@ test('heading on asks for up to three things found out there', async () => {
   expect(screen.getByTestId('reach-reason-1')).toBeTruthy();
   expect(screen.getByTestId('reach-reason-2')).toBeTruthy();
   expect(screen.getByTestId('reach-reason-3')).toBeTruthy();
+  expect(screen.getByText('REASONS FOR RATING')).toBeTruthy();
+  expect(screen.queryByText(/WHAT DID YOU FIND/)).toBeNull();
   expect(screen.queryByTestId('reach-star-1')).toBeNull();
   expect(screen.queryByTestId('reach-encounter')).toBeNull();
   expect(screen.getByTestId('reach-reasons-help')).toHaveTextContent(

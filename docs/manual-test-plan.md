@@ -145,10 +145,10 @@ Wide map, at least one stop on your road.
 
 As Bart, after Paul plotted at least 2 stops for him:
 
-- [ ] A big orange **RATE** key sits outside the screens in its own well (`road-rate-<external_id>`): beside the stop detail on wide ("WATCHED IT?"), under the strip map on narrow ("WATCHED STOP N?" for the open stop; with every stop shut it reads "OPEN A STOP TO RATE IT" and can't be pressed).
+- [ ] A big orange **RATE** key sits outside the screens in its own well (`road-rate-<external_id>`): beside the stop detail on wide ("RATE THIS STOP"), under the strip map on narrow ("RATE THIS STOP", for the open stop; with every stop shut it reads "OPEN A STOP TO RATE IT" and can't be pressed).
 - [ ] It opens the panel (`reach-stop`) headed "RATE · <TITLE> (<YEAR>)", chips 1 · STARS lit and 2 · REASONS (`reach-step-stars`, `reach-step-reasons`). The form is a cream punch card (`reach-card`) with the poster and five star boxes. No encounter shows yet.
 - [ ] Tapping a star (`reach-star-1..5`) fills that many. Nothing gives away the encounter. Closing and reopening starts fresh.
-- [ ] **NEXT: REASONS** (`reach-to-reasons`) → "WHAT DID YOU FIND OUT THERE?", the help line (`reach-reasons-help`), FOUND 1 · REQUIRED and FOUND 2, 3 · OPTIONAL (`reach-reason-1..3`), written on the card's underlined lines.
+- [ ] **NEXT: REASONS** (`reach-to-reasons`) → "REASONS FOR RATING", the help line (`reach-reasons-help`), FOUND 1 · REQUIRED and FOUND 2, 3 · OPTIONAL (`reach-reason-1..3`), written on the card's underlined lines.
 - [ ] **LOG IT** (`reach-log`) with nothing typed: "Give 1 to 3 reasons" in red (`reach-error`). One reason in any box is enough.
 - [ ] **BACK TO STARS** (`reach-back-to-stars`) keeps the stars and what you typed.
 - [ ] The orange LOG IT → the card flips over to a green screen (`reach-reveal`): the encounter flickers in (`reach-encounter-stars`, `reach-encounter-title`, in the star color: 1 red, 2 yellow, 3 white, 4 dim green, 5 green) above the filled-in story (`reach-reveal-story`, green REDACTED bars `reach-reveal-redacted`). This is the first time you see what you rolled. **BACK TO THE ROAD** (`reach-done`) closes it. The stop is gone from the road and the rest move up (the badge counts one fewer).
@@ -163,7 +163,7 @@ After 10:
 - [ ] Log with only 1 reason: the story shows black **REDACTED** bars (`log-entry-redacted`) where the missing ones go, and no bar is ever split across two lines.
 - [ ] As Paul on Bart's page: the same entries show under the Nav Console in **LOG-02 · FIELD REPORTS** with a label tape **NOMAD: BART-HARLEY-JARVIS** (`field-reports`). Paul's own log is empty until he logs a stop Bart plotted.
 - [ ] With more than 3 entries: only the 3 newest show, with "3 OF N" (`nomad-log-count`) and **SHOW 3 MORE** (`nomad-log-more`). Each press unfolds up to 3 more sheets, one after another, swinging down from the crease like printer paper. When they're all out, SHOW MORE disappears. **FOLD UP** (`nomad-log-fold`) folds the extras back up, last first, leaving 3. With reduce motion on, they just appear and disappear.
-- [ ] Empty states: "NO ENTRIES YET. THE ROAD AWAITS." (`nomad-log-empty`) and "NO FIELD REPORTS YET. …" (`field-reports-empty`).
+- [ ] Empty states: "NO NAVIGATION FOUND, PLEASE CONSULT YOUR LOCAL NAVIGATOR" (`nomad-log-empty`) and "NO FIELD REPORTS YET. PLEASE REACH OUT TO <NAME> FOR A REPORT." (`field-reports-empty`).
 - [ ] Narrow: the log sits under the road on MY ROAD, field reports under the console on the other tab.
 - [ ] A third nomad connected to Bart only sees none of Bart and Paul's entries.
 
