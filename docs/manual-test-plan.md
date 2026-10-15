@@ -169,7 +169,7 @@ After 10:
 
 ## 12. Flip an entry
 
-- [ ] Tap an entry: it squeezes and swings back as the star card (`log-entry-back`): big stars, the encounter, the movie (`log-entry-media`), PLOTTED BY PAUL-BUFANO (`log-entry-navigator`), and WHAT I FOUND with only the reasons given (`log-entry-reason-1..3`). No REDACTED bars here.
+- [ ] Tap an entry: it squeezes and swings back as the star card (`log-entry-back`): big stars, the encounter, the movie (`log-entry-media`), PLOTTED BY PAUL-BUFANO (`log-entry-navigator`), WHAT PAUL-BUFANO PROMISED (`log-entry-promised-1..3`) and WHAT I FOUND (`log-entry-reason-1..3`), each with only the reasons given. No REDACTED bars here.
 - [ ] Tap again: back to the story. The corner hint reads TAP TO FLIP ↻ / TAP FOR THE STORY ↻.
 - [ ] With reduce motion on: it switches sides with no squeeze.
 

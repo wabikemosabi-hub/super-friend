@@ -62,6 +62,19 @@ export function LogEntry({ stars, encounter, title, navigator, promised, found, 
             <ThemedText style={[styles.label, { color: theme.textSecondary }]} testID="log-entry-navigator">
               PLOTTED BY {(navigator ?? 'REDACTED').toUpperCase()}
             </ThemedText>
+            <ThemedText
+              style={[styles.label, styles.found, { color: theme.hazard }]}
+              testID="log-entry-promised-heading">
+              WHAT {(navigator ?? 'REDACTED').toUpperCase()} PROMISED
+            </ThemedText>
+            {promised.map((reason, i) => (
+              <View key={i} style={styles.reason}>
+                <ThemedText style={[styles.bullet, { color: theme.textSecondary }]}>▸</ThemedText>
+                <ThemedText style={[styles.reasonText, { color: theme.text }]} testID={`log-entry-promised-${i + 1}`}>
+                  {reason}
+                </ThemedText>
+              </View>
+            ))}
             <ThemedText style={[styles.label, styles.found, { color: theme.hazard }]}>WHAT I FOUND</ThemedText>
             {found.map((reason, i) => (
               <View key={i} style={styles.reason}>

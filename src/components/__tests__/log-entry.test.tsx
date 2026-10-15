@@ -71,6 +71,19 @@ test('tapping flips it to a star card with a plain list of reasons', async () =>
   expect(screen.getByTestId('log-entry')).toBeExpanded();
 });
 
+test('the star card shows what the navigator promised next to what was found', async () => {
+  await render(<LogEntry {...latrine} found={['The dog']} promised={['Bones', 'Coffins']} />);
+
+  await fireEvent.press(screen.getByTestId('log-entry'));
+
+  expect(screen.getByTestId('log-entry-promised-heading')).toHaveTextContent('WHAT TAFFY-LEE-FUBBINS PROMISED');
+  expect(screen.getAllByTestId(/^log-entry-promised-\d/)).toHaveLength(2);
+  expect(screen.getByTestId('log-entry-promised-1')).toHaveTextContent('Bones');
+  expect(screen.getByTestId('log-entry-promised-2')).toHaveTextContent('Coffins');
+  expect(screen.getAllByTestId(/^log-entry-reason-/)).toHaveLength(1);
+  expect(screen.getByTestId('log-entry-reason-1')).toHaveTextContent('The dog');
+});
+
 test('tapping again flips it back to the story', async () => {
   await render(<LogEntry {...latrine} />);
 
