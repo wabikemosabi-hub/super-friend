@@ -7,18 +7,20 @@ import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { ReachedStop } from '@/lib/ratings';
 import { MAX_PICKS, openSlots, type Recommendation } from '@/lib/recommendations';
 import { slotsLine, toggleOpen } from '@/lib/road-map';
 
 type NavConsoleProps = {
   nomadName: string;
   plotted: Recommendation[];
+  reached: ReachedStop[];
   isLoading: boolean;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
   onReplace: (recommendationId: string, mediaItemId: string, reasons: string[]) => Promise<void>;
 };
 
-export function NavConsole({ nomadName, plotted, isLoading, onAdd, onReplace }: NavConsoleProps) {
+export function NavConsole({ nomadName, plotted, reached, isLoading, onAdd, onReplace }: NavConsoleProps) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(null);
   const [plotting, setPlotting] = useState(false);
@@ -79,6 +81,7 @@ export function NavConsole({ nomadName, plotted, isLoading, onAdd, onReplace }: 
           replacing ? onReplace(replacing.id, item.id, reasons) : onAdd(item.id, reasons)
         }
         routeFull={full}
+        reached={reached}
         route={plotted}
         visible={plotting}
       />

@@ -87,6 +87,37 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"stop_ratings": {
+                  Row: {
+                    "created_at": string,"encounter": number,"id": string,"media_item_id": string,"navigator_id": string | null,"nomad_id": string,"promised_reasons": (string)[],"reasons": (string)[],"stars": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"encounter": number,"id"?: string,"media_item_id": string,"navigator_id"?: string | null,"nomad_id": string,"promised_reasons"?: (string)[],"reasons": (string)[],"stars": number
+                  }
+                  Update: {
+                    "created_at"?: string,"encounter"?: number,"id"?: string,"media_item_id"?: string,"navigator_id"?: string | null,"nomad_id"?: string,"promised_reasons"?: (string)[],"reasons"?: (string)[],"stars"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stop_ratings_media_item_id_fkey"
+      columns: ["media_item_id"]
+isOneToOne: false
+      referencedRelation: "media_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stop_ratings_navigator_id_fkey"
+      columns: ["navigator_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stop_ratings_nomad_id_fkey"
+      columns: ["nomad_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -104,6 +135,14 @@ isOneToOne: false
 "my_connections":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"connection_id": string,"nomad_id": string,"outgoing": boolean,"status": string,"username": string
+            }[]
+                           },
+"rate_stop":
+{ Args: { "encounter": number,"media_item_id": string,"reasons": (string)[],"stars": number }; Returns: string
+                           },
+"reached_stops":
+{ Args: { "nomad_id": string }; Returns: {
+              "encounter": number,"external_id": string,"media_item_id": string,"stars": number
             }[]
                            },
 "replace_recommendation":

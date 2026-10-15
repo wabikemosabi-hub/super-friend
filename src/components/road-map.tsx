@@ -3,8 +3,10 @@ import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, V
 
 import { MediaPoster } from '@/components/media-poster';
 import { MediaRow, StopReasons } from '@/components/media-row';
-import { CrtScreen, ScreenLine, ShipPanel } from '@/components/ship-panel';
+import { ReachStopPanel } from '@/components/reach-stop-panel';
+import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
+import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useDegauss } from '@/hooks/use-degauss';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,14 +29,16 @@ type RoadMapProps = {
   picks: Recommendation[];
   isLoading: boolean;
   wide: boolean;
+  onRate: (mediaItemId: string, stars: Stars, encounter: number, reasons: string[]) => Promise<void>;
 };
 
-export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
+export function RoadMap({ nomadName, picks, isLoading, wide, onRate }: RoadMapProps) {
   const theme = useTheme();
   const stops = roadStops(picks);
   const count = stops.length;
   const { scanning, degauss } = useDegauss();
   const [shake] = useState(() => new Animated.Value(0));
+  const [reaching, setReaching] = useState<Recommendation | null>(null);
 
   async function degaussWithWobble() {
     if (await AccessibilityInfo.isReduceMotionEnabled()) {
@@ -72,18 +76,34 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
           <ScreenLine text={`NO STOPS YET. ${nomadName} hasn't plotted a route for you.`} testID="road-empty" />
         </CrtScreen>
       )}
-      {!isLoading && count > 0 && (wide ? <WideRoad nomadName={nomadName} scanning={scanning} shake={shake} stops={stops} /> : <StripRoad nomadName={nomadName} stops={stops} />)}
+      {!isLoading &&
+        count > 0 &&
+        (wide ? (
+          <WideRoad nomadName={nomadName} onReach={setReaching} scanning={scanning} shake={shake} stops={stops} />
+        ) : (
+          <StripRoad nomadName={nomadName} onReach={setReaching} stops={stops} />
+        ))}
+      {reaching && (
+        <ReachStopPanel
+          onClose={() => setReaching(null)}
+          onLog={(stars, encounter, reasons) => onRate(reaching.media_item_id, stars, encounter, reasons)}
+          stop={reaching}
+          visible
+        />
+      )}
     </ShipPanel>
   );
 }
 
 function WideRoad({
   nomadName,
+  onReach,
   scanning,
   shake,
   stops,
 }: {
   nomadName: string;
+  onReach: (stop: Recommendation) => void;
   scanning: boolean;
   shake: Animated.Value;
   stops: RoadStop[];
@@ -143,7 +163,7 @@ function WideRoad({
           </View>
         </CrtScreen>
       </Animated.View>
-      <StopDetail nomadName={nomadName} stop={selected} />
+      <StopDetail nomadName={nomadName} onReach={onReach} stop={selected} />
     </>
   );
 }
@@ -238,7 +258,15 @@ function MapStop({
   );
 }
 
-function StopDetail({ nomadName, stop }: { nomadName: string; stop: RoadStop }) {
+function StopDetail({
+  nomadName,
+  onReach,
+  stop,
+}: {
+  nomadName: string;
+  onReach: (stop: Recommendation) => void;
+  stop: RoadStop;
+}) {
   const theme = useTheme();
 
   return (
@@ -258,12 +286,21 @@ function StopDetail({ nomadName, stop }: { nomadName: string; stop: RoadStop }) 
           </ThemedText>
         </View>
         <StopReasons reasons={stop.pick.reasons} />
+        <CurrentPosition onPress={() => onReach(stop.pick)} stop={stop} />
       </View>
     </CrtScreen>
   );
 }
 
-function StripRoad({ nomadName, stops }: { nomadName: string; stops: RoadStop[] }) {
+function StripRoad({
+  nomadName,
+  onReach,
+  stops,
+}: {
+  nomadName: string;
+  onReach: (stop: Recommendation) => void;
+  stops: RoadStop[];
+}) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(stops[0].pick.id);
 
@@ -294,6 +331,7 @@ function StripRoad({ nomadName, stops }: { nomadName: string; stops: RoadStop[] 
                 open={openId === stop.pick.id}
                 testID={`road-stop-${stop.pick.external_id}`}>
                 <StopReasons reasons={stop.pick.reasons} />
+                <CurrentPosition onPress={() => onReach(stop.pick)} stop={stop} />
               </MediaRow>
             </View>
           </View>
@@ -303,6 +341,19 @@ function StripRoad({ nomadName, stops }: { nomadName: string; stops: RoadStop[] 
         </ThemedText>
       </View>
     </CrtScreen>
+  );
+}
+
+function CurrentPosition({ stop, onPress }: { stop: RoadStop; onPress: () => void }) {
+  return (
+    <View style={styles.current}>
+      <ShipButton
+        label="Current position"
+        onPress={onPress}
+        testID={`road-current-${stop.pick.external_id}`}
+        variant="phosphor"
+      />
+    </View>
   );
 }
 
@@ -418,6 +469,10 @@ function ScanBar() {
 }
 
 const styles = StyleSheet.create({
+  current: {
+    alignItems: 'flex-start',
+    paddingTop: Spacing.two,
+  },
   badge: {
     alignItems: 'center',
     flexDirection: 'row',

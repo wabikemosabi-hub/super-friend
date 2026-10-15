@@ -10,12 +10,14 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { MediaItem } from '@/lib/media-search';
-import { MAX_PICKS, onRoute, type Recommendation } from '@/lib/recommendations';
+import { blockedStop, type ReachedStop } from '@/lib/ratings';
+import { MAX_PICKS, type Recommendation } from '@/lib/recommendations';
 
 type PlotStopPanelProps = {
   visible: boolean;
   nomadName: string;
   route: Recommendation[];
+  reached: ReachedStop[];
   routeFull: boolean;
   landingRank: number;
   onClose: () => void;
@@ -26,7 +28,7 @@ type Step = 'replace' | 'search' | 'plot';
 
 const stepLabels: Record<Step, string> = { replace: 'STOP TO REPLACE', search: 'SEARCH', plot: 'REASONS' };
 
-export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRank, onClose, onPlot }: PlotStopPanelProps) {
+export function PlotStopPanel({ visible, nomadName, route, reached, routeFull, landingRank, onClose, onPlot }: PlotStopPanelProps) {
   const theme = useTheme();
   const [chosen, setChosen] = useState<Recommendation | null>(null);
   const [searching, setSearching] = useState(false);
@@ -127,11 +129,7 @@ export function PlotStopPanel({ visible, nomadName, route, routeFull, landingRan
           <MediaSearch
             type="movie"
             onPick={setPicked}
-            unavailable={(item) =>
-              onRoute(route, item.external_id)
-                ? { note: 'ALREADY ON YOUR ROUTE', testID: `plot-stop-unavailable-${item.external_id}` }
-                : null
-            }
+            unavailable={(item) => blockedStop(item.external_id, route, reached, nomadName)}
           />
         </View>
 

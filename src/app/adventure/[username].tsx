@@ -12,7 +12,7 @@ export default function AdventureRoute() {
   const { profile } = useSession();
   const { nomads, isLoading } = useConnections();
   const nomad = findNomad(nomads, username ?? '');
-  const { fromThem, toThem, isLoading: picksLoading, error, add, replace } = useAdventure(nomad?.nomad_id ?? null, 'movie');
+  const { fromThem, toThem, reached, isLoading: picksLoading, error, add, replace, rate } = useAdventure(nomad?.nomad_id ?? null, 'movie');
 
   return (
     <AdventureScreen
@@ -22,10 +22,12 @@ export default function AdventureRoute() {
       isLoading={isLoading}
       fromThem={fromThem}
       toThem={toThem}
+      reached={reached}
       picksLoading={picksLoading}
       picksError={error}
       onAdd={add}
       onReplace={replace}
+      onRate={rate}
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       onSignOut={signOut}
     />
