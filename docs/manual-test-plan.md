@@ -2,13 +2,13 @@
 
 Everything built so far, as checks you can click through on web. Each check names the testIDs it touches, so it can become a Playwright test later. When a check moves to Playwright, delete it here. Add checks in the same PR as the feature.
 
-_Covers: sign-in, sign-up, Basecamp, fellow nomads, the Adventure Page road map, Degauss, and Plot a stop (through WAB-42)._
+_Covers: sign-in, sign-up, Basecamp, fellow nomads, the Adventure Page road map, Degauss, Plot a stop, reaching a stop, and the Nomad's Log with field reports (through WAB-44)._
 
 ## Before you start
 
 1. Docker running, then `npx supabase start`.
 2. `npx supabase db reset` for a clean slate: just the two seed nomads, not connected, no stops.
-3. In separate terminals: `npx supabase functions serve --env-file supabase/functions/.env` (search needs it) and `npx expo start --web`.
+3. In separate terminals: `npx supabase functions serve --env-file supabase/functions/.env` (search needs it) and `npx expo start --web`. Start `functions serve` **after** the reset: a reset stops it.
 4. Open http://localhost:8081. Use two browser windows (one normal, one private) to be two nomads at once.
 
 Seed nomads: `bart-harley-jarvis@dev.local` and `paul-bufano@dev.local`. The password is in `supabase/seed.sql`.
@@ -141,6 +141,38 @@ Wide map, at least one stop on your road.
 
 - [ ] With a third nomad (made as in section 2) connected to Bart only: they can't see Bart and Paul's stops, and `/adventure/paul-bufano` shows NO SIGNAL for them.
 
+## 10. Reaching a stop (CURRENT POSITION)
+
+As Bart, after Paul plotted at least 2 stops for him:
+
+- [ ] Each stop on your road has a green **CURRENT POSITION** button (`road-current-<external_id>`): in the detail screen on wide, inside the opened row on narrow.
+- [ ] It opens the panel (`reach-stop`) headed "CURRENT POSITION · <TITLE> (<YEAR>)", chips 1 · STARS lit and 2 · REASONS (`reach-step-stars`, `reach-step-reasons`), and "PICK YOUR STARS. THE ROAD DECIDES WHAT HAPPENED." (`reach-stars-prompt`).
+- [ ] Tapping a star (`reach-star-1..5`) lights that many and reveals an encounter card (`reach-encounter`) that flickers in: ★ line (`reach-encounter-stars`) and the encounter title (`reach-encounter-title`) in the star color (1 red, 2 yellow, 3 white, 4 dim green, 5 green).
+- [ ] Tapping the same star keeps the encounter. A different star draws a new one. Closing and reopening starts fresh.
+- [ ] **NEXT: REASONS** (`reach-to-reasons`) → "WHAT DID YOU FIND OUT THERE?", the help line (`reach-reasons-help`), FOUND 1 · REQUIRED and FOUND 2, 3 · OPTIONAL (`reach-reason-1..3`). The encounter card stays on screen.
+- [ ] **LOG IT** (`reach-log`) with nothing typed: "Give 1 to 3 reasons" in red (`reach-error`). One reason in any box is enough.
+- [ ] **BACK TO STARS** (`reach-back-to-stars`) keeps the stars, encounter and what you typed.
+- [ ] LOG IT → the panel shows your new journal entry (`log-entry`). **BACK TO THE ROAD** (`reach-done`) closes it. The stop is gone from the road and the rest move up (the badge counts one fewer).
+- [ ] As Paul, plotting that movie for Bart again: search dims it with "BART-HARLEY-JARVIS ALREADY REACHED THIS: <ENCOUNTER>" (`plot-stop-reached-<external_id>`) and it can't be picked.
+
+## 11. Nomad's Log and field reports
+
+After 10:
+
+- [ ] As Bart on Paul's page: **LOG-01 · NOMAD'S LOG · STOPS FROM PAUL-BUFANO** (`nomad-log`) under the road lists Bart's entries, newest first.
+- [ ] Each entry (`log-entry`) shows the stars, the encounter in its star color, and the story starting with today's date ("October 15, 2026"), with Paul's name, the movie, Paul's reasons and yours filled in.
+- [ ] Log with only 1 reason: the story shows black **REDACTED** bars (`log-entry-redacted`) where the missing ones go, and no bar is ever split across two lines.
+- [ ] As Paul on Bart's page: the same entries show under the Nav Console in **LOG-02 · FIELD REPORTS · FROM BART-HARLEY-JARVIS** (`field-reports`). Paul's own log is empty until he logs a stop Bart plotted.
+- [ ] Empty states: "NO ENTRIES YET. THE ROAD AWAITS." (`nomad-log-empty`) and "NO FIELD REPORTS YET. …" (`field-reports-empty`).
+- [ ] Narrow: the log sits under the road on MY ROAD, field reports under the console on the other tab.
+- [ ] A third nomad connected to Bart only sees none of Bart and Paul's entries.
+
+## 12. Flip an entry
+
+- [ ] Tap an entry: it squeezes and swings back as the star card (`log-entry-back`): big stars, the encounter, the movie (`log-entry-media`), PLOTTED BY PAUL-BUFANO (`log-entry-navigator`), WHAT PAUL-BUFANO PROMISED (`log-entry-promised-1..3`) and WHAT I FOUND (`log-entry-reason-1..3`), each with only the reasons given. No REDACTED bars here.
+- [ ] Tap again: back to the story. The corner hint reads TAP TO FLIP ↻ / TAP FOR THE STORY ↻.
+- [ ] With reduce motion on: it switches sides with no squeeze.
+
 ## Not built yet (don't test)
 
-Rating, rerouting and field reports (WAB-43). "Already reached: <encounter>" dimming (WAB-43). The Nomad's Log (WAB-44). Removing, reordering or editing stops. Series and books. Removing or blocking a nomad (WAB-30). Phones beyond a quick look (sign-in on phones needs a development build, WAB-6).
+Reroute (WAB-51). Sharing a log entry (WAB-49). Rewatch (WAB-50). OVERALL JOURNEY (WAB-52). Stops behind you on the road. Removing, reordering or editing stops. Series and books. Removing or blocking a nomad (WAB-30). Phones beyond a quick look (sign-in on phones needs a development build, WAB-6).

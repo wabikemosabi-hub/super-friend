@@ -1,10 +1,12 @@
 import type { Stars } from '@/constants/encounters';
 import type { Database } from '@/lib/database.types';
 import { encounterFor, STARS } from '@/lib/encounters';
+import type { JournalEntry } from '@/lib/nomad-log';
 import { onRoute, type Recommendation } from '@/lib/recommendations';
 import { supabase } from '@/lib/supabase';
 
 export type ReachedStop = Database['public']['Functions']['reached_stops']['Returns'][number];
+export type LogRow = Database['public']['Functions']['nomad_log']['Returns'][number];
 
 export function isStars(value: number): value is Stars {
   return STARS.some((stars) => stars === value);
@@ -44,4 +46,23 @@ export function blockedStop(externalId: string, route: Recommendation[], reached
   const stop = reachedStop(reached, externalId);
   if (stop) return { note: reachedNote(nomadName, stop), testID: `plot-stop-reached-${externalId}` };
   return null;
+}
+
+export async function nomadLog(nomadId: string) {
+  const { data, error } = await supabase.rpc('nomad_log', { nomad_id: nomadId });
+  if (error) throw error;
+  return data;
+}
+
+export function logEntry(row: LogRow): JournalEntry | null {
+  if (!isStars(row.stars)) return null;
+  return {
+    stars: row.stars,
+    encounter: row.encounter,
+    title: row.title,
+    navigator: row.navigator,
+    promised: row.promised_reasons,
+    found: row.reasons,
+    date: new Date(row.created_at),
+  };
 }

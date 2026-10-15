@@ -41,3 +41,10 @@ test('draws the stars as filled and empty', () => {
 test('colors each star level like the field guide', () => {
   expect(STARS.map(encounterColor)).toEqual(['alert', 'hazard', 'text', 'phosphorDim', 'phosphor']);
 });
+
+test('every star level has at least three real encounters', () => {
+  for (const stars of STARS) {
+    expect(encounters[stars].length).toBeGreaterThanOrEqual(3);
+    expect(encounters[stars].map((encounter) => encounter.title).join(' ')).not.toContain('PLACEHOLDER');
+  }
+});
