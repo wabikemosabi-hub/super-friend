@@ -15,16 +15,17 @@ type ReachStopPanelProps = {
   visible: boolean;
   stop: Recommendation;
   onClose: () => void;
+  onLog: (stars: Stars, encounter: number, reasons: string[]) => Promise<void>;
 };
 
-type Step = 'stars' | 'reasons' | 'when';
+type Step = 'stars' | 'reasons';
 
-const steps: Step[] = ['stars', 'reasons', 'when'];
-const stepLabels: Record<Step, string> = { stars: 'STARS', reasons: 'REASONS', when: 'WHEN' };
+const steps: Step[] = ['stars', 'reasons'];
+const stepLabels: Record<Step, string> = { stars: 'STARS', reasons: 'REASONS' };
 const useNativeDriver = Platform.OS !== 'web';
 const flickerSteps = [0, 0.7, 0.2, 0.9, 0.5, 1];
 
-export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) {
+export function ReachStopPanel({ visible, stop, onClose, onLog }: ReachStopPanelProps) {
   const theme = useTheme();
   const [stars, setStars] = useState<Stars | null>(null);
   const [encounter, setEncounter] = useState(0);
@@ -32,6 +33,7 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
   const [reasons, setReasons] = useState(['', '', '']);
   const [problem, setProblem] = useState<string | null>(null);
   const [focused, setFocused] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const title = `${stop.title}${stop.year ? ` (${stop.year})` : ''}`;
 
   function pick(next: Stars) {
@@ -40,14 +42,23 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
     setEncounter(randomEncounterIndex(next));
   }
 
-  function toWhen() {
+  async function log() {
+    if (saving || stars === null) return;
     const issue = reasonsProblem(reasons);
     if (issue) {
       setProblem(issue);
       return;
     }
+    setSaving(true);
     setProblem(null);
-    setStep('when');
+    try {
+      await onLog(stars, encounter, reasons);
+      setSaving(false);
+      close();
+    } catch (failure) {
+      setProblem(failure instanceof Error ? failure.message : 'That log did not go through');
+      setSaving(false);
+    }
   }
 
   function close() {
@@ -159,14 +170,8 @@ export function ReachStopPanel({ visible, stop, onClose }: ReachStopPanelProps) 
             {problem && <ScreenLine color={theme.alert} testID="reach-error" text={problem} />}
             <View style={styles.buttons}>
               <ShipButton label="Back to stars" onPress={() => setStep('stars')} testID="reach-back-to-stars" variant="panel" />
-              <ShipButton label="Next: when" onPress={toWhen} testID="reach-to-when" variant="phosphor" />
+              <ShipButton disabled={saving} label="Log it" onPress={log} testID="reach-log" variant="phosphor" />
             </View>
-          </View>
-        )}
-
-        {step === 'when' && (
-          <View style={styles.buttons} testID="reach-when">
-            <ShipButton label="Back to reasons" onPress={() => setStep('reasons')} testID="reach-back-to-reasons" variant="panel" />
           </View>
         )}
       </View>

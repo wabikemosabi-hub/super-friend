@@ -7,7 +7,6 @@ create table public.stop_ratings (
   stars int not null check (stars between 1 and 5),
   encounter int not null check (encounter >= 0),
   reasons text[] not null check (cardinality(reasons) between 1 and 3),
-  watched_on date not null,
   created_at timestamptz not null default clock_timestamp()
 );
 
@@ -21,8 +20,7 @@ create function public.rate_stop(
   media_item_id uuid,
   stars int,
   encounter int,
-  reasons text[],
-  watched_on date default current_date
+  reasons text[]
 )
 returns uuid
 language plpgsql
@@ -58,10 +56,6 @@ begin
     raise exception 'Keep each reason under 140 characters';
   end if;
 
-  if coalesce(rate_stop.watched_on, current_date) > current_date + 1 then
-    raise exception 'You can''t have watched it in the future';
-  end if;
-
   select * into plotted from public.recommendations x
   where x.recipient_id = auth.uid()
     and x.media_item_id = rate_stop.media_item_id
@@ -92,11 +86,11 @@ begin
 
   insert into public.stop_ratings (
     nomad_id, media_item_id, navigator_id, promised_reasons,
-    stars, encounter, reasons, watched_on
+    stars, encounter, reasons
   )
   values (
     auth.uid(), rate_stop.media_item_id, navigator, promised,
-    rate_stop.stars, picked, cleaned, coalesce(rate_stop.watched_on, current_date)
+    rate_stop.stars, picked, cleaned
   )
   returning id into new_id;
 
@@ -128,4 +122,4 @@ begin
 end;
 $$;
 
-revoke execute on function public.rate_stop(uuid, int, int, text[], date) from public, anon;
+revoke execute on function public.rate_stop(uuid, int, int, text[]) from public, anon;

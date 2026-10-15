@@ -9,6 +9,7 @@ import { RoadMap } from '@/components/road-map';
 import { CrtScreen, HazardStripe, Plate, ScreenLine } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { TmdbAttribution } from '@/components/tmdb-attribution';
+import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Connection } from '@/lib/connections';
@@ -29,6 +30,7 @@ type AdventureScreenProps = {
   picksError: string | null;
   onAdd: (mediaItemId: string, reasons: string[]) => Promise<void>;
   onReplace: (recommendationId: string, mediaItemId: string, reasons: string[]) => Promise<void>;
+  onRate: (mediaItemId: string, stars: Stars, encounter: number, reasons: string[]) => Promise<void>;
   onBack: () => void;
   onSignOut: () => void;
 };
@@ -47,6 +49,7 @@ export function AdventureScreen({
   picksError,
   onAdd,
   onReplace,
+  onRate,
   onBack,
   onSignOut,
 }: AdventureScreenProps) {
@@ -70,7 +73,13 @@ export function AdventureScreen({
               <View style={[styles.panels, sideBySide && styles.panelsSideBySide]}>
                 {(sideBySide || showing === 'road') && (
                   <View style={sideBySide ? styles.road : undefined}>
-                    <RoadMap isLoading={picksLoading} nomadName={nomad.username} picks={fromThem} wide={sideBySide} />
+                    <RoadMap
+                      isLoading={picksLoading}
+                      nomadName={nomad.username}
+                      onRate={onRate}
+                      picks={fromThem}
+                      wide={sideBySide}
+                    />
                   </View>
                 )}
                 {(sideBySide || showing === 'console') && (

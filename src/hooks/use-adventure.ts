@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Stars } from '@/constants/encounters';
-import { randomEncounterIndex } from '@/lib/encounters';
 import { rateStop, reachedStops } from '@/lib/ratings';
 import {
   addRecommendation,
@@ -39,8 +38,8 @@ export function useAdventure(nomadId: string | null, type: string) {
       await replaceRecommendation(recommendationId, mediaItemId, cleanReasons(reasons));
       await client.invalidateQueries({ queryKey: key });
     },
-    rate: async (mediaItemId: string, stars: Stars, reasons: string[], watchedOn: string) => {
-      await rateStop(mediaItemId, stars, randomEncounterIndex(stars), cleanReasons(reasons), watchedOn);
+    rate: async (mediaItemId: string, stars: Stars, encounter: number, reasons: string[]) => {
+      await rateStop(mediaItemId, stars, encounter, cleanReasons(reasons));
       await client.invalidateQueries({ queryKey: key });
     },
   };

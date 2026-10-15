@@ -28,17 +28,17 @@ select public.add_recommendation(tests.user_id('roy'), (select id from public.me
 select public.add_recommendation(tests.user_id('roy'), (select id from public.media_items where external_id = 'movie:test-3'), array['Pants']);
 
 select tests.authenticate_as('roy');
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 1, 2, array['Flop'], current_date - 5);
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 3, 1, array['Grew on me'], current_date);
-select public.rate_stop((select id from public.media_items where external_id = 'movie:test-2'), 5, 0, array['Buff'], current_date - 1);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 1, 2, array['Flop']);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-1'), 3, 1, array['Grew on me']);
+select public.rate_stop((select id from public.media_items where external_id = 'movie:test-2'), 5, 0, array['Buff']);
 
 select has_function('public', 'reached_stops', array['uuid'], 'reached_stops exists');
 
 select tests.authenticate_as('taffy');
 
 select results_eq(
-  $$select external_id, stars, encounter, watched_on from public.reached_stops(tests.user_id('roy')) order by external_id$$,
-  $$values ('movie:test-1', 3, 1, current_date), ('movie:test-2', 5, 0, current_date - 1)$$,
+  $$select external_id, stars, encounter from public.reached_stops(tests.user_id('roy')) order by external_id$$,
+  $$values ('movie:test-1', 3, 1), ('movie:test-2', 5, 0)$$,
   'a fellow nomad sees each stop the nomad reached, with the latest rating'
 );
 

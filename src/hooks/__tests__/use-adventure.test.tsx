@@ -10,7 +10,7 @@ const mockAdventureRecommendations = jest.fn<Promise<Recommendation[]>, [string]
 const mockAddRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 const mockReplaceRecommendation = jest.fn<Promise<string>, [string, string, string[]]>();
 const mockReachedStops = jest.fn<Promise<ReachedStop[]>, [string]>();
-const mockRateStop = jest.fn<Promise<string>, [string, number, number, string[], string]>();
+const mockRateStop = jest.fn<Promise<string>, [string, number, number, string[]]>();
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/lib/recommendations', () => ({
@@ -24,8 +24,8 @@ jest.mock('@/lib/recommendations', () => ({
 jest.mock('@/lib/ratings', () => ({
   ...jest.requireActual<typeof import('@/lib/ratings')>('@/lib/ratings'),
   reachedStops: (nomadId: string) => mockReachedStops(nomadId),
-  rateStop: (mediaItemId: string, stars: number, encounter: number, reasons: string[], watchedOn: string) =>
-    mockRateStop(mediaItemId, stars, encounter, reasons, watchedOn),
+  rateStop: (mediaItemId: string, stars: number, encounter: number, reasons: string[]) =>
+    mockRateStop(mediaItemId, stars, encounter, reasons),
 }));
 
 function recommendation(title: string, rank: number, outgoing: boolean, type = 'movie'): Recommendation {
@@ -51,7 +51,6 @@ const latrine: ReachedStop = {
   external_id: 'movie:Calico Cut Pants',
   stars: 1,
   encounter: 0,
-  watched_on: '2026-10-12',
 };
 
 function setup(nomadId: string | null) {
@@ -161,15 +160,14 @@ test('passes along the reason a replacement was refused', async () => {
   expect(mockAdventureRecommendations).toHaveBeenCalledTimes(1);
 });
 
-test('rates a stop with a random encounter and cleaned reasons, then refreshes', async () => {
-  jest.spyOn(Math, 'random').mockReturnValue(0.99);
+test('rates a stop with the encounter the nomad saw and cleaned reasons, then refreshes', async () => {
   const { result } = await setup('roy-id');
   await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-  await act(() => result.current.rate('Driving Crooner-media', 1, [' The dog ', '', 'Too long'], '2026-10-12'));
+  await act(() => result.current.rate('Driving Crooner-media', 1, 2, [' The dog ', '', 'Too long']));
 
   expect(mockRateStop).toHaveBeenCalledTimes(1);
-  expect(mockRateStop).toHaveBeenCalledWith('Driving Crooner-media', 1, 2, ['The dog', 'Too long'], '2026-10-12');
+  expect(mockRateStop).toHaveBeenCalledWith('Driving Crooner-media', 1, 2, ['The dog', 'Too long']);
   await waitFor(() => expect(mockAdventureRecommendations).toHaveBeenCalledTimes(2));
 });
 
@@ -178,7 +176,7 @@ test('passes along the reason a rating was refused', async () => {
   const { result } = await setup('roy-id');
   await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-  await expect(result.current.rate('media-1', 3, ['Hi'], '2026-10-12')).rejects.toThrow(
+  await expect(result.current.rate('media-1', 3, 0, ['Hi'])).rejects.toThrow(
     'You can only rate stops plotted for you',
   );
   expect(mockAdventureRecommendations).toHaveBeenCalledTimes(1);

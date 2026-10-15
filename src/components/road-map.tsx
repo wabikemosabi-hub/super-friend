@@ -6,6 +6,7 @@ import { MediaRow, StopReasons } from '@/components/media-row';
 import { ReachStopPanel } from '@/components/reach-stop-panel';
 import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
+import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useDegauss } from '@/hooks/use-degauss';
 import { useTheme } from '@/hooks/use-theme';
@@ -28,9 +29,10 @@ type RoadMapProps = {
   picks: Recommendation[];
   isLoading: boolean;
   wide: boolean;
+  onRate: (mediaItemId: string, stars: Stars, encounter: number, reasons: string[]) => Promise<void>;
 };
 
-export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
+export function RoadMap({ nomadName, picks, isLoading, wide, onRate }: RoadMapProps) {
   const theme = useTheme();
   const stops = roadStops(picks);
   const count = stops.length;
@@ -81,7 +83,14 @@ export function RoadMap({ nomadName, picks, isLoading, wide }: RoadMapProps) {
         ) : (
           <StripRoad nomadName={nomadName} onReach={setReaching} stops={stops} />
         ))}
-      {reaching && <ReachStopPanel onClose={() => setReaching(null)} stop={reaching} visible />}
+      {reaching && (
+        <ReachStopPanel
+          onClose={() => setReaching(null)}
+          onLog={(stars, encounter, reasons) => onRate(reaching.media_item_id, stars, encounter, reasons)}
+          stop={reaching}
+          visible
+        />
+      )}
     </ShipPanel>
   );
 }

@@ -3,8 +3,7 @@ returns table (
   media_item_id uuid,
   external_id text,
   stars int,
-  encounter int,
-  watched_on date
+  encounter int
 )
 language sql
 stable
@@ -15,8 +14,7 @@ as $$
     s.media_item_id,
     m.external_id,
     s.stars,
-    s.encounter,
-    s.watched_on
+    s.encounter
   from public.stop_ratings s
   join public.media_items m on m.id = s.media_item_id
   where s.nomad_id = reached_stops.nomad_id

@@ -26,7 +26,6 @@ function reached(externalId: string, stars: number, encounter: number): ReachedS
     external_id: externalId,
     stars,
     encounter,
-    watched_on: '2026-10-12',
   };
 }
 
@@ -105,10 +104,10 @@ test('leaves every other search result alone', () => {
   expect(blockedStop('movie:3', [onTheRoute('movie:1')], [reached('movie:2', 1, 0)], 'roy-donk')).toBeNull();
 });
 
-test('rates a stop with stars, an encounter, reasons and the day it was watched', async () => {
+test('rates a stop with stars, an encounter and reasons', async () => {
   mockRpc.mockResolvedValue({ data: 'rating-1', error: null });
 
-  const id = await rateStop('media-1', 1, 2, ['The dog', 'Too long'], '2026-10-12');
+  const id = await rateStop('media-1', 1, 2, ['The dog', 'Too long']);
 
   expect(id).toBe('rating-1');
   expect(mockRpc).toHaveBeenCalledTimes(1);
@@ -117,7 +116,6 @@ test('rates a stop with stars, an encounter, reasons and the day it was watched'
     stars: 1,
     encounter: 2,
     reasons: ['The dog', 'Too long'],
-    watched_on: '2026-10-12',
   });
 });
 
@@ -127,7 +125,7 @@ test('passes along the reason a rating was refused', async () => {
     error: new PostgrestError({ code: 'P0001', message: 'You can only rate stops plotted for you', details: '', hint: '' }),
   });
 
-  await expect(rateStop('media-1', 3, 0, ['Hi'], '2026-10-12')).rejects.toThrow(
+  await expect(rateStop('media-1', 3, 0, ['Hi'])).rejects.toThrow(
     'You can only rate stops plotted for you',
   );
 });

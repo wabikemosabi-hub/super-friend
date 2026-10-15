@@ -10,19 +10,12 @@ export function isStars(value: number): value is Stars {
   return STARS.some((stars) => stars === value);
 }
 
-export async function rateStop(
-  mediaItemId: string,
-  stars: Stars,
-  encounter: number,
-  reasons: string[],
-  watchedOn: string,
-) {
+export async function rateStop(mediaItemId: string, stars: Stars, encounter: number, reasons: string[]) {
   const { data, error } = await supabase.rpc('rate_stop', {
     media_item_id: mediaItemId,
     stars,
     encounter,
     reasons,
-    watched_on: watchedOn,
   });
   if (error) throw error;
   return data;

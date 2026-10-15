@@ -1,5 +1,5 @@
 begin;
-select plan(22);
+select plan(20);
 
 select tests.create_user('taffy');
 select tests.create_user('roy');
@@ -43,12 +43,12 @@ select
      where x.recipient_id = tests.user_id('roy') and m.external_id = 'movie:test-2') as buff;
 grant select on movies to authenticated, anon;
 
-select has_function('public', 'rate_stop', array['uuid', 'integer', 'integer', 'text[]', 'date'], 'rate_stop exists');
+select has_function('public', 'rate_stop', array['uuid', 'integer', 'integer', 'text[]'], 'rate_stop exists');
 
 select tests.authenticate_as('roy');
 
 select isnt(
-  public.rate_stop((select flop from movies), 1, 2, array['  The dog  ', '', 'Flop'], current_date - 3),
+  public.rate_stop((select flop from movies), 1, 2, array['  The dog  ', '', 'Flop']),
   null,
   'rating a stop returns the rating''s id'
 );
@@ -56,10 +56,10 @@ select isnt(
 select tests.clear_authentication();
 
 select results_eq(
-  $$select stars, encounter, reasons, watched_on from public.stop_ratings
+  $$select stars, encounter, reasons from public.stop_ratings
     where nomad_id = tests.user_id('roy')$$,
-  $$values (1, 2, array['The dog', 'Flop'], current_date - 3)$$,
-  'the rating keeps the stars, encounter, cleaned reasons and watched date'
+  $$values (1, 2, array['The dog', 'Flop'])$$,
+  'the rating keeps the stars, encounter and cleaned reasons'
 );
 
 select results_eq(
@@ -82,13 +82,13 @@ select results_eq(
 );
 
 select tests.authenticate_as('roy');
-select public.rate_stop((select flop from movies), 1, 0, array['Still a flop'], current_date);
-select public.rate_stop((select flop from movies), 4, 0, array['Grew on me'], current_date);
+select public.rate_stop((select flop from movies), 1, 0, array['Still a flop']);
+select public.rate_stop((select flop from movies), 4, 0, array['Grew on me']);
 
 select tests.clear_authentication();
 
 select results_eq(
-  $$select stars, encounter from public.stop_ratings where nomad_id = tests.user_id('roy') order by created_at, watched_on$$,
+  $$select stars, encounter from public.stop_ratings where nomad_id = tests.user_id('roy') order by created_at$$,
   $$values (1, 2), (1, 2), (4, 0)$$,
   'a rewatch adds a rating, keeping the encounter unless the stars change'
 );
@@ -102,61 +102,50 @@ select results_eq(
 select tests.authenticate_as('roy');
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, 0, array['Hi'], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 3, 0, array['Hi'])$$,
   'You can only rate stops plotted for you',
   'you cannot rate media nobody plotted for you'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 6, 0, array['Hi'], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 6, 0, array['Hi'])$$,
   'Pick 1 to 5 stars',
   'stars go up to 5'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 0, 0, array['Hi'], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 0, 0, array['Hi'])$$,
   'Pick 1 to 5 stars',
   'stars start at 1'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, -1, array['Hi'], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 3, -1, array['Hi'])$$,
   'No encounter like that',
   'the encounter number cannot be negative'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, 0, array[' ', ''], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 3, 0, array[' ', ''])$$,
   'Give 1 to 3 reasons',
   'a rating needs at least one reason'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, 0, array['a', 'b', 'c', 'd'], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 3, 0, array['a', 'b', 'c', 'd'])$$,
   'Give 1 to 3 reasons',
   'a rating has at most 3 reasons'
 );
 
 select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, 0, array[repeat('x', 141)], current_date)$$,
+  $$select public.rate_stop((select crooner from movies), 3, 0, array[repeat('x', 141)])$$,
   'Keep each reason under 140 characters',
   'rating reasons are short'
 );
 
-select throws_ok(
-  $$select public.rate_stop((select crooner from movies), 3, 0, array['Hi'], current_date + 2)$$,
-  'You can''t have watched it in the future',
-  'the watched date cannot be in the future'
-);
-
-select lives_ok(
-  $$select public.rate_stop((select flop from movies), 4, 0, array['Hi'], current_date + 1)$$,
-  'tomorrow by the database clock is allowed for nomads ahead of UTC'
-);
-
 select tests.authenticate_as('taffy');
 select throws_ok(
-  $$select public.rate_stop((select flop from movies), 3, 0, array['Hi'], current_date)$$,
+  $$select public.rate_stop((select flop from movies), 3, 0, array['Hi'])$$,
   'You can only rate stops plotted for you',
   'a navigator cannot rate a stop they plotted for someone else'
 );
@@ -181,7 +170,7 @@ select throws_ok(
 
 select tests.authenticate_as_anon();
 select throws_ok(
-  $$select public.rate_stop(gen_random_uuid(), 3, 0, array['Hi'], current_date)$$,
+  $$select public.rate_stop(gen_random_uuid(), 3, 0, array['Hi'])$$,
   '42501', null,
   'anon cannot rate a stop'
 );
