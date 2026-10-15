@@ -16,10 +16,15 @@ _Last sessions: 2026-10-14 and 15 (Eben's Mac). WAB-43 and WAB-44 merged; WAB-53
 1. Eben looks over WAB-53 on web and a phone (manual test plan section 13), then the PR for Jake. After pulling it: `npm install` (new font package).
 2. Pick the next thing with Eben. Ready to build: **WAB-49** share a log entry as styled text (designed; the sign-off line is the only open question), **WAB-51** reroute, **WAB-52** OVERALL JOURNEY. Parked: **WAB-50** rewatch (the database already supports it).
 3. **WAB-46 Unanswered questions** is where open product questions go for Eben and Jake to settle together. Add new ones there rather than making a ticket each.
-4. **WAB-45, deploy for friends** on a subdomain of Eben's onlyfins.wtf: hosted Supabase, Google sign-in settings, `npx expo export -p web`, then DNS. Agree with Jake first. The App Store age rating will need to know about the 5★ stories' sexual and drug jokes, whenever phones ship.
-5. Small known defect: at phone width, the road panel's header badge is cut off ("3 STOPS · JUST STARTI…").
-6. The old `ebenbsmith/wab-39-wasteland-road-map` branch is empty (just PR #13's commits) and can be deleted, once Eben says so.
-7. The app rename (Media Wasteland Nomads) waits on Eben and Jake.
+4. **WAB-45, deploy for friends** on **thewasteland.wtf** (Eben bought it 2026-10-15): hosted Supabase, Google sign-in settings, `npx expo export -p web` on a free static host connected to GitHub (Cloudflare Pages, Netlify or Vercel), then DNS. The ticket has the full steps. The App Store age rating will need to know about the 5★ stories' sexual and drug jokes, whenever phones ship.
+5. **Eben's to-do, the registrar for thewasteland.wtf** (all free; the paid "domain protection" add-on isn't needed):
+   - Two-factor authentication on the registrar account.
+   - Registrar lock (transfer lock) on.
+   - Auto-renew on, with a card that won't expire soon.
+   - WHOIS privacy on.
+6. Small known defect: at phone width, the road panel's header badge is cut off ("3 STOPS · JUST STARTI…").
+7. The old `ebenbsmith/wab-39-wasteland-road-map` branch is empty (just PR #13's commits) and can be deleted, once Eben says so.
+8. The app rename (Media Wasteland Nomads) waits on Eben and Jake.
 
 ## Start here
 
@@ -52,7 +57,7 @@ _Last sessions: 2026-10-14 and 15 (Eben's Mac). WAB-43 and WAB-44 merged; WAB-53
 | WAB-53 | The Crawler Bridge look (PR #19) |
 | WAB-54 | Name your land crawler at sign-up; Basecamp's header shows it (Eben's idea) |
 | WAB-52 | OVERALL JOURNEY: every log entry in one place (Eben's idea, after WAB-44) |
-| WAB-45 | Deploy the web build for friends on a subdomain of onlyfins.wtf |
+| WAB-45 | Deploy the web build for friends on thewasteland.wtf |
 | **WAB-46 Unanswered questions** | A running list of open product questions for Eben and Jake to settle together. Add new ones under "Open" instead of making a ticket each. First one: should the map's "ROUTE 1" tags say "STOP 1"? |
 | WAB-36, 37 | Small defects: request avatars, search placeholder |
 | WAB-31 Theme Colors | Every color from a named role in one theme file. Updated 2026-10-01 for the ship-computer look (see Design), with every role, its value and use |
