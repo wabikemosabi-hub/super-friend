@@ -145,11 +145,23 @@ test("shows the road a fellow nomad plotted and your route for them", async () =
 
   expect(await screen.findByTestId('road-stop-movie:Coffin Flop')).toHaveTextContent(/Coffin Flop \(2019\)/);
   expect(screen.queryByTestId('console-stop-movie:Hot Dog Car')).toBeNull();
+  expect(await screen.findByTestId('nomad-log-empty')).toHaveTextContent(
+    'NO NAVIGATION FOUND, PLEASE CONSULT YOUR LOCAL NAVIGATOR',
+  );
 
   await fireEvent.press(screen.getByTestId('adventure-view-console'));
 
+  expect(await screen.findByTestId('field-reports-empty')).toHaveTextContent(
+    'NO FIELD REPORTS YET. PLEASE REACH OUT TO ROY-DONK FOR A REPORT.',
+  );
+
   expect(await screen.findByTestId('console-stop-movie:Hot Dog Car')).toHaveTextContent(/Hot Dog Car \(2019\)/);
-  expect(screen.getByTestId('console-slots')).toHaveTextContent('2 SLOTS OPEN. MAKE THEM COUNT.');
+  expect(screen.getByTestId('console-slots')).toHaveTextContent('1/3');
+
+  await fireEvent.press(screen.getByTestId('console-stop-movie:Hot Dog Car'));
+
+  expect(screen.getByText(/GREAT STOP BECAUSE/)).toBeTruthy();
+  expect(screen.queryByText(/HASN'T REACHED IT YET/)).toBeNull();
   expect(screen.queryByTestId('road-stop-movie:Coffin Flop')).toBeNull();
 });
 

@@ -7,7 +7,7 @@ import { NavConsole } from '@/components/nav-console';
 import { NomadAvatar } from '@/components/nomad-avatar';
 import { NomadLog } from '@/components/nomad-log';
 import { RoadMap } from '@/components/road-map';
-import { CrtScreen, HazardStripe, Plate, ScreenLine } from '@/components/ship-panel';
+import { CrtScreen, HazardStripe, Plate, ScreenLine, Screws } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { TmdbAttribution } from '@/components/tmdb-attribution';
 import type { Stars } from '@/constants/encounters';
@@ -87,10 +87,11 @@ export function AdventureScreen({
                     />
                     <NomadLog
                       channel="LOG-01"
-                      empty="NO ENTRIES YET. THE ROAD AWAITS."
+                      empty="NO NAVIGATION FOUND, PLEASE CONSULT YOUR LOCAL NAVIGATOR"
                       rows={log}
+                      tape={`Navigator: ${nomad.username}`}
                       testID="nomad-log"
-                      title={`Nomad's log · stops from ${nomad.username}`}
+                      title="Nomad's log"
                     />
                   </View>
                 )}
@@ -106,10 +107,11 @@ export function AdventureScreen({
                     />
                     <NomadLog
                       channel="LOG-02"
-                      empty={`NO FIELD REPORTS YET. ${nomad.username.toUpperCase()} HASN'T REACHED YOUR STOPS.`}
+                      empty={`NO FIELD REPORTS YET. PLEASE REACH OUT TO ${nomad.username.toUpperCase()} FOR A REPORT.`}
                       rows={reports}
+                      tape={`Nomad: ${nomad.username}`}
                       testID="field-reports"
-                      title={`Field reports · from ${nomad.username}`}
+                      title="Field reports"
                     />
                   </View>
                 )}
@@ -142,8 +144,9 @@ function Header({
     <View
       style={[
         styles.header,
-        { backgroundColor: theme.backgroundElement, borderColor: theme.edge, boxShadow: `0px 8px 0px ${theme.edge}` },
+        { backgroundColor: theme.backgroundElement, borderColor: theme.panelEdge, boxShadow: `0px 6px 0px ${theme.edge}` },
       ]}>
+      <Screws />
       <View style={styles.headerTop}>
         <View style={styles.headerLeft}>
           <Pressable
@@ -153,14 +156,13 @@ function Header({
             style={({ pressed }) => [
               styles.back,
               {
-                backgroundColor: theme.backgroundSelected,
-                borderColor: theme.edge,
-                boxShadow: `0px 4px 0px ${theme.edge}`,
+                backgroundColor: theme.keyTop,
+                boxShadow: `0px ${pressed ? 1 : 4}px 0px ${theme.keyShadow}`,
                 transform: [{ translateY: pressed ? 3 : 0 }],
               },
             ]}
             testID="adventure-back">
-            <ThemedText style={styles.backText}>‹ BASECAMP</ThemedText>
+            <ThemedText style={[styles.backText, { color: theme.onAccent }]}>‹ BASECAMP</ThemedText>
           </Pressable>
           <Plate label="ADVENTURE" />
         </View>
@@ -189,14 +191,10 @@ function Header({
             />
           </View>
           <View style={styles.names}>
-            <ThemedText accessibilityRole="header" style={styles.pairTitle} testID="adventure-title">
-              <ThemedText style={[styles.pairTitle, { color: theme.you, textShadowColor: theme.you }]}>You</ThemedText>
-              {' & '}
-              <ThemedText style={[styles.pairTitle, { color: theme.friend, textShadowColor: theme.friend }]}>
-                {nomad.username}
-              </ThemedText>
+            <ThemedText accessibilityRole="header" style={[styles.pairTitle, { color: theme.ink }]} testID="adventure-title">
+              You & {nomad.username}
             </ThemedText>
-            <ThemedText style={[styles.nomadLine, { color: theme.textSecondary }]} testID="adventure-nomad">
+            <ThemedText style={[styles.nomadLine, { color: theme.inkSecondary }]} testID="adventure-nomad">
               @{nomad.username} · Fellow Nomad
             </ThemedText>
           </View>
@@ -245,9 +243,8 @@ function MediaTabs() {
           style={[
             styles.tab,
             {
-              backgroundColor: tab.ready ? theme.hazard : theme.backgroundElement,
-              borderColor: theme.edge,
-              opacity: tab.ready ? 1 : 0.5,
+              backgroundColor: tab.ready ? theme.hazard : theme.bezel,
+              boxShadow: `0px 4px 0px ${tab.ready ? theme.keyShadow : theme.edge}`,
             },
           ]}
           testID={`adventure-tab-${tab.key}`}>
@@ -337,17 +334,16 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   back: {
-    borderRadius: 3,
-    borderWidth: 2,
+    borderRadius: 4,
     justifyContent: 'center',
     minHeight: 44,
     paddingHorizontal: Spacing.three,
   },
   backText: {
-    fontFamily: Typefaces.labelBold,
-    fontSize: 13,
-    letterSpacing: 1,
-    lineHeight: 18,
+    fontFamily: Typefaces.tape,
+    fontSize: 17,
+    letterSpacing: 1.5,
+    lineHeight: 22,
   },
   pair: {
     alignItems: 'center',
@@ -368,10 +364,10 @@ const styles = StyleSheet.create({
   },
   pairTitle: {
     fontFamily: Typefaces.display,
-    fontSize: 28,
-    letterSpacing: 1.2,
-    lineHeight: 36,
-    textShadowRadius: 12,
+    fontSize: 38,
+    letterSpacing: 0.5,
+    lineHeight: 40,
+    textTransform: 'uppercase',
   },
   nomadLine: {
     fontFamily: Typefaces.label,
@@ -387,17 +383,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tab: {
-    borderRadius: 3,
-    borderWidth: 2,
+    borderRadius: 4,
     justifyContent: 'center',
     minHeight: 44,
     paddingHorizontal: Spacing.three,
   },
   tabText: {
-    fontFamily: Typefaces.labelBold,
-    fontSize: 13,
-    letterSpacing: 1,
-    lineHeight: 18,
+    fontFamily: Typefaces.tape,
+    fontSize: 17,
+    letterSpacing: 1.5,
+    lineHeight: 22,
   },
   empty: {
     alignItems: 'center',
@@ -451,9 +446,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
   },
   switchText: {
-    fontFamily: Typefaces.labelBold,
-    fontSize: 12,
-    letterSpacing: 1,
-    lineHeight: 16,
+    fontFamily: Typefaces.tape,
+    fontSize: 16,
+    letterSpacing: 1.5,
+    lineHeight: 20,
   },
 });

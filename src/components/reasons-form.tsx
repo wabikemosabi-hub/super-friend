@@ -59,10 +59,10 @@ export function ReasonsForm({ item, nomadName, onBack, onSave, submitLabel, repl
           )}
         </View>
       </View>
-      <ThemedText style={[styles.because, { color: theme.hazard }]}>GREAT STOP BECAUSE:</ThemedText>
+      <ThemedText style={[styles.because, { color: theme.ink }]}>GREAT STOP BECAUSE:</ThemedText>
       {reasons.map((reason, i) => (
         <View key={i} style={styles.field}>
-          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
+          <ThemedText style={[styles.label, { color: theme.inkSecondary }]}>
             {i === 0 ? 'REASON 1 · REQUIRED' : `REASON ${i + 1} · OPTIONAL`}
           </ThemedText>
           <TextInput

@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { MediaRow, StopReasons } from '@/components/media-row';
 import { PlotStopPanel } from '@/components/plot-stop-panel';
-import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
+import { CrtScreen, Lamp, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { ReachedStop } from '@/lib/ratings';
 import { MAX_PICKS, openSlots, type Recommendation } from '@/lib/recommendations';
-import { slotsLine, toggleOpen } from '@/lib/road-map';
+import { routeCount, toggleOpen } from '@/lib/road-map';
 
 type NavConsoleProps = {
   nomadName: string;
@@ -28,25 +28,17 @@ export function NavConsole({ nomadName, plotted, reached, isLoading, onAdd, onRe
   const full = slots === 0;
 
   return (
-    <ShipPanel channel="NAV-02" title={`Nav console · plot ${nomadName}'s route`} testID="nav-console">
+    <ShipPanel channel="NAV-02" icon="crosshair" tape={`Plot ${nomadName}'s route`} title="Nav console" testID="nav-console">
       <CrtScreen>
         <View style={styles.screen}>
           <View style={styles.slotsRow}>
             <View accessibilityLabel={`${plotted.length} of ${MAX_PICKS} stops plotted`} style={styles.pips}>
               {Array.from({ length: MAX_PICKS }, (_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.pip,
-                    i < plotted.length
-                      ? { backgroundColor: theme.you, borderColor: theme.you, boxShadow: `0px 0px 6px ${theme.you}` }
-                      : { backgroundColor: theme.background, borderColor: theme.backgroundElement },
-                  ]}
-                />
+                <Lamp key={i} on={i < plotted.length} />
               ))}
             </View>
-            <ThemedText style={[styles.slots, { color: slots === 0 ? theme.alert : theme.hazard }]} testID="console-slots">
-              {slotsLine(slots)}
+            <ThemedText style={[styles.slots, { color: theme.amber, textShadowColor: theme.amber }]} testID="console-slots">
+              {routeCount(plotted.length, MAX_PICKS)}
             </ThemedText>
           </View>
           {isLoading && <ScreenLine text="SCANNING…" testID="console-loading" />}
@@ -54,14 +46,14 @@ export function NavConsole({ nomadName, plotted, reached, isLoading, onAdd, onRe
             <ScreenLine text={`NO STOPS PLOTTED. Where should ${nomadName} go first?`} testID="console-empty" />
           )}
           {plotted.map((stop) => (
-            <View key={stop.id} style={[styles.stop, { borderTopColor: theme.bezel }]}>
+            <View key={stop.id} style={[styles.stop, { borderTopColor: theme.phosphorDim }]}>
               <MediaRow
                 item={stop}
                 onToggle={() => setOpenId(toggleOpen(openId, stop.id))}
                 open={openId === stop.id}
                 rank={stop.rank}
                 testID={`console-stop-${stop.external_id}`}>
-                <StopReasons footnote={`${nomadName.toUpperCase()} HASN'T REACHED IT YET`} reasons={stop.reasons} />
+                <StopReasons reasons={stop.reasons} />
               </MediaRow>
             </View>
           ))}
@@ -101,17 +93,13 @@ const styles = StyleSheet.create({
   },
   pips: {
     flexDirection: 'row',
-    gap: Spacing.one,
-  },
-  pip: {
-    borderWidth: 1,
-    height: 14,
-    width: 14,
+    gap: Spacing.two,
   },
   slots: {
     fontFamily: Typefaces.screen,
-    fontSize: 20,
-    lineHeight: 22,
+    fontSize: 24,
+    lineHeight: 26,
+    textShadowRadius: 6,
   },
   stop: {
     borderStyle: 'dashed',

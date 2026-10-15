@@ -4,17 +4,17 @@ import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, V
 import { MediaPoster } from '@/components/media-poster';
 import { MediaRow, StopReasons } from '@/components/media-row';
 import { ReachStopPanel } from '@/components/reach-stop-panel';
-import { CrtScreen, ScreenLine, ShipButton, ShipPanel } from '@/components/ship-panel';
+import { CrtScreen, Readout, ScreenLine, ShipButton, ShipPanel, Tape } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import type { Stars } from '@/constants/encounters';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useDegauss } from '@/hooks/use-degauss';
 import { useTheme } from '@/hooks/use-theme';
 import type { Recommendation } from '@/lib/recommendations';
-import { dottedLine, lineWeight, roadStops, toggleOpen, youAreHere, type RoadStop } from '@/lib/road-map';
+import { dottedLine, lineWeight, roadStops, toggleOpen, youAreHere, type RoadStop, type Spot } from '@/lib/road-map';
+import { textureStyle } from '@/lib/textures';
 
 const mapHeight = 380;
-const gridStep = 40;
 const stopBox = 56;
 const stopWidth = 150;
 const scanBarHeight = 3;
@@ -33,7 +33,6 @@ type RoadMapProps = {
 };
 
 export function RoadMap({ nomadName, picks, isLoading, wide, onRate }: RoadMapProps) {
-  const theme = useTheme();
   const stops = roadStops(picks);
   const count = stops.length;
   const { scanning, degauss } = useDegauss();
@@ -54,13 +53,15 @@ export function RoadMap({ nomadName, picks, isLoading, wide, onRate }: RoadMapPr
   return (
     <ShipPanel
       channel="NAV-01"
-      title={`Your road · plotted by ${nomadName}`}
+      icon="up"
+      tape={`Navigator: ${nomadName}`}
+      title="Your road"
       testID="road-map"
       badge={
         <View style={styles.badge}>
-          <ThemedText style={[styles.readout, { color: theme.textSecondary }]}>
+          <Readout>
             {count} {count === 1 ? 'STOP' : 'STOPS'} · JUST STARTING OUT
-          </ThemedText>
+          </Readout>
           {wide && (
             <DegaussButton on={scanning} onPress={degaussWithWobble} />
           )}
@@ -134,7 +135,7 @@ function WideRoad({
             </ThemedText>
           </View>
           <View onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
-            <Grid width={width} />
+            <Terrain width={width} />
             {width > 0 &&
               stops.map((stop) => <RouteLine key={stop.pick.id} stop={stop} width={width} />)}
             {width > 0 &&
@@ -169,19 +170,64 @@ function WideRoad({
   );
 }
 
-function Grid({ width }: { width: number }) {
+const ridge: Spot[] = [
+  { x: 0, y: 30 },
+  { x: 8, y: 27 },
+  { x: 17, y: 31 },
+  { x: 25, y: 24 },
+  { x: 33, y: 29 },
+  { x: 45, y: 21 },
+  { x: 54, y: 27 },
+  { x: 65, y: 19 },
+  { x: 76, y: 26 },
+  { x: 87, y: 22 },
+  { x: 100, y: 27 },
+];
+const floorColumns = 24;
+const floorRows = 9;
+
+function Terrain({ width }: { width: number }) {
   const theme = useTheme();
-  const columns = Math.floor(width / gridStep);
-  const rows = Math.floor(mapHeight / gridStep);
+  const floorWidth = width * 1.8;
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {Array.from({ length: columns }, (_, i) => (
-        <View key={`c${i}`} style={[styles.gridColumn, { left: (i + 1) * gridStep, backgroundColor: theme.grid }]} />
-      ))}
-      {Array.from({ length: rows }, (_, i) => (
-        <View key={`r${i}`} style={[styles.gridRow, { top: (i + 1) * gridStep, backgroundColor: theme.grid }]} />
-      ))}
+      <View style={[styles.floor, { left: -width * 0.4, width: floorWidth }]}>
+        {Array.from({ length: floorColumns + 1 }, (_, i) => (
+          <View
+            key={`c${i}`}
+            style={[styles.gridColumn, { left: (i * floorWidth) / floorColumns, backgroundColor: theme.grid }]}
+          />
+        ))}
+        {Array.from({ length: floorRows + 1 }, (_, i) => (
+          <View key={`r${i}`} style={[styles.gridRow, { top: `${(i * 100) / floorRows}%`, backgroundColor: theme.grid }]} />
+        ))}
+      </View>
+      <View
+        style={[
+          styles.horizon,
+          textureStyle({ image: `linear-gradient(180deg, ${theme.screen} 30%, transparent 100%)` }),
+        ]}
+      />
+      {width > 0 &&
+        ridge.slice(1).map((spot, i) => {
+          const line = dottedLine(ridge[i], spot, width, mapHeight);
+          return (
+            <View
+              key={i}
+              style={[
+                styles.ridge,
+                {
+                  backgroundColor: theme.phosphorDim,
+                  left: line.left,
+                  top: line.top,
+                  transform: [{ rotate: `${line.angle}deg` }],
+                  width: line.length + 1,
+                },
+              ]}
+            />
+          );
+        })}
     </View>
   );
 }
@@ -245,7 +291,7 @@ function MapStop({
             backgroundColor: theme.screen,
             borderColor: theme.friend,
             boxShadow: selected
-              ? `0px 0px 0px 3px ${theme.screen}, 0px 0px 0px 6px ${theme.neon}, 0px 0px 18px ${theme.friend}`
+              ? `0px 0px 0px 3px ${theme.screen}, 0px 0px 0px 6px ${theme.you}, 0px 0px 18px ${theme.friend}`
               : `0px 0px 10px ${theme.friend}`,
           },
         ]}>
@@ -271,25 +317,27 @@ function StopDetail({
   const theme = useTheme();
 
   return (
-    <CrtScreen>
-      <View style={styles.detail} testID="road-detail">
-        <View style={styles.detailHeading}>
-          <ThemedText style={[styles.detailKicker, { color: theme.textSecondary }]}>
-            STOP {stop.rank} ON {nomadName.toUpperCase()}&apos;S ROUTE · AHEAD OF YOU
-          </ThemedText>
-          <ThemedText style={[styles.detailKicker, { color: theme.friend }]}>STOP {stop.rank}</ThemedText>
+    <View style={styles.detailRow}>
+      <CrtScreen style={styles.detailScreen}>
+        <View style={styles.detail} testID="road-detail">
+          <View style={styles.detailHeading}>
+            <ThemedText style={[styles.detailKicker, { color: theme.textSecondary }]}>
+              STOP {stop.rank} ON {nomadName.toUpperCase()}&apos;S ROUTE · AHEAD OF YOU
+            </ThemedText>
+            <ThemedText style={[styles.detailKicker, { color: theme.friend }]}>STOP {stop.rank}</ThemedText>
+          </View>
+          <View style={styles.detailTitleRow}>
+            <MediaPoster item={stop.pick} />
+            <ThemedText style={[styles.detailTitle, { color: theme.phosphor, textShadowColor: theme.phosphorDim }]}>
+              {stop.pick.title.toUpperCase()}
+              {stop.pick.year ? ` (${stop.pick.year})` : ''}
+            </ThemedText>
+          </View>
+          <StopReasons reasons={stop.pick.reasons} />
         </View>
-        <View style={styles.detailTitleRow}>
-          <MediaPoster item={stop.pick} />
-          <ThemedText style={[styles.detailTitle, { color: theme.phosphor, textShadowColor: theme.phosphorDim }]}>
-            {stop.pick.title.toUpperCase()}
-            {stop.pick.year ? ` (${stop.pick.year})` : ''}
-          </ThemedText>
-        </View>
-        <StopReasons reasons={stop.pick.reasons} />
-        <CurrentPosition onPress={() => onReach(stop.pick)} stop={stop} />
-      </View>
-    </CrtScreen>
+      </CrtScreen>
+      <RateKey onPress={() => onReach(stop.pick)} prompt="Rate this stop" testID={`road-rate-${stop.pick.external_id}`} />
+    </View>
   );
 }
 
@@ -304,56 +352,74 @@ function StripRoad({
 }) {
   const theme = useTheme();
   const [openId, setOpenId] = useState<string | null>(stops[0].pick.id);
+  const open = stops.find((stop) => stop.pick.id === openId) ?? null;
 
   return (
-    <CrtScreen>
-      <View style={styles.strip}>
-        <View style={styles.stripRow}>
-          <View style={styles.stripRail}>
-            <YouAreHere compact />
-            <DashedRail />
-          </View>
-          <ThemedText style={[styles.hereText, { color: theme.neon }]}>YOU ARE HERE</ThemedText>
-        </View>
-        {stops.map((stop) => (
-          <View key={stop.pick.id} style={styles.stripRow}>
+    <>
+      <CrtScreen>
+        <View style={styles.strip}>
+          <View style={styles.stripRow}>
             <View style={styles.stripRail}>
-              <DashedRail />
-              <View style={[styles.stopBox, styles.stripBox, { backgroundColor: theme.screen, borderColor: theme.friend, boxShadow: `0px 0px 10px ${theme.friend}` }]}>
-                <ThemedText style={[styles.stopRank, { color: theme.friend }]}>{stop.rank}</ThemedText>
-              </View>
+              <YouAreHere compact />
               <DashedRail />
             </View>
-            <View style={styles.stripStop}>
-              <MediaRow
-                item={stop.pick}
-                kicker={`STOP ${stop.rank} · ${nomadName.toUpperCase()}'S RANK`}
-                onToggle={() => setOpenId(toggleOpen(openId, stop.pick.id))}
-                open={openId === stop.pick.id}
-                testID={`road-stop-${stop.pick.external_id}`}>
-                <StopReasons reasons={stop.pick.reasons} />
-                <CurrentPosition onPress={() => onReach(stop.pick)} stop={stop} />
-              </MediaRow>
-            </View>
+            <ThemedText style={[styles.hereText, { color: theme.you }]}>YOU ARE HERE</ThemedText>
           </View>
-        ))}
-        <ThemedText style={[styles.roadEnd, { color: theme.textSecondary }]}>
-          ▾ END OF {nomadName.toUpperCase()}&apos;S ROUTE. 3 STOPS, ALWAYS.
-        </ThemedText>
-      </View>
-    </CrtScreen>
+          {stops.map((stop) => (
+            <View key={stop.pick.id} style={styles.stripRow}>
+              <View style={styles.stripRail}>
+                <DashedRail />
+                <View style={[styles.stopBox, styles.stripBox, { backgroundColor: theme.screen, borderColor: theme.friend, boxShadow: `0px 0px 10px ${theme.friend}` }]}>
+                  <ThemedText style={[styles.stopRank, { color: theme.friend }]}>{stop.rank}</ThemedText>
+                </View>
+                <DashedRail />
+              </View>
+              <View style={styles.stripStop}>
+                <MediaRow
+                  item={stop.pick}
+                  kicker={`STOP ${stop.rank} · ${nomadName.toUpperCase()}'S RANK`}
+                  onToggle={() => setOpenId(toggleOpen(openId, stop.pick.id))}
+                  open={openId === stop.pick.id}
+                  testID={`road-stop-${stop.pick.external_id}`}>
+                  <StopReasons reasons={stop.pick.reasons} />
+                </MediaRow>
+              </View>
+            </View>
+          ))}
+          <ThemedText style={[styles.roadEnd, { color: theme.textSecondary }]}>
+            ▾ END OF {nomadName.toUpperCase()}&apos;S ROUTE.
+          </ThemedText>
+        </View>
+      </CrtScreen>
+      {open ? (
+        <RateKey
+          onPress={() => onReach(open.pick)}
+          prompt="Rate this stop"
+          testID={`road-rate-${open.pick.external_id}`}
+        />
+      ) : (
+        <RateKey prompt="OPEN A STOP TO RATE IT" testID="road-rate" />
+      )}
+    </>
   );
 }
 
-function CurrentPosition({ stop, onPress }: { stop: RoadStop; onPress: () => void }) {
+function RateKey({ prompt, onPress, testID }: { prompt: string; onPress?: () => void; testID: string }) {
+  const theme = useTheme();
+
   return (
-    <View style={styles.current}>
-      <ShipButton
-        label="Current position"
-        onPress={onPress}
-        testID={`road-current-${stop.pick.external_id}`}
-        variant="phosphor"
-      />
+    <View style={styles.rateKey}>
+      <Tape label={prompt} tilt={-2} />
+      <View style={[styles.rateWell, { backgroundColor: theme.bezel, boxShadow: `inset 0px 3px 6px ${theme.edge}` }]}>
+        <ShipButton
+          disabled={!onPress}
+          label="Rate"
+          onPress={onPress ?? (() => undefined)}
+          size="big"
+          testID={testID}
+          variant="orange"
+        />
+      </View>
     </View>
   );
 }
@@ -379,11 +445,11 @@ function YouAreHere({ compact = false }: { compact?: boolean }) {
       <View
         style={[
           styles.diamond,
-          { backgroundColor: theme.neon, borderColor: theme.onAccent, boxShadow: `0px 0px 12px ${theme.neon}` },
+          { backgroundColor: theme.you, borderColor: theme.onAccent, boxShadow: `0px 0px 12px ${theme.you}` },
         ]}
       />
       {!compact && (
-        <ThemedText style={[styles.hereLabel, { backgroundColor: theme.screen, color: theme.neon }]}>YOU ARE HERE</ThemedText>
+        <ThemedText style={[styles.hereLabel, { backgroundColor: theme.screen, color: theme.you }]}>YOU ARE HERE</ThemedText>
       )}
     </Animated.View>
   );
@@ -429,14 +495,13 @@ function DegaussButton({ on, onPress }: { on: boolean; onPress: () => void }) {
         style={({ pressed }) => [
           styles.degaussKey,
           {
-            backgroundColor: theme.backgroundSelected,
-            borderColor: theme.edge,
-            boxShadow: pressed ? `0px 0px 0px ${theme.edge}` : `0px 2px 0px ${theme.edge}`,
+            backgroundColor: theme.keyTop,
+            boxShadow: `0px ${pressed ? 1 : 3}px 0px ${theme.keyShadow}`,
             transform: [{ translateY: pressed ? 2 : 0 }],
           },
         ]}
         testID="road-degauss">
-        <ThemedText style={[styles.degaussText, { color: theme.textSecondary }]}>DEGAUSS</ThemedText>
+        <ThemedText style={[styles.degaussText, { color: theme.onAccent }]}>DEGAUSS</ThemedText>
       </Pressable>
     </View>
   );
@@ -470,9 +535,26 @@ function ScanBar() {
 }
 
 const styles = StyleSheet.create({
-  current: {
-    alignItems: 'flex-start',
-    paddingTop: Spacing.two,
+  detailRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.three,
+  },
+  detailScreen: {
+    flexBasis: 360,
+    flexGrow: 999,
+    minWidth: 0,
+  },
+  rateKey: {
+    alignItems: 'center',
+    flexGrow: 1,
+    gap: 10,
+  },
+  rateWell: {
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    padding: 10,
   },
   badge: {
     alignItems: 'center',
@@ -492,21 +574,15 @@ const styles = StyleSheet.create({
     width: 8,
   },
   degaussKey: {
-    borderRadius: 2,
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   degaussText: {
-    fontFamily: Typefaces.labelBold,
-    fontSize: 9,
-    letterSpacing: 1.2,
-    lineHeight: 12,
-  },
-  readout: {
-    fontFamily: Typefaces.screen,
-    fontSize: 20,
-    lineHeight: 22,
+    fontFamily: Typefaces.tape,
+    fontSize: 13,
+    letterSpacing: 1.5,
+    lineHeight: 16,
   },
   mapHeading: {
     flexDirection: 'row',
@@ -528,6 +604,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  floor: {
+    bottom: 0,
+    height: mapHeight * 1.5,
+    position: 'absolute',
+    transform: [{ perspective: 500 }, { rotateX: '58deg' }],
+    transformOrigin: 'bottom',
+  },
+  horizon: {
+    height: mapHeight * 0.45,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  ridge: {
+    height: 1.5,
+    position: 'absolute',
   },
   gridColumn: {
     bottom: 0,

@@ -110,7 +110,7 @@ function AddNomad({ onSend }: { onSend: (username: string) => Promise<void> }) {
 
   return (
     <View style={styles.add}>
-      <ThemedText nativeID="add-nomad-label" style={[styles.label, { color: theme.textSecondary }]}>
+      <ThemedText nativeID="add-nomad-label" style={[styles.label, { color: theme.inkSecondary }]}>
         ADD A NOMAD BY USERNAME
       </ThemedText>
       <View style={styles.addRow}>

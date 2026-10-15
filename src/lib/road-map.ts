@@ -44,10 +44,8 @@ export function lineWeight(rank: number) {
   return lineWeights[Math.min(rank, lineWeights.length) - 1];
 }
 
-export function slotsLine(open: number) {
-  if (open === 0) return 'ROUTE FULL';
-  if (open === 1) return '1 SLOT OPEN. MAKE IT COUNT.';
-  return `${open} SLOTS OPEN. MAKE THEM COUNT.`;
+export function routeCount(plotted: number, size: number) {
+  return `${plotted}/${size}`;
 }
 
 export function toggleOpen(openId: string | null, id: string): string | null {

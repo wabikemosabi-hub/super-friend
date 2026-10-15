@@ -78,20 +78,20 @@ export function MediaSearch({ type, onPick, unavailable }: MediaSearchProps) {
               style={({ pressed }) => [
                 styles.row,
                 {
-                  backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement,
-                  borderColor: theme.edge,
+                  backgroundColor: pressed ? theme.bezel : theme.screen,
+                  borderColor: theme.bezel,
                   opacity: blocked ? 0.45 : 1,
                 },
               ]}
               testID={`media-search-result-${item.external_id}`}>
               <MediaPoster item={item} />
               <View style={styles.details}>
-                <ThemedText style={styles.title}>{item.title}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
+                <ThemedText style={[styles.title, { color: theme.phosphor }]}>{item.title}</ThemedText>
+                <ThemedText style={[styles.meta, { color: theme.phosphorDim }]}>
                   {item.year ? `${item.year} · ${singular[type]}` : singular[type]}
                 </ThemedText>
                 {blocked && (
-                  <ThemedText style={[styles.note, { color: theme.textSecondary }]} testID={blocked.testID}>
+                  <ThemedText style={[styles.note, { color: theme.amber }]} testID={blocked.testID}>
                     {blocked.note}
                   </ThemedText>
                 )}
@@ -143,8 +143,13 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   title: {
-    fontFamily: Typefaces.display,
-    fontSize: 14,
+    fontFamily: Typefaces.screen,
+    fontSize: 24,
+    lineHeight: 26,
+  },
+  meta: {
+    fontFamily: Typefaces.screen,
+    fontSize: 18,
     lineHeight: 20,
   },
   note: {

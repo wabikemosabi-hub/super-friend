@@ -78,7 +78,7 @@ export function PlotStopPanel({ visible, nomadName, route, reached, routeFull, l
 
         {step === 'replace' && (
           <View style={styles.replace}>
-            <ThemedText style={[styles.question, { color: theme.hazard }]}>
+            <ThemedText style={[styles.question, { color: theme.ink }]}>
               {name}&apos;S ROUTE IS FULL. WHICH STOP ARE YOU REPLACING?
             </ThemedText>
             <CrtScreen>
@@ -110,7 +110,7 @@ export function PlotStopPanel({ visible, nomadName, route, reached, routeFull, l
                 })}
               </View>
             </CrtScreen>
-            <ThemedText style={[styles.footnote, { color: theme.textSecondary }]}>
+            <ThemedText style={[styles.footnote, { color: theme.inkSecondary }]}>
               The new stop takes its place in the ranking. The old one leaves the route. {nomadName} never sees it was
               swapped.
             </ThemedText>

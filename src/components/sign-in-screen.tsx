@@ -41,7 +41,7 @@ function EmailSignIn({ onSignIn }: { onSignIn: (email: string, password: string)
     }
   }
 
-  const inputStyle = [styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }];
+  const inputStyle = [styles.input, { backgroundColor: theme.screen, borderColor: theme.bezel, color: theme.phosphor }];
 
   return (
     <ThemedView style={styles.emailSignIn}>
@@ -52,7 +52,7 @@ function EmailSignIn({ onSignIn }: { onSignIn: (email: string, password: string)
         inputMode="email"
         onChangeText={setEmail}
         placeholder="Email"
-        placeholderTextColor={theme.textSecondary}
+        placeholderTextColor={theme.phosphorDim}
         style={inputStyle}
         testID="email-sign-in-email"
         value={email}
@@ -62,7 +62,7 @@ function EmailSignIn({ onSignIn }: { onSignIn: (email: string, password: string)
         onChangeText={setPassword}
         onSubmitEditing={handleSignIn}
         placeholder="Password"
-        placeholderTextColor={theme.textSecondary}
+        placeholderTextColor={theme.phosphorDim}
         secureTextEntry
         style={inputStyle}
         testID="email-sign-in-password"
@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   input: {
-    borderRadius: Spacing.three,
+    borderRadius: 4,
+    borderWidth: 2,
     minWidth: 240,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
