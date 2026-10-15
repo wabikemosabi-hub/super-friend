@@ -142,6 +142,10 @@ export function ReachStopPanel({ visible, stop, onClose, onLog }: ReachStopPanel
         {step === 'reasons' && (
           <View style={styles.reasons}>
             <ThemedText style={[styles.question, { color: theme.hazard }]}>WHAT DID YOU FIND OUT THERE?</ThemedText>
+            <ThemedText style={[styles.help, { color: theme.textSecondary }]} testID="reach-reasons-help">
+              Help your navigator get you safely through this Wasteland! Give good reasons so that they can tailor their
+              navigation to your specific desires!
+            </ThemedText>
             {reasons.map((reason, i) => (
               <View key={i} style={styles.field}>
                 <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
@@ -265,6 +269,11 @@ const styles = StyleSheet.create({
   },
   reasons: {
     gap: 12,
+  },
+  help: {
+    fontFamily: Typefaces.screen,
+    fontSize: 19,
+    lineHeight: 22,
   },
   field: {
     gap: 4,

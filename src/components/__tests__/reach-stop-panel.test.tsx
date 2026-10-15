@@ -99,6 +99,9 @@ test('heading on asks for up to three things found out there', async () => {
   expect(screen.getByTestId('reach-reason-3')).toBeTruthy();
   expect(screen.queryByTestId('reach-star-1')).toBeNull();
   expect(screen.getByTestId('reach-encounter-title')).toHaveTextContent('MUTANT LATRINE FOUND');
+  expect(screen.getByTestId('reach-reasons-help')).toHaveTextContent(
+    'Help your navigator get you safely through this Wasteland! Give good reasons so that they can tailor their navigation to your specific desires!',
+  );
 });
 
 test('only two steps: stars and reasons', async () => {
