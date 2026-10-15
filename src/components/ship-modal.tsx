@@ -41,13 +41,13 @@ export function ShipModal({ visible, channel, heading, onClose, closeLabel, test
             style={[
               styles.panel,
               isWeb ? styles.panelWeb : styles.panelPhone,
-              { backgroundColor: theme.backgroundElement, borderColor: theme.edge },
+              { backgroundColor: theme.backgroundElement, borderColor: theme.panelEdge },
             ]}>
-            <View style={[styles.header, { borderBottomColor: theme.edge }]}>
+            <View style={[styles.header, { borderBottomColor: theme.panelEdge }]}>
               <View style={[styles.plate, { backgroundColor: theme.hazard }]}>
                 <ThemedText style={[styles.plateText, { color: theme.onAccent }]}>{channel}</ThemedText>
               </View>
-              <ThemedText style={styles.heading}>{heading}</ThemedText>
+              <ThemedText style={[styles.heading, { color: theme.ink }]}>{heading}</ThemedText>
               <Pressable
                 accessibilityLabel={closeLabel}
                 accessibilityRole="button"
@@ -55,12 +55,13 @@ export function ShipModal({ visible, channel, heading, onClose, closeLabel, test
                 style={({ pressed }) => [
                   styles.close,
                   {
-                    backgroundColor: pressed ? theme.backgroundElement : theme.backgroundSelected,
-                    borderColor: theme.edge,
+                    backgroundColor: theme.keyTop,
+                    boxShadow: `0px ${pressed ? 1 : 3}px 0px ${theme.keyShadow}`,
+                    transform: [{ translateY: pressed ? 2 : 0 }],
                   },
                 ]}
                 testID={`${testID}-close`}>
-                <ThemedText style={styles.closeText}>✕</ThemedText>
+                <ThemedText style={[styles.closeText, { color: theme.onAccent }]}>✕</ThemedText>
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -114,14 +115,13 @@ const styles = StyleSheet.create({
   heading: {
     flex: 1,
     fontFamily: Typefaces.display,
-    fontSize: 15,
-    letterSpacing: 0.6,
-    lineHeight: 20,
+    fontSize: 22,
+    letterSpacing: 0.5,
+    lineHeight: 24,
   },
   close: {
     alignItems: 'center',
     borderRadius: 4,
-    borderWidth: 2,
     height: 44,
     justifyContent: 'center',
     width: 44,

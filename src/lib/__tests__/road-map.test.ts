@@ -1,5 +1,5 @@
 import type { Recommendation } from '@/lib/recommendations';
-import { dottedLine, lineWeight, roadStops, slotsLine, toggleOpen } from '@/lib/road-map';
+import { dottedLine, lineWeight, roadStops, routeCount, toggleOpen } from '@/lib/road-map';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -76,13 +76,8 @@ test('draws lines past stop 3 like stop 3', () => {
   expect(lineWeight(4)).toEqual({ width: 2, opacity: 0.65 });
 });
 
-test('counts the open slots on a route', () => {
-  expect([3, 2, 1, 0].map(slotsLine)).toEqual([
-    '3 SLOTS OPEN. MAKE THEM COUNT.',
-    '2 SLOTS OPEN. MAKE THEM COUNT.',
-    '1 SLOT OPEN. MAKE IT COUNT.',
-    'ROUTE FULL',
-  ]);
+test('counts the stops plotted on a route out of its size', () => {
+  expect([0, 1, 2, 3].map((plotted) => routeCount(plotted, 3))).toEqual(['0/3', '1/3', '2/3', '3/3']);
 });
 
 test('opens one row at a time', () => {

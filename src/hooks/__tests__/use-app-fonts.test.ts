@@ -1,4 +1,4 @@
-import { Michroma_400Regular } from '@expo-google-fonts/michroma';
+import { BarlowCondensed_700Bold, BarlowCondensed_800ExtraBold } from '@expo-google-fonts/barlow-condensed';
 import { SpaceMono_400Regular, SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { renderHook } from '@testing-library/react-native';
@@ -15,11 +15,12 @@ beforeEach(() => {
   mockUseFonts.mockReset().mockReturnValue([false, null]);
 });
 
-test('loads the four ship-computer faces under the theme names', async () => {
+test('loads the five crawler-bridge faces under the theme names', async () => {
   await renderHook(() => useAppFonts());
 
   expect(mockUseFonts).toHaveBeenCalledWith({
-    Michroma_400Regular,
+    BarlowCondensed_800ExtraBold,
+    BarlowCondensed_700Bold,
     SpaceMono_400Regular,
     SpaceMono_700Bold,
     VT323_400Regular,

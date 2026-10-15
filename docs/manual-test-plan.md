@@ -68,7 +68,7 @@ Bart and Paul connected, no stops yet.
 - [ ] Tabs: **Movies** works. **Series** and **Books** are disabled with SOON (`adventure-tab-movies`, `-series`, `-books`).
 - [ ] **Wide:** the road (2/3) and the Nav Console (1/3) side by side.
 - [ ] **Narrow:** a switch between MY ROAD and PLOT <NAME>'S ROUTE (`adventure-view-road`, `adventure-view-console`).
-- [ ] With no stops: road says NO STOPS YET (`road-empty`). Console says NO STOPS PLOTTED, 3 empty pips, "3 SLOTS OPEN. MAKE THEM COUNT." (`console-slots`).
+- [ ] With no stops: road says NO STOPS YET (`road-empty`). Console says NO STOPS PLOTTED, 3 dark lamps and **0/3** (`console-slots`).
 
 ## 5. Plot a stop (open slots)
 
@@ -93,13 +93,13 @@ Reasons:
 - [ ] **Back to search** (`plot-stop-back`) shows your query and results again.
 - [ ] **Plot it** (`plot-stop-submit`) with no reasons (or only spaces) → red "Give 1 to 3 reasons" (`plot-stop-error`). Typing clears it.
 - [ ] **Plot it** with one reason → **STOP 1 PLOTTED** (`plot-stop-done-line`), "paul-bufano will see it on their road." **Back to the console** (`plot-stop-done`) closes it.
-- [ ] The console shows stop 1 (`console-stop-<external_id>`) with a filled pip and "2 SLOTS OPEN…". Tapping it opens its reasons and "PAUL-BUFANO HASN'T REACHED IT YET".
+- [ ] The console shows stop 1 (`console-stop-<external_id>`) with one lit lamp and **1/3**. Rows start folded shut; tapping one opens its reasons (no "hasn't reached it yet" line).
 - [ ] Reasons are saved trimmed, with blank fields dropped.
 
 Already on your route:
 
 - [ ] Plot again and search the same movie: it's dimmed with "ALREADY ON YOUR ROUTE" (`plot-stop-unavailable-<external_id>`) and tapping does nothing.
-- [ ] Plot stops 2 and 3. After the 3rd, the done screen still says "STOP 3 PLOTTED" (its header doesn't flip to "Replace…"), and the console then shows "ROUTE FULL" in red with 3 pips.
+- [ ] Plot stops 2 and 3. After the 3rd, the done screen still says "STOP 3 PLOTTED" (its header doesn't flip to "Replace…"), and the console then shows **3/3** with all three lamps lit, and the button turns red, in red with 3 pips.
 
 ## 6. Replace a stop (full route)
 
@@ -111,7 +111,7 @@ Bart's route for Paul has 3 stops.
 - [ ] **Find its replacement** (`plot-stop-replace-next`) is disabled until you choose one. The chosen row gets a red outline and REPLACING. You can change your choice.
 - [ ] Search dims all 3 current stops, including the one being replaced.
 - [ ] Reasons step shows the swap card (`plot-stop-swap`): STOP 2 · THE SWAP, **OUT** the old stop, dimmed (`plot-stop-swap-out`), **IN** the new one (`plot-stop-swap-in`). The button says **Replace**.
-- [ ] **Replace** → **STOP 2 REPLACED**. The console shows the new movie at stop 2 and the old one is gone. Still ROUTE FULL.
+- [ ] **Replace** → **STOP 2 REPLACED**. The console shows the new movie at stop 2 and the old one is gone. Still 3/3.
 - [ ] As Paul, Bart's road shows the new movie as stop 2.
 
 ## 7. Your road (what your navigator plotted for you)
@@ -141,28 +141,28 @@ Wide map, at least one stop on your road.
 
 - [ ] With a third nomad (made as in section 2) connected to Bart only: they can't see Bart and Paul's stops, and `/adventure/paul-bufano` shows NO SIGNAL for them.
 
-## 10. Reaching a stop (CURRENT POSITION)
+## 10. Reaching a stop (RATE)
 
 As Bart, after Paul plotted at least 2 stops for him:
 
-- [ ] Each stop on your road has a green **CURRENT POSITION** button (`road-current-<external_id>`): in the detail screen on wide, inside the opened row on narrow.
-- [ ] It opens the panel (`reach-stop`) headed "CURRENT POSITION · <TITLE> (<YEAR>)", chips 1 · STARS lit and 2 · REASONS (`reach-step-stars`, `reach-step-reasons`), and "PICK YOUR STARS. THE ROAD DECIDES WHAT HAPPENED." (`reach-stars-prompt`).
-- [ ] Tapping a star (`reach-star-1..5`) lights that many and reveals an encounter card (`reach-encounter`) that flickers in: ★ line (`reach-encounter-stars`) and the encounter title (`reach-encounter-title`) in the star color (1 red, 2 yellow, 3 white, 4 dim green, 5 green).
-- [ ] Tapping the same star keeps the encounter. A different star draws a new one. Closing and reopening starts fresh.
-- [ ] **NEXT: REASONS** (`reach-to-reasons`) → "WHAT DID YOU FIND OUT THERE?", the help line (`reach-reasons-help`), FOUND 1 · REQUIRED and FOUND 2, 3 · OPTIONAL (`reach-reason-1..3`). The encounter card stays on screen.
+- [ ] A big orange **RATE** key sits outside the screens in its own well (`road-rate-<external_id>`): beside the stop detail on wide ("WATCHED IT?"), under the strip map on narrow ("WATCHED STOP N?" for the open stop; with every stop shut it reads "OPEN A STOP TO RATE IT" and can't be pressed).
+- [ ] It opens the panel (`reach-stop`) headed "RATE · <TITLE> (<YEAR>)", chips 1 · STARS lit and 2 · REASONS (`reach-step-stars`, `reach-step-reasons`). The form is a cream punch card (`reach-card`) with the poster and five star boxes. No encounter shows yet.
+- [ ] Tapping a star (`reach-star-1..5`) fills that many. Nothing gives away the encounter. Closing and reopening starts fresh.
+- [ ] **NEXT: REASONS** (`reach-to-reasons`) → "WHAT DID YOU FIND OUT THERE?", the help line (`reach-reasons-help`), FOUND 1 · REQUIRED and FOUND 2, 3 · OPTIONAL (`reach-reason-1..3`), written on the card's underlined lines.
 - [ ] **LOG IT** (`reach-log`) with nothing typed: "Give 1 to 3 reasons" in red (`reach-error`). One reason in any box is enough.
-- [ ] **BACK TO STARS** (`reach-back-to-stars`) keeps the stars, encounter and what you typed.
-- [ ] LOG IT → the panel shows your new journal entry (`log-entry`). **BACK TO THE ROAD** (`reach-done`) closes it. The stop is gone from the road and the rest move up (the badge counts one fewer).
+- [ ] **BACK TO STARS** (`reach-back-to-stars`) keeps the stars and what you typed.
+- [ ] The orange LOG IT → the card flips over to a green screen (`reach-reveal`): the encounter flickers in (`reach-encounter-stars`, `reach-encounter-title`, in the star color: 1 red, 2 yellow, 3 white, 4 dim green, 5 green) above the filled-in story (`reach-reveal-story`, green REDACTED bars `reach-reveal-redacted`). This is the first time you see what you rolled. **BACK TO THE ROAD** (`reach-done`) closes it. The stop is gone from the road and the rest move up (the badge counts one fewer).
 - [ ] As Paul, plotting that movie for Bart again: search dims it with "BART-HARLEY-JARVIS ALREADY REACHED THIS: <ENCOUNTER>" (`plot-stop-reached-<external_id>`) and it can't be picked.
 
 ## 11. Nomad's Log and field reports
 
 After 10:
 
-- [ ] As Bart on Paul's page: **LOG-01 · NOMAD'S LOG · STOPS FROM PAUL-BUFANO** (`nomad-log`) under the road lists Bart's entries, newest first.
+- [ ] As Bart on Paul's page: **LOG-01 · NOMAD'S LOG** with a label tape **NAVIGATOR: PAUL-BUFANO** (`nomad-log`) under the road lists Bart's entries, newest first.
 - [ ] Each entry (`log-entry`) shows the stars, the encounter in its star color, and the story starting with today's date ("October 15, 2026"), with Paul's name, the movie, Paul's reasons and yours filled in.
 - [ ] Log with only 1 reason: the story shows black **REDACTED** bars (`log-entry-redacted`) where the missing ones go, and no bar is ever split across two lines.
-- [ ] As Paul on Bart's page: the same entries show under the Nav Console in **LOG-02 · FIELD REPORTS · FROM BART-HARLEY-JARVIS** (`field-reports`). Paul's own log is empty until he logs a stop Bart plotted.
+- [ ] As Paul on Bart's page: the same entries show under the Nav Console in **LOG-02 · FIELD REPORTS** with a label tape **NOMAD: BART-HARLEY-JARVIS** (`field-reports`). Paul's own log is empty until he logs a stop Bart plotted.
+- [ ] With more than 3 entries: only the 3 newest show, with "3 OF N" (`nomad-log-count`) and **SHOW 3 MORE** (`nomad-log-more`). Each press unfolds up to 3 more sheets, one after another, swinging down from the crease like printer paper. When they're all out, SHOW MORE disappears. **FOLD UP** (`nomad-log-fold`) folds the extras back up, last first, leaving 3. With reduce motion on, they just appear and disappear.
 - [ ] Empty states: "NO ENTRIES YET. THE ROAD AWAITS." (`nomad-log-empty`) and "NO FIELD REPORTS YET. …" (`field-reports-empty`).
 - [ ] Narrow: the log sits under the road on MY ROAD, field reports under the console on the other tab.
 - [ ] A third nomad connected to Bart only sees none of Bart and Paul's entries.
@@ -172,6 +172,20 @@ After 10:
 - [ ] Tap an entry: it squeezes and swings back as the star card (`log-entry-back`): big stars, the encounter, the movie (`log-entry-media`), PLOTTED BY PAUL-BUFANO (`log-entry-navigator`), WHAT PAUL-BUFANO PROMISED (`log-entry-promised-1..3`) and WHAT I FOUND (`log-entry-reason-1..3`), each with only the reasons given. No REDACTED bars here.
 - [ ] Tap again: back to the story. The corner hint reads TAP TO FLIP ↻ / TAP FOR THE STORY ↻.
 - [ ] With reduce motion on: it switches sides with no squeeze.
+
+## 13. The Crawler Bridge look (WAB-53)
+
+Compare against the [Crawler Bridge canvas](https://claude.ai/artifact/4tmxFsCLaaFf8ZcH1Xnfij). Wide and narrow.
+
+- [ ] Every panel is worn cream plastic with a screw in each corner, on a dark grimy background. No magenta anywhere.
+- [ ] Panel titles are heavy condensed capitals ("NAV-01 · YOUR ROAD"), with a pictogram plate (blue arrow, red crosshair, yellow page) and a black label tape ("NAVIGATOR: PAUL-BUFANO").
+- [ ] Every screen sits in a dark bezel, with faint scanlines and darker corners.
+- [ ] Buttons look like chunky keys that press down: cream for plain ones, yellow for Plot, orange and glowing for Rate.
+- [ ] The road's status ("3 STOPS · JUST STARTING OUT") is an amber readout.
+- [ ] Wide map: a green ridge line across the top and a wireframe floor grid running toward it in perspective.
+- [ ] Log entries print on green-bar paper with sprocket holes, coming out of a dark printer slot. Flipped, they're a punch card: big stars, the encounter, the movie, PLOTTED BY, promised on the left, found on the right, a row of punched holes.
+- [ ] Sign-in and pick-a-username: cream keys and dark green-text fields, all readable.
+- [ ] All text is readable: nothing light-on-cream or dark-on-dark, in modals too (Rate, Plot a stop, search results).
 
 ## Not built yet (don't test)
 

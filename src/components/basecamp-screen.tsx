@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccountButton } from '@/components/account-button';
 import { FellowNomadsCard } from '@/components/fellow-nomads-card';
 import { NomadRequestsCard } from '@/components/nomad-requests-card';
-import { HazardStripe } from '@/components/ship-panel';
+import { HazardStripe, Screws } from '@/components/ship-panel';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -65,12 +65,13 @@ function Header({ username, avatarUrl, onSignOut }: { username: string; avatarUr
     <View
       style={[
         styles.header,
-        { backgroundColor: theme.backgroundElement, borderColor: theme.edge, boxShadow: `0px 8px 0px ${theme.edge}` },
+        { backgroundColor: theme.backgroundElement, borderColor: theme.panelEdge, boxShadow: `0px 6px 0px ${theme.edge}` },
       ]}>
+      <Screws />
       <View style={styles.headerBody}>
         <View style={styles.titles}>
-          <ThemedText style={[styles.unit, { color: theme.textSecondary }]}>
-            MEDIA ADVISORY BOARD · DEEP FIELD UNIT MAB-1
+          <ThemedText style={[styles.unit, { color: theme.inkSecondary }]}>
+            MAB-1 · LAND CRAWLER · DEEP FIELD UNIT
           </ThemedText>
           <View style={styles.titleRow}>
             <View style={[styles.eye, { backgroundColor: theme.alert, borderColor: theme.edge, boxShadow: `0px 0px 16px ${theme.alert}` }]}>
@@ -78,7 +79,7 @@ function Header({ username, avatarUrl, onSignOut }: { username: string; avatarUr
             </View>
             <ThemedText
               accessibilityRole="header"
-              style={[styles.basecamp, { color: theme.neon, textShadowColor: theme.neon }]}>
+              style={[styles.basecamp, { color: theme.ink }]}>
               BASECAMP
             </ThemedText>
           </View>

@@ -79,8 +79,8 @@ export function PickUsernameScreen({
         autoCorrect={false}
         onChangeText={handleChangeText}
         placeholder="Username"
-        placeholderTextColor={theme.textSecondary}
-        style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+        placeholderTextColor={theme.phosphorDim}
+        style={[styles.input, { backgroundColor: theme.screen, borderColor: theme.bezel, color: theme.phosphor }]}
         testID="pick-username-input"
         value={username}
       />
@@ -108,7 +108,8 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   input: {
-    borderRadius: Spacing.three,
+    borderRadius: 4,
+    borderWidth: 2,
     minWidth: 240,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Typefaces } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ActionButtonProps = {
@@ -20,9 +20,13 @@ export function ActionButton({ label, onPress, testID }: ActionButtonProps) {
       testID={testID}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement },
+        {
+          backgroundColor: theme.keyTop,
+          boxShadow: `0px ${pressed ? 1 : 4}px 0px ${theme.keyShadow}`,
+          transform: [{ translateY: pressed ? 3 : 0 }],
+        },
       ]}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      <ThemedText style={[styles.label, { color: theme.onAccent }]}>{label}</ThemedText>
     </Pressable>
   );
 }
@@ -30,8 +34,16 @@ export function ActionButton({ label, onPress, testID }: ActionButtonProps) {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    borderRadius: Spacing.three,
+    borderRadius: 4,
+    minHeight: 48,
+    justifyContent: 'center',
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+  },
+  label: {
+    fontFamily: Typefaces.tape,
+    fontSize: 18,
+    letterSpacing: 1.5,
+    lineHeight: 22,
+    textTransform: 'uppercase',
   },
 });
