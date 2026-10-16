@@ -16,7 +16,7 @@ _Last sessions: 2026-10-14 and 15 (Eben's Mac). WAB-43 and WAB-44 merged; WAB-53
 1. Eben looks over WAB-53 on web and a phone (manual test plan section 13), then the PR for Jake. After pulling it: `npm install` (new font package).
 2. Pick the next thing with Eben. Ready to build: **WAB-49** share a log entry as styled text (designed; the sign-off line is the only open question), **WAB-51** reroute, **WAB-52** OVERALL JOURNEY. Parked: **WAB-50** rewatch (the database already supports it).
 3. **WAB-46 Unanswered questions** is where open product questions go for Eben and Jake to settle together. Add new ones there rather than making a ticket each.
-4. **WAB-45, deploy for friends** on **thewasteland.wtf** (Eben bought it 2026-10-15): hosted Supabase, Google sign-in settings, `npx expo export -p web` on a free static host connected to GitHub (Cloudflare Pages, Netlify or Vercel), then DNS. The ticket has the full steps. The App Store age rating will need to know about the 5★ stories' sexual and drug jokes, whenever phones ship.
+4. **WAB-45, deploy for friends** on **thewasteland.wtf** (Eben bought it 2026-10-15): hosted Supabase, Google sign-in settings, `npx expo export -p web` on a free static host connected to GitHub (Cloudflare Pages, Netlify or Vercel), then DNS. The step-by-step is **Deploy runbook** below. The App Store age rating will need to know about the 5★ stories' sexual and drug jokes, whenever phones ship.
 5. **Eben's to-do, the registrar for thewasteland.wtf** (all free; the paid "domain protection" add-on isn't needed):
    - Two-factor authentication on the registrar account.
    - Registrar lock (transfer lock) on.
@@ -208,6 +208,65 @@ Eben clicked through on web (2026-10-07): Paul sends Bart a request, Bart sees i
 7. Sign-in error states and phones (WAB-6): phones need a development build for a stable OAuth redirect. On that build, also check that `uploadAvatar` can read the photo's bytes (`fetch(uri)` works on web).
 8. When building "change avatar": add a version to the avatar URL (e.g. `?v=<timestamp>`) so browsers don't keep showing the old picture.
 9. Housekeeping: `npx expo install --check` wants patch updates for `expo`, `expo-constants`, `expo-router`, `@expo/ui`. `expo-symbols`, `expo-web-browser` and `expo-image` are no longer used by any code. Do both carefully because of the lockfile gotcha.
+
+## Deploy runbook: thewasteland.wtf (WAB-45)
+
+Prepared 2026-10-15 on `ebenbsmith/wab-45-deploy-to-the-web-for-friends-thewastelandwtf`. Follow it top to bottom; each part only needs the one before it. **(Eben)** marks steps that need your logins.
+
+**Already checked locally:** `npm run build:web` (`npx expo export -p web`) makes a 4 MB `dist/` (one `index.html`, one 1.7 MB JS bundle, fonts and images, **no `404.html`**). Served as plain static files with every path falling back to `index.html`, it works signed in as Bart: deep links like `/adventure/paul-bufano` load on refresh, search returns results, rating opens, log entries render and flip, Basecamp loads, and the browser console shows no errors. The production build hides the "DEV ONLY: test nomads" form (it's behind `__DEV__`), and the app code has no hard-coded `localhost` or `127.0.0.1`.
+
+### 1. Registrar (Eben)
+
+The free checklist under "Next session" (two-factor auth, transfer lock, auto-renew, WHOIS privacy). Don't add any DNS records yet.
+
+### 2. Hosted Supabase project
+
+1. **(Eben)** In the Supabase dashboard, create a new project (free tier). Pick a region near you and friends. **Save the database password** in your password manager; `link` asks for it.
+2. Note the **project ref** (the `xxxx` in `https://xxxx.supabase.co`), the **project URL**, and the **publishable key** (Project Settings → API Keys). The publishable key is safe to put in the web app; the secret/service-role key never goes anywhere but Supabase.
+3. From the repo, on your Mac:
+   ```sh
+   npx supabase login                          # opens the browser once
+   npx supabase link --project-ref <ref>       # asks for the database password
+   npx supabase db push                        # runs all 16 migrations; never pass --include-seed
+   npx supabase functions deploy media-search
+   npx supabase secrets set TMDB_API_TOKEN=<the same eyJ... token as supabase/functions/.env>
+   ```
+   `db push` builds every table, function, rule and the `avatars` bucket. The search function gets `SUPABASE_URL` and its keys from the hosted platform automatically; only the TMDB token needs setting. If search later answers 401 for signed-in people, redeploy with `npx supabase functions deploy media-search --no-verify-jwt` (the function checks the caller itself).
+4. **(Eben)** Dashboard → Authentication → URL Configuration: **Site URL** `https://thewasteland.wtf`; **Redirect URLs** `https://thewasteland.wtf/**`, plus the Cloudflare preview address from step 4 (`https://<project>.pages.dev/**`) so you can test before the domain is live.
+5. **(Eben)** Dashboard → Authentication → Sign In / Providers → **Google**: turn it on and paste the same client ID and secret as the root `.env` (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `_SECRET`). Leave email sign-up off; friends use Google.
+
+### 3. Google Cloud (Eben, with Jake if needed)
+
+On the existing OAuth client:
+- **Authorized redirect URIs:** add `https://<ref>.supabase.co/auth/v1/callback`.
+- **Authorized JavaScript origins:** add `https://thewasteland.wtf` and `https://<project>.pages.dev`.
+- The consent screen is in **testing** mode: only listed test users can sign in. Add each friend's Google address as a test user, or publish the consent screen (basic profile and email only) when you're ready for anyone.
+
+### 4. Cloudflare Pages
+
+1. **(Eben)** Make a free Cloudflare account, then Workers & Pages → Create → Pages → **Connect to Git** → pick `wabikemosabi-hub/super-friend` (Jake may need to approve Cloudflare's GitHub app on the org).
+2. Build settings:
+   - Production branch: `main`
+   - Framework preset: none
+   - Build command: `npm run build:web`
+   - Build output directory: `dist`
+   - Environment variables (Production **and** Preview): `EXPO_PUBLIC_SUPABASE_URL` = the project URL, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the publishable key, `NODE_VERSION` = `22`.
+3. Deploy. `EXPO_PUBLIC_` values are baked into the bundle at build time, so changing them later needs a redeploy (Deployments → Retry). They come from these settings because `.env` is never committed.
+4. Single-page routing works without any rule: with no `404.html` in `dist`, Cloudflare Pages serves the app for every path. (On Netlify instead, add `public/_redirects` with `/* /index.html 200`.)
+5. Test on `https://<project>.pages.dev`: sign in with Google, add a fellow nomad, plot, rate, check the logs. Every merge to `main` now redeploys; pull requests get their own preview address.
+
+### 5. thewasteland.wtf
+
+1. **(Eben)** Pages project → Custom domains → add `thewasteland.wtf`, then `www.thewasteland.wtf`.
+2. Cloudflare shows what it needs. The cleanest route for a bare domain is moving the domain's **nameservers** to Cloudflare (free; the registrar keeps the registration, Cloudflare runs DNS). If you'd rather keep DNS at the registrar, use the records Cloudflare lists instead.
+3. Point `www` at the bare domain with a redirect (Cloudflare: a redirect rule `www.thewasteland.wtf/*` → `https://thewasteland.wtf/$1`).
+4. Wait for DNS and the HTTPS certificate (minutes to a few hours), then sign in at `https://thewasteland.wtf`.
+
+### Afterwards
+
+- Write the project ref, Pages project name and which Google account owns what into this section (no secrets).
+- Free Supabase projects pause after about a week with no use; un-pause from the dashboard.
+- Migrations don't deploy themselves: after merging one, run `npx supabase db push` (and `functions deploy` if a function changed). Automating that is a later GitHub Actions job.
 
 ## What this is
 
